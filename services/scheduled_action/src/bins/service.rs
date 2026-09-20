@@ -1,19 +1,17 @@
-// Shared implementation included by the historical AWS and standalone/local
-// binary entrypoints. Their crate-level recursion attributes live in the thin
-// wrappers because inner attributes cannot be carried through `include!`.
+#![recursion_limit = "256"]
 use std::{sync::Arc, time::Duration};
 
 use ai_tools::build_tool_service_context_from_env;
 use anyhow::{Context, Result};
 use axum::Router;
 use connection_gateway_client::client::ConnectionGatewayClient;
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{
+use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use macro_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
-    MacroAuthorizationState,
+    MacroAuthorizationState, PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
 };
-use conation_entrypoint::MacroEntrypoint;
-use conation_service_urls::ConnectionGatewayUrl;
+use macro_entrypoint::MacroEntrypoint;
+use macro_service_urls::ConnectionGatewayUrl;
 use notification::domain::service::SqsNotificationIngress;
 use notification::outbound::queue::SqsQueue;
 use scheduled_action::config::Config;
@@ -34,7 +32,11 @@ use tokio_util::{sync::CancellationToken, task::TaskTracker};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
+#[cfg(test)]
+mod test;
+
 const EVENT_BROKER_DRAIN_TIMEOUT: Duration = Duration::from_secs(10);
+const GATEWAY_PATH_PREFIX: &str = "/scheduled-action";
 
 #[tokio::main]
 #[tracing::instrument(err)]
@@ -57,16 +59,16 @@ async fn main() -> Result<()> {
             .await
             .context("failed to build tool service context")?;
 
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
+    let aws_config = macro_aws_config::get_macro_aws_config().await;
     let notification_ingress = Arc::new(SqsNotificationIngress {
         queue: SqsQueue::new(
             aws_sdk_sqs::Client::new(&aws_config),
-            conation_queues::NotificationIngressQueue::new().to_string(),
+            macro_queues::NotificationIngressQueue::new().to_string(),
         ),
     });
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
-        aws_sdk_secretsmanager::Client::new(&conation_aws_config::get_conation_aws_config().await),
+        aws_sdk_secretsmanager::Client::new(&macro_aws_config::get_macro_aws_config().await),
     );
     let conn_gateway_client = Arc::new(ConnectionGatewayClient::new(
         config.internal_api_key.to_string(),
@@ -122,7 +124,8 @@ async fn main() -> Result<()> {
             api_key: config.internal_api_key.to_string(),
             default_user_id: None,
         },
-        conation_authorization::NoBotAuthorizer,
+        macro_authorization::NoBotAuthorizer,
+        PgUserApiKeyAuthorizer::new(PgUserApiKeyAuthorizationRepo::new(db.clone())),
     );
     let authorization_state = MacroAuthorizationState::new(Arc::new(authorization_service));
 
@@ -133,10 +136,13 @@ async fn main() -> Result<()> {
     let authed_routes = scheduled_action_router::<_, _, ()>(state);
 
     let router = Router::new()
-        .route("/health", axum::routing::get(health))
-        .merge(SwaggerUi::new("/docs").url("/api-doc/openapi.json", ApiDoc::openapi()))
-        .merge(authed_routes)
-        .layer(conation_cors::cors_layer());
+        .merge(mount_at_root_and_prefix(
+            Router::new()
+                .route("/health", axum::routing::get(health))
+                .merge(authed_routes),
+        ))
+        .merge(mount_docs_at_root_and_prefix())
+        .layer(macro_cors::cors_layer());
 
     let port = config.port;
     let addr = format!("0.0.0.0:{port}");
@@ -147,7 +153,7 @@ async fn main() -> Result<()> {
     tracing::info!("scheduled_action service listening on {addr}");
 
     let server_result = axum::serve(listener, router.into_make_service())
-        .with_graceful_shutdown(conation_entrypoint::shutdown_signal())
+        .with_graceful_shutdown(macro_entrypoint::shutdown_signal())
         .await
         .context("server closed");
 
@@ -171,4 +177,19 @@ async fn main() -> Result<()> {
     }
 
     server_result
+}
+
+fn mount_at_root_and_prefix(inner: Router) -> Router {
+    Router::new()
+        .merge(inner.clone())
+        .nest(GATEWAY_PATH_PREFIX, inner)
+}
+
+fn mount_docs_at_root_and_prefix() -> Router {
+    Router::new()
+        .merge(SwaggerUi::new("/docs").url("/api-doc/openapi.json", ApiDoc::openapi()))
+        .merge(SwaggerUi::new(format!("{GATEWAY_PATH_PREFIX}/docs")).url(
+            format!("{GATEWAY_PATH_PREFIX}/api-doc/openapi.json"),
+            ApiDoc::openapi(),
+        ))
 }

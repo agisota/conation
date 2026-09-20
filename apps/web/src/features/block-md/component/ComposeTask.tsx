@@ -1,4 +1,3 @@
-import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
@@ -26,6 +25,7 @@ import type { PortalScope } from '@core/component/ScopedPortal';
 import { toast } from '@core/component/Toast/Toast';
 import { useUserId } from '@core/context/user';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
+import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { buildSimpleEntityUrl } from '@core/util/url';
 import { mergeRegister } from '@lexical/utils';
 import ArrowSquareOutIcon from '@phosphor/arrow-square-out.svg';
@@ -40,7 +40,7 @@ import type { PropertyApiValues } from '@property/types';
 import { useUpsertToHistoryMutation } from '@queries/history/history';
 import { onElementConnect } from '@solid-primitives/lifecycle';
 import { debounce } from '@solid-primitives/scheduled';
-import { Button, Hotkey, Scroll, ToggleSwitch } from '@ui';
+import { Button, cn, Hotkey, Scroll, ToggleSwitch } from '@ui';
 import {
   $getRoot,
   $getSelection,
@@ -78,10 +78,19 @@ import {
   saveTaskComposerDraft,
   updateDraftTimestamp,
 } from '../util/taskComposerStorage';
+import { EditorSystemMessage } from './EditorSystemMessage';
 import { InlinePropertyValue } from './InlinePropertyValue';
 import { SimilarTasksSection } from './TaskDuplicateList';
 
 type ComposerTagLayoutMode = 'bottom' | 'title';
+
+/**
+ * Wrapper for controls that sit beside the composer title (the inline tags
+ * pill) so they stay centered on the title's *first* line rather than drifting
+ * to the middle of a title that wraps onto several lines. `h-7` matches the
+ * `text-xl/7` line box of {@link ComposeTaskTitleEditor}; keep the two in sync.
+ */
+export const COMPOSER_TITLE_LINE_CLASS = 'flex h-7 shrink-0 items-center';
 
 function composerTitleNavigationPlugin(
   bodyEditor: Accessor<LexicalEditor | undefined>,
@@ -284,7 +293,7 @@ export function ComposeTaskTitleEditor(props: {
     <div class="relative w-full">
       <div
         contentEditable={!props.disabled()}
-        class="ph-no-capture w-full text-xl font-medium outline-none whitespace-pre-wrap wrap-break-word"
+        class="ph-no-capture w-full text-xl/7 font-medium outline-none whitespace-pre-wrap wrap-break-word [&_p]:my-0! [&_p:empty]:min-h-7"
         ref={(el) => {
           props.ref?.(el);
           onElementConnect(el, () => onConnect(el));
@@ -303,8 +312,8 @@ export function ComposeTaskTitleEditor(props: {
         portalScope={props.portalScope}
       />
       <Show when={showPlaceholder()}>
-        <div class="pointer-events-none absolute top-1.5 text-xl font-medium text-ink-placeholder">
-          {t('markdown.task.new')}
+        <div class="pointer-events-none absolute top-0 text-xl/7 font-medium text-ink-placeholder">
+          New task
         </div>
       </Show>
     </div>
@@ -464,6 +473,16 @@ export function ComposeTask(props: ComposeTaskProps) {
     });
   });
 
+  // A title-mode pill that ends a picker session with no tags left has nothing
+  // to show, so drop it back to the property row instead of leaving an empty
+  // "Tags" chip beside the title. Collapsing on the session end rather than on
+  // the tag removal itself keeps the open picker from unmounting under the user.
+  const handleTitleTagPickerActive = (active: boolean) => {
+    if (active) return;
+    if (composerTags.appliedTags().length > 0) return;
+    setTagLayoutMode('bottom');
+  };
+
   const deleteTitleTagsAtStart = () => {
     if (tagLayoutMode() !== 'title') return false;
     clearComposerTags();
@@ -482,18 +501,18 @@ export function ComposeTask(props: ComposeTaskProps) {
       await navigator.clipboard.writeText(url);
       linkCopied = true;
     } catch {
-      toast.failure(t('markdown.actions.copyLinkFailed'));
+      toast.failure('Failed to copy link to clipboard');
     }
 
     const snapshotParams = optimisticSnapshot
       ? { params: { optimisticSnapshot }, preserveParams: true as const }
       : {};
 
-    toast.success(t('markdown.task.created'), {
-      subtext: linkCopied ? t('markdown.actions.linkCopied') : undefined,
+    toast.success('Task created', {
+      subtext: linkCopied ? 'Link copied' : undefined,
       actions: [
         {
-          label: t('markdown.actions.open'),
+          label: 'Open',
           icon: ArrowSquareOutIcon,
           onClick: () => {
             openWithSplit(
@@ -503,7 +522,7 @@ export function ComposeTask(props: ComposeTaskProps) {
           },
         },
         {
-          label: t('markdown.actions.openInNewSplit'),
+          label: 'Open (New Split)',
           icon: SplitIcon,
           onClick: () => {
             openWithSplit(
@@ -523,7 +542,7 @@ export function ComposeTask(props: ComposeTaskProps) {
     const taskContent = content().trim();
 
     if (!taskTitle) {
-      setErrorMessage(t('markdown.task.titleRequired'));
+      setErrorMessage('Please give this task a title');
       return;
     }
     setErrorMessage('');
@@ -738,6 +757,7 @@ export function ComposeTask(props: ComposeTaskProps) {
   };
 
   onMount(() => {
+    splitPanel.handle.setDisplayName('New task');
     const container = containerRef();
     if (container) {
       attachHotkeys(container);
@@ -747,7 +767,7 @@ export function ComposeTask(props: ComposeTaskProps) {
   registerHotkey({
     hotkey: 'cmd+enter',
     scopeId: composeHotkeyScope,
-    description: () => t('markdown.task.create'),
+    description: 'Create task',
     keyDownHandler: () => {
       handleCreateTask();
       return true;
@@ -758,7 +778,7 @@ export function ComposeTask(props: ComposeTaskProps) {
   const editorConfig = buildConfig('markdown')
     .withMentions()
     .withTags({
-      applyTargetLabel: t('markdown.task.title'),
+      applyTargetLabel: 'Task',
       isApplied: (tag) => composerTags.isApplied(tag.optionId),
       onCreate: (tag) => {
         void composerTags.applyTag(tag.scope, tag.optionId);
@@ -769,6 +789,7 @@ export function ComposeTask(props: ComposeTaskProps) {
     .withCode()
     .withMedia({ fileDrop: true })
     .withSelectionData()
+    .withFloatingFormatMenu()
     .withHistory()
     .onChange(setContent)
     .onFocusLeave({
@@ -798,8 +819,8 @@ export function ComposeTask(props: ComposeTaskProps) {
               onMouseDown={handleContinueInSplit}
               disabled={isCreating()}
               tabIndex={-1}
-              tooltip={t('markdown.compose.continueInSplit')}
-              size="icon-sm"
+              tooltip="Continue editing in split"
+              size="icon-composer"
             >
               <ArrowsOutIcon />
             </Button>
@@ -809,34 +830,37 @@ export function ComposeTask(props: ComposeTaskProps) {
           <Button
             onMouseDown={handleClearDraft}
             tabIndex={-1}
-            tooltip={t('markdown.task.clearDraft')}
+            tooltip="Clear Draft"
             size="sm"
             variant="outline"
             depth={3}
             class="bg-surface px-3"
           >
-            {t('markdown.task.clearDraft')}
+            Clear Draft
           </Button>
         </Show>
         <Show when={splitPanel?.handle.isPopover()}>
           <Button
             onMouseDown={handleClose}
             tabIndex={-1}
-            tooltip={t('common.close')}
-            size="icon-sm"
+            tooltip="Close"
+            size="icon-composer"
           >
             <XIcon />
           </Button>
         </Show>
       </div>
       <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
-        <div class="shrink-0 flex gap-2 items-center px-2 mb-4">
+        <div class="shrink-0 flex gap-2 items-start px-2 mb-4">
           <Show when={tagLayoutMode() === 'title'}>
-            <InlineTagsPill
-              docTags={composerTags}
-              showPlaceholder
-              class="shrink-0"
-            />
+            <div class={COMPOSER_TITLE_LINE_CLASS}>
+              <InlineTagsPill
+                docTags={composerTags}
+                showPlaceholder
+                class="shrink-0"
+                onActiveChange={handleTitleTagPickerActive}
+              />
+            </div>
           </Show>
           <ComposeTaskTitleEditor
             value={title}
@@ -871,9 +895,7 @@ export function ComposeTask(props: ComposeTaskProps) {
                   ? undefined
                   : initialState.content || undefined
               }
-              placeholder={
-                props.placeholder ?? t('markdown.task.descriptionPlaceholder')
-              }
+              placeholder={props.placeholder ?? 'Add description...'}
               portalScope={portalScope()}
             />
           </Scroll>
@@ -942,7 +964,9 @@ export function ComposeTask(props: ComposeTaskProps) {
       <Show when={errorMessage()}>
         <div class="w-full border-b border-edge-muted" />
         <div class="p-2">
-          <div class="text-sm text-failure-ink px-3 py-2">{errorMessage()}</div>
+          <EditorSystemMessage variant="error">
+            {errorMessage()}
+          </EditorSystemMessage>
         </div>
       </Show>
 
@@ -960,8 +984,8 @@ export function ComposeTask(props: ComposeTaskProps) {
         <Button
           onMouseDown={() => attachInputRef?.click()}
           tabIndex={-1}
-          tooltip={t('markdown.task.attachMedia')}
-          size="icon-sm"
+          tooltip="Attach image or video"
+          size="icon-composer"
         >
           <PaperclipIcon />
         </Button>
@@ -970,16 +994,19 @@ export function ComposeTask(props: ComposeTaskProps) {
             labelClass="text-xs text-ink-muted font-normal whitespace-nowrap"
             onChange={setCreateMore}
             checked={createMore()}
-            label={t('markdown.task.createMore')}
+            label="Create More"
           />
           <Button
             onClick={handleCreateTask}
             disabled={title().trim().length === 0 || isCreating()}
             variant={title().trim().length === 0 ? 'ghost' : 'accent'}
             depth={3}
-            class="gap-3 rounded-lg border-0"
+            class={cn(
+              'gap-3 rounded-lg border-0',
+              !isTouchDevice() && 'rounded-full h-[33.75px] px-[15px]'
+            )}
           >
-            {t('markdown.task.create')}
+            Create Task
             <Hotkey shortcut="cmd+enter" theme="current" />
           </Button>
         </div>

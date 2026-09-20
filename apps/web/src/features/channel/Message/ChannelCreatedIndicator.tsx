@@ -1,7 +1,7 @@
 import { t } from '@app/lib/i18n';
 import { useChannel } from '@core/context/channels';
 import { formatDate } from '@core/util/date';
-import ChannelIcon from '@icon/wide-channel.svg';
+import ChannelIcon from '@phosphor/hash-straight.svg';
 import { ChannelTypeEnum } from '@service-storage/client';
 import { Avatar } from '@ui';
 import { Show } from 'solid-js';

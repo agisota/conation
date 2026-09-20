@@ -2,7 +2,7 @@
 
 use std::future::Future;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 /// Records the entity mentions embedded in a document's markdown, so a
 /// mentioned entity can surface the mentioning document in its references.
@@ -17,7 +17,7 @@ pub trait DocumentMentionTrackingPort: Send + Sync {
     ) -> impl Future<Output = anyhow::Result<()>> + Send;
 }
 
-/// Mention tracker that records nothing, for callers without a Conation DB pool.
+/// Mention tracker that records nothing, for callers without a MacroDB pool.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct NoOpDocumentMentionTracker;
 

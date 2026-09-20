@@ -1,14 +1,9 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
-import {
-  ENABLE_CURSOR_AGENTS_FLAG,
-  ENABLE_CURSOR_AGENTS_OVERRIDE,
-} from '@core/constant/featureFlags';
+import { enableCursorAgents } from '@core/constant/featureFlags';
 import type { Accessor } from 'solid-js';
 
-/** Whether the current user may see and use Cursor-agent surfaces. */
+/** Whether the built-in Cursor mention is included in this user's rollout. */
 export function useCursorAgentsAccess(): Accessor<boolean> {
-  const flag = useFeatureFlag(ENABLE_CURSOR_AGENTS_FLAG, {
-    enabledOverride: ENABLE_CURSOR_AGENTS_OVERRIDE,
-  });
+  const flag = useFeatureFlag(enableCursorAgents);
   return () => flag().enabled;
 }

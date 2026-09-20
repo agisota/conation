@@ -62,8 +62,8 @@ pub enum CursorApiKeyError {
     /// The supplied value does not look like a Cursor API key.
     #[error("value does not look like a Cursor API key")]
     MalformedKey,
-    /// An operation that needs a connected account was attempted without one —
-    /// e.g. choosing a model before pasting a key.
+    /// An operation that needs a connected account was attempted without one,
+    /// such as listing the account's available models before pasting a key.
     #[error("connect a Cursor API key first")]
     NotConnected,
     /// Cursor's own API could not be reached or refused the request — listing

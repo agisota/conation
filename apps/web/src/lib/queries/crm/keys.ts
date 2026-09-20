@@ -2,6 +2,7 @@ import { createQueryKeys } from '@lukemorales/query-key-factory';
 import type { CrmCommentEntityType } from '@service-storage/generated/schemas/crmCommentEntityType';
 
 export const crmKeys = createQueryKeys('crm', {
+  lists: null,
   company: (companyId: string) => [companyId],
   companyForDomain: (domain: string) => [domain],
   contact: (contactId: string) => [contactId],

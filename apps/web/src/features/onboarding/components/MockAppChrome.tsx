@@ -1,16 +1,10 @@
-import { ConationMark } from '@app/components/brand';
 import { GO_TO_COMMAND_SCOPE, GO_TO_LEADER_KEY } from '@app/constants/hotkeys';
-import { t } from '@app/lib/i18n';
+import { getIconConfig } from '@core/component/EntityIcon';
 import { createHotkeyGroup, registerHotkey } from '@core/hotkey/hotkeys';
 import type { ValidHotkey } from '@core/hotkey/types';
-import { AnimatedChannelIcon } from '@icon/wide-channel';
-import { AnimatedEmailIcon } from '@icon/wide-email';
-import { AnimatedFileMdIcon } from '@icon/wide-fileMd';
-import { AnimatedFolderIcon } from '@icon/wide-folder';
-import { AnimatedGearIcon } from '@icon/wide-gear';
-import { AnimatedPlusIcon } from '@icon/wide-plus';
-import { AnimatedStarIcon } from '@icon/wide-star';
-import { AnimatedTaskIcon } from '@icon/wide-task';
+import MacroIcon from '@icon/macro-logo.svg';
+import GearIcon from '@phosphor/gear.svg';
+import PlusIcon from '@phosphor/plus.svg';
 import { cn, HoverCard } from '@ui';
 import {
   createSignal,
@@ -30,43 +24,43 @@ import {
 const MOCK_SIDEBAR_LINKS = [
   {
     id: 'agents',
-    labelKey: 'onboarding.mock.sidebar.agents',
-    icon: AnimatedStarIcon,
+    label: 'Agents',
+    icon: getIconConfig('agent').icon,
     hotkey: 'a',
   },
   {
     id: 'mail',
-    labelKey: 'onboarding.mock.sidebar.emails',
-    icon: AnimatedEmailIcon,
+    label: 'Emails',
+    icon: getIconConfig('email').icon,
     hotkey: 'e',
   },
   {
     id: 'documents',
-    labelKey: 'onboarding.mock.sidebar.documents',
-    icon: AnimatedFileMdIcon,
+    label: 'Documents',
+    icon: getIconConfig('md').icon,
     hotkey: 'd',
   },
   {
     id: 'tasks',
-    labelKey: 'onboarding.mock.sidebar.tasks',
-    icon: AnimatedTaskIcon,
+    label: 'Tasks',
+    icon: getIconConfig('task').icon,
     hotkey: 't',
   },
   {
     id: 'channels',
-    labelKey: 'onboarding.mock.sidebar.channels',
-    icon: AnimatedChannelIcon,
+    label: 'Channels',
+    icon: getIconConfig('channel').icon,
     hotkey: 'c',
   },
   {
     id: 'folders',
-    labelKey: 'onboarding.mock.sidebar.folders',
-    icon: AnimatedFolderIcon,
+    label: 'Folders',
+    icon: getIconConfig('project').icon,
     hotkey: 'f',
   },
 ] satisfies {
   id: SandboxSidebarFilter;
-  labelKey: string;
+  label: string;
   icon: (props: {}) => JSX.Element;
   hotkey: ValidHotkey;
 }[];
@@ -88,9 +82,9 @@ interface MockAppChromeProps {
 export function MockAppChrome(props: MockAppChromeProps) {
   const displayTitle = () => {
     const filter = sidebarFilter();
-    if (!filter) return t('onboarding.mock.sidebar.allItems');
+    if (!filter) return 'All Items';
     const match = MOCK_SIDEBAR_LINKS.find((link) => link.id === filter);
-    return match ? t(match.labelKey) : t('onboarding.mock.sidebar.allItems');
+    return match?.label ?? 'All Items';
   };
 
   // Tracks which highlight ids have been activated at least once so the glow
@@ -124,7 +118,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
     const leaderRegistration = registerHotkey({
       hotkey: GO_TO_LEADER_KEY,
       scopeId: props.scopeId ?? 'global',
-      description: t('onboarding.hotkeys.goToPage'),
+      description: 'Go to page',
       keyDownHandler: () => false,
       hide: true,
       registrationType: 'add',
@@ -143,9 +137,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
       registerHotkey({
         hotkey: link.hotkey as ValidHotkey,
         scopeId: commandScopeId,
-        description: t('onboarding.hotkeys.goToSection', {
-          section: t(link.labelKey),
-        }),
+        description: `Go to ${link.label}`,
         keyDownHandler: () => {
           setFilter(link.id as SandboxSidebarFilter);
           return true;
@@ -157,10 +149,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
   onCleanup(() => group.dispose());
 
   return (
-    <div class="size-full p-4 bg-surface relative">
-      <div class="absolute top-1 left-1/2 -translate-x-1/2 z-10 rounded-full bg-ink/80 px-2 py-0.5 text-[10px] font-medium tracking-wide text-surface">
-        {t('onboarding.tutorial.demoLabel')}
-      </div>
+    <div class="size-full p-4 bg-surface">
       <style>{`
         @keyframes sidebar-glow-pulse {
           0%, 100% { box-shadow: 0 0 0 0 rgb(from var(--color-accent) r g b / 0.7), 0 0 6px 1px rgb(from var(--color-accent) r g b / 0.7), 0 0 12px 3px rgb(from var(--color-accent) r g b / 0.4); }
@@ -170,7 +159,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
       `}</style>
       <div class="flex size-full bg-surface rounded-sm border border-edge-muted">
         <div class="px-2 shrink-0 bg-panel flex flex-col items-center py-3 gap-1">
-          <ConationMark class="size-5 mb-3" />
+          <MacroIcon class="size-5 text-accent mb-3" />
           <button
             type="button"
             class={cn(
@@ -184,9 +173,9 @@ export function MockAppChrome(props: MockAppChromeProps) {
               setCreateActivated(true);
               props.onCreateClick?.();
             }}
-            title={t('onboarding.mock.actions.create')}
+            title="Create"
           >
-            <AnimatedPlusIcon />
+            <PlusIcon />
           </button>
           <hr class="border-ink/5 w-full my-1" />
           <button
@@ -201,7 +190,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
               e.preventDefault();
               setFilter(null);
             }}
-            title={t('onboarding.mock.actions.all')}
+            title="All"
           >
             <svg
               viewBox="0 0 24 24"
@@ -237,12 +226,12 @@ export function MockAppChrome(props: MockAppChromeProps) {
                   placement="right"
                   content={
                     <span class="flex items-center gap-1.5 text-xs">
-                      {t(link.labelKey)}
+                      {link.label}
                       <span class="flex items-center gap-1 text-ink/40">
                         <span class="px-1.5 rounded-sm border border-edge-muted">
                           G
                         </span>
-                        {t('onboarding.callout.then')}
+                        then
                         <span class="px-1.5 rounded-sm border border-edge-muted">
                           {link.hotkey.toUpperCase()}
                         </span>
@@ -275,9 +264,9 @@ export function MockAppChrome(props: MockAppChromeProps) {
               type="button"
               class="size-6 text-ink rounded-xs p-1 transition-colors cursor-default opacity-50 hover:opacity-80 hover:bg-ink/10"
               onClick={(e) => e.preventDefault()}
-              title={t('onboarding.mock.actions.settings')}
+              title="Settings"
             >
-              <AnimatedGearIcon />
+              <GearIcon />
             </button>
           </div>
         </div>
@@ -299,7 +288,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
               when={sidebarFilter() !== 'empty'}
               fallback={
                 <div class="flex items-center justify-center size-full">
-                  <ConationMark class="size-10 opacity-10" />
+                  <MacroIcon class="size-10 text-ink/10" />
                 </div>
               }
             >

@@ -7,6 +7,7 @@ import { createCallback } from '@solid-primitives/rootless';
 import { Tooltip } from '@ui';
 import { $getNodeByKey } from 'lexical';
 import {
+  type Accessor,
   createEffect,
   createSignal,
   onCleanup,
@@ -33,8 +34,10 @@ false && floatWithSelection;
 false && floatWithElement;
 false && clickOutside;
 
-export function FloatingEquationMenu() {
-  const canEdit = useCanEdit();
+export function FloatingEquationMenu(
+  props: { canEdit?: Accessor<boolean> } = {}
+) {
+  const canEdit = props.canEdit ?? useCanEdit();
   const lexicalWrapper = useContext(LexicalWrapperContext);
   const plugins = () => lexicalWrapper?.plugins;
   const editor = () => lexicalWrapper?.editor;

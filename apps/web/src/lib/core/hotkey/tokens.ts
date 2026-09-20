@@ -1,4 +1,7 @@
 export const TOKENS = {
+  workspace: {
+    toggleNavigation: 'workspace.toggleNavigation',
+  },
   // soup
   soup: {
     openSearch: 'soup.openSearch',
@@ -60,6 +63,7 @@ export const TOKENS = {
       copyBranchName: 'entity.action.copyBranchName',
       copyEntityId: 'entity.action.copyEntityId',
       favorite: 'entity.action.favorite',
+      mute: 'entity.action.mute',
       createReminder: 'entity.action.createReminder',
       properties: 'entity.action.properties',
       tags: 'entity.action.tags',
@@ -76,6 +80,7 @@ export const TOKENS = {
   code: {
     toggleComment: 'code.toggleComment',
     escape: 'code.escape',
+    find: 'code.find',
   },
 
   // calendar
@@ -90,6 +95,7 @@ export const TOKENS = {
       next: 'calendar.period.next',
       today: 'calendar.period.today',
     },
+    search: 'calendar.search',
   },
 
   // global
@@ -272,6 +278,8 @@ export const TOKENS = {
     chatNewSplit: 'create.chatNewSplit',
     canvas: 'create.canvas',
     canvasNewSplit: 'create.canvasNewSplit',
+    spreadsheet: 'create.spreadsheet',
+    spreadsheetNewSplit: 'create.spreadsheetNewSplit',
     project: 'create.project',
     projectNewSplit: 'create.projectNewSplit',
     code: 'create.code',

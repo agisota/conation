@@ -1,7 +1,7 @@
 use axum::{Json, extract::State};
-use conation_authorization::{MacroAuthorizationExtractor, UserOnly};
 use cursor_cloud_agents::api::{ApiKey, CursorClient, CursorConfig};
 use cursor_cloud_agents::domain::ports::CursorAgents;
+use macro_authorization::{MacroAuthorizationExtractor, UserOnly};
 use utoipa::ToSchema;
 
 use super::CursorApiKeyError;
@@ -9,9 +9,11 @@ use crate::api::context::{ApiContext, AuthorizationService};
 
 /// One model the settings dropdown can offer.
 ///
-/// Just id and name: the dropdown lists models, not the hundreds of parameter
-/// variants each carries. The chosen id's parameters are resolved to Cursor's
-/// default variant at session start.
+/// Id, name and family: the dropdown lists models, not the hundreds of
+/// parameter variants each carries. The chosen id's parameters are resolved to
+/// Cursor's default variant at session start. The family is the same heading
+/// the Cursor ACP agent groups its session model select under, so the settings
+/// picker and the in-session picker read the same way.
 #[derive(Debug, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CursorModelOption {
@@ -19,6 +21,8 @@ pub struct CursorModelOption {
     pub id: String,
     /// The human-readable name, e.g. `Cursor Grok 4.6`.
     pub display_name: String,
+    /// The family heading to list this model under, e.g. `Cursor Grok`.
+    pub group: String,
 }
 
 /// The models this account may choose from.
@@ -43,6 +47,7 @@ pub struct CursorModelsResponse {
     responses(
         (status = 200, body = CursorModelsResponse),
         (status = 401, body = String),
+        (status = 403, body = model::response::ErrorResponse),
         (status = 409, body = model::response::ErrorResponse),
         (status = 502, body = model::response::ErrorResponse),
     )
@@ -53,6 +58,7 @@ pub async fn handler(
     user_context: MacroAuthorizationExtractor<AuthorizationService, UserOnly>,
 ) -> Result<Json<CursorModelsResponse>, CursorApiKeyError> {
     let user_id = &user_context.authorization.macro_user_id;
+
     let stored = cursor_api_key::store::get_cursor_api_key(&ctx.db, user_id.as_ref())
         .await
         .map_err(|error| {
@@ -75,7 +81,7 @@ pub async fn handler(
 
     let client = CursorClient::new(CursorConfig {
         api_key: ApiKey::new(key.expose()),
-        base_url: cursor_cloud_agents::api::CURSOR_API_BASE_URL.to_owned(),
+        base_url: cursor_cloud_agents::api::cursor_api_base_url(),
         model: None,
         starting_ref: "main".to_owned(),
         record_dir: None,
@@ -94,6 +100,7 @@ pub async fn handler(
         models: models
             .into_iter()
             .map(|model| CursorModelOption {
+                group: model.family(),
                 id: model.id,
                 display_name: model.display_name,
             })

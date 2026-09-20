@@ -1,9 +1,8 @@
 import { ROUTER_BASE_CONCAT, toBaseRelative } from '@app/constants/routerBase';
 import { updateUserAuth } from '@core/auth';
 import { toast } from '@core/component/Toast/Toast';
-import { getConfiguredNativeAppScheme } from '@core/constant/clientProfile';
+import { PaywallKey, usePaywallState } from '@core/constant/PaywallState';
 import { currentSettingsReturnTo } from '@core/constant/SettingsState';
-import { t } from '@core/i18n';
 import { getNativeMobilePlatform } from '@core/util/platform';
 import { useInitGmailLink } from '@queries/auth';
 import { invalidateUserInfo } from '@queries/auth/user-info';
@@ -12,7 +11,6 @@ import type { ConsentScopes } from '@service-auth/client';
 import {
   ALREADY_INITIALIZED_CODE,
   emailClient,
-  MAILBOX_TAKEN_CODE,
   NO_GMAIL_GRANT_CODE,
   SHARED_INBOX_CONFLICT_CODE,
 } from '@service-email/client';
@@ -26,7 +24,6 @@ import { err, okAsync, ResultAsync } from 'neverthrow';
 import { createMemo, createSignal } from 'solid-js';
 import { rememberInboxLinkReturn } from './return-layout';
 import { requestShareInboxConfirmation } from './share-conflict';
-export { hasStalwartMailbox } from './mailbox-empty-copy';
 
 const [emailRefetchInterval, setEmailRefetchInterval] = createSignal<
   number | undefined
@@ -53,8 +50,6 @@ type EmailInitError =
   | { tag: 'NoGmailGrant' }
   /** The mailbox is already connected by another user; confirm to share it. */
   | { tag: 'SharedInboxConflict'; emailAddress: string; ownerEmail: string }
-  /** Chosen @conation.dev local-part is already claimed. */
-  | { tag: 'MailboxTaken' }
   | { tag: 'FailedToInitialize'; message: string };
 
 function parseSharedInboxConflict(message: string): {
@@ -90,14 +85,9 @@ function parseSharedInboxConflict(message: string): {
 function initEmailLink(args?: {
   linkId?: string;
   forceShare?: boolean;
-  localPart?: string;
 }): ResultAsync<void, EmailInitError> {
   return ResultAsync.fromSafePromise(
-    emailClient.init({
-      linkId: args?.linkId,
-      forceShare: args?.forceShare,
-      localPart: args?.localPart,
-    })
+    emailClient.init({ linkId: args?.linkId, forceShare: args?.forceShare })
   ).andThen((initResult) => {
     if (initResult.isErr()) {
       const conflict = initResult.error.find(
@@ -112,9 +102,6 @@ function initEmailLink(args?: {
       }
       if (initResult.error.some((e) => e.code === NO_GMAIL_GRANT_CODE)) {
         return err<void, EmailInitError>({ tag: 'NoGmailGrant' });
-      }
-      if (initResult.error.some((e) => e.code === MAILBOX_TAKEN_CODE)) {
-        return err<void, EmailInitError>({ tag: 'MailboxTaken' });
       }
       const error: EmailInitError = initResult.error.some(
         (e) => e.code === ALREADY_INITIALIZED_CODE
@@ -201,6 +188,17 @@ export function initAndStartEmailSync() {
 }
 
 /**
+ * The backend gates additional inboxes behind a paid subscription and answers
+ * `POST /link/gmail` with 402 when the user isn't entitled. The auth client maps
+ * that to a `PAYMENT_REQUIRED` error code; the add-inbox flow surfaces the
+ * paywall instead of a generic failure so the backend stays the source of truth
+ * on entitlement.
+ */
+function isPaymentRequired(errors: ReadonlyArray<{ code: string }>): boolean {
+  return errors.some((error) => error.code === 'PAYMENT_REQUIRED');
+}
+
+/**
  * The backend answers `POST /link/gmail` with 429 when the user has too many
  * incomplete link attempts in flight (each abandoned OAuth leaves a pending row
  * that expires after 24h). The auth client maps that to `TOO_MANY_PENDING_LINKS`
@@ -211,6 +209,9 @@ function isTooManyPendingLinks(
 ): boolean {
   return errors.some((error) => error.code === 'TOO_MANY_PENDING_LINKS');
 }
+
+const TOO_MANY_PENDING_LINKS_MESSAGE =
+  'Too many inbox connections in progress.';
 
 /**
  * Starts the add-inbox flow: fetches the Gmail link authorization URL and
@@ -235,12 +236,13 @@ function isTooManyPendingLinks(
 export function useAddInboxFlow() {
   const initGmailLink = useInitGmailLink();
   const { query, initEmailLink } = useEmailLinks();
+  const { showPaywall } = usePaywallState();
 
   const completeNativeLink = async (linkId: string, forceShare: boolean) => {
     await initEmailLink({ linkId, forceShare }).match(
       async () => {
         await query.refetch();
-        toast.success(t('core.inbox.connected'));
+        toast.success('Account connected');
       },
       async (error) => {
         if (error.tag === 'AlreadyInitialized') {
@@ -255,23 +257,26 @@ export function useAddInboxFlow() {
           });
           return;
         }
-        toast.failure(t('core.inbox.addFailed'));
+        toast.failure('Failed to add inbox');
       }
     );
   };
 
   const startNativeFlow = async (scopes: ConsentScopes) => {
-    const callbackScheme = getConfiguredNativeAppScheme();
     const result = await initGmailLink.mutateAsync({
-      originalUrl: `${callbackScheme}://inbox-link-callback`,
+      originalUrl: 'macro://inbox-link-callback',
       scopes,
     });
     if (result.isErr()) {
-      if (isTooManyPendingLinks(result.error)) {
-        toast.failure(t('core.inbox.tooManyPending'));
+      if (isPaymentRequired(result.error)) {
+        showPaywall(PaywallKey.MULTI_INBOX);
         return;
       }
-      toast.failure(t('core.inbox.gmailLinkStartFailed'));
+      if (isTooManyPendingLinks(result.error)) {
+        toast.failure(TOO_MANY_PENDING_LINKS_MESSAGE);
+        return;
+      }
+      toast.failure('Failed to start Gmail link flow');
       return;
     }
 
@@ -280,19 +285,19 @@ export function useAddInboxFlow() {
       auth = await invoke('plugin:auth|authenticate', {
         payload: {
           authUrl: result.value.authorization_url,
-          callbackScheme,
+          callbackScheme: 'macro',
           ephemeralSession: true,
         },
       });
     } catch (error) {
       console.error('add-inbox authenticate failed', error);
-      toast.failure(t('core.inbox.addFailed'));
+      toast.failure('Failed to add inbox');
       return;
     }
 
     if (!auth.success || !auth.token) {
       if (auth.error !== 'User canceled login') {
-        toast.failure(t('core.inbox.addFailed'));
+        toast.failure('Failed to add inbox');
       }
       return;
     }
@@ -321,10 +326,12 @@ export function useAddInboxFlow() {
         settingsReturnTo: currentSettingsReturnTo(),
       });
       window.location.href = result.value.authorization_url;
+    } else if (isPaymentRequired(result.error)) {
+      showPaywall(PaywallKey.MULTI_INBOX);
     } else if (isTooManyPendingLinks(result.error)) {
-      toast.failure(t('core.inbox.tooManyPending'));
+      toast.failure(TOO_MANY_PENDING_LINKS_MESSAGE);
     } else {
-      toast.failure(t('core.inbox.gmailLinkStartFailed'));
+      toast.failure('Failed to start Gmail link flow');
     }
   };
 }
@@ -344,11 +351,8 @@ export function useEmailLinks() {
   return {
     query: query,
     isConnected: () => hasEmailLinks(query),
-    initEmailLink: (args?: {
-      linkId?: string;
-      forceShare?: boolean;
-      localPart?: string;
-    }) => initEmailLink(args).map(startEmailPolling).map(invalidations),
+    initEmailLink: (args?: { linkId?: string; forceShare?: boolean }) =>
+      initEmailLink(args).map(startEmailPolling).map(invalidations),
     disconnect: () => disconnectEmail().andTee(invalidations),
     resyncInbox: (linkId: string) =>
       resyncInbox(linkId).andTee(() => invalidateEmailLinks()),

@@ -1,6 +1,6 @@
-import { t } from '@app/lib/i18n';
 import { StaticMarkdown } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { unifiedListMarkdownTheme } from '@core/component/LexicalMarkdown/theme';
+import { blockNameToDefaultFile } from '@core/constant/allBlocks';
 import { formatDocumentName } from '@service-storage/util/filename';
 import { type JSX, Show } from 'solid-js';
 import { match } from 'ts-pattern';
@@ -19,12 +19,13 @@ function extractRawTitle(entity: EntityData): JSX.Element {
       .with({ type: 'channel' }, (e) => e.name)
       .with({ type: 'channel_message' }, (e) => e.channelName)
       .with({ type: 'channel_thread' }, (e) => e.name)
-      .with({ type: 'email' }, (e) => e.name || t('entity.fallback.noSubject'))
+      .with({ type: 'email' }, (e) => e.name || '(No Subject)')
+      .with({ type: 'agent_session' }, (e) => e.name || 'Agent session')
       .with({ type: 'chat' }, (e) => e.name)
-      .with({ type: 'call' }, (e) => e.name || t('entity.fallback.call'))
+      .with({ type: 'call' }, (e) => e.name || blockNameToDefaultFile('call'))
       .with(
         { type: 'automation' },
-        (e) => e.name || t('entity.fallback.automation')
+        (e) => e.name || blockNameToDefaultFile('automation')
       )
       .when(isGithubPrEntity, (e) => (
         <>
@@ -35,24 +36,15 @@ function extractRawTitle(entity: EntityData): JSX.Element {
         </>
       ))
       .with({ type: 'foreign' }, (e) => e.name)
-      .with(
-        { type: 'crm_company' },
-        (e) => e.name || t('entity.fallback.unknownCompany')
-      )
+      .with({ type: 'crm_company' }, (e) => e.name || 'Unknown Company')
       .with(
         { type: 'crm_contact' },
-        (e) => e.name || e.email || t('entity.fallback.unknownContact')
+        (e) => e.name || e.email || 'Unknown Contact'
       )
       // A reminder's name is its description — there is no separate title.
-      .with(
-        { type: 'reminder' },
-        (e) => e.name || t('entity.fallback.reminder')
-      )
-      .with(
-        { type: 'calendar_event' },
-        (e) => e.name || t('entity.fallback.noTitle')
-      )
-      .otherwise(() => t('entity.fallback.unknown'))
+      .with({ type: 'reminder' }, (e) => e.name || 'Reminder')
+      .with({ type: 'calendar_event' }, (e) => e.name || '(No title)')
+      .otherwise(() => 'Unknown')
   );
 }
 

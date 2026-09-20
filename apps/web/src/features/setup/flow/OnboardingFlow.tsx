@@ -1,17 +1,18 @@
-import { ConationMark as LogoIcon } from '@app/components/brand';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
-import { t } from '@app/lib/i18n';
 import { FEATURED_MCP_SERVERS } from '@core/component/AI/constant/mcpServers';
+import LogoIcon from '@icon/macro-logo.svg';
 import { authKeys } from '@queries/auth/keys';
 import { useCompleteTutorialMutation } from '@queries/auth/tutorial';
 import { useUserInfoQuery } from '@queries/auth/user-info';
 import { queryClient } from '@queries/client';
 import { useEmailLinksQuery } from '@queries/email/link';
+import { useGtmInviteOfferQuery } from '@queries/gtm-invite/links';
 import { useImportQuery } from '@queries/import';
 import { useMcpServersQuery } from '@queries/mcp-servers';
 import { useOnboardingQuery } from '@queries/onboarding';
 import { usePipedreamConnectionsQuery } from '@queries/pipedream-connectors';
+import type { GtmInviteOffer } from '@service-auth/generated/schemas/gtmInviteOffer';
 import { useNavigate } from '@solidjs/router';
 import { cn } from '@ui';
 import { Stepper } from '@ui/components/Stepper';
@@ -27,7 +28,6 @@ import {
 } from 'solid-js';
 import type { ModuleLogo, ModuleState } from '../Module';
 import { MODULE_LOGOS } from '../moduleLogos';
-import { AgentModeStep } from './AgentModeStep';
 import { BrandHandoff, type BrandHandoffSource } from './BrandHandoff';
 import { BuildingStep, type ConnectedTools } from './BuildingStep';
 import { ConnectorStep } from './ConnectorStep';
@@ -89,48 +89,56 @@ interface StepControls {
   /** Advance without finishing the step (tracked as skipped). */
   skip: () => void;
   finishing: () => boolean;
-  /** Complete the included-access step and enter the app. */
-  finish: () => void;
+  finishFree: (planSkipped: boolean) => void;
+  /** Redirect to Stripe checkout without completing the flow. */
+  startPremiumCheckout: (tier: 'premium') => void;
+  /** Finish after checkout confirmed payment (or an existing license). */
+  finishPremium: () => void;
+  /** The free-month promotion an invite-link signup holds, once known. */
+  inviteOffer: () => GtmInviteOffer | null;
 }
 
 interface ConnectorStepCopy {
-  subtitleKey: string;
-  featureKeys: string[];
+  subtitle: string;
+  features: string[];
   /** Shown under the row once connected — what happens behind the scenes. */
-  gatherHintKey?: string;
+  gatherHint?: string;
 }
 
 const CONNECTOR_COPY: Record<string, ConnectorStepCopy> = {
   Linear: {
-    subtitleKey: 'setup.connectors.linear.subtitle',
-    featureKeys: [
-      'setup.connectors.linear.featureImport',
-      'setup.connectors.linear.featureAi',
+    subtitle: 'Bring your issues into your unified workspace.',
+    features: [
+      'Macro imports a small set of your recent issues and tags as Macro tasks, ready to work on.',
+      'Macro AI can create, read, and update Linear issues without leaving Macro.',
     ],
-    gatherHintKey: 'setup.connectors.linear.gatherHint',
+    gatherHint:
+      "We're already looking through your Linear — you'll see what we found before you finish.",
   },
   Notion: {
-    subtitleKey: 'setup.connectors.notion.subtitle',
-    featureKeys: [
-      'setup.connectors.notion.featureImport',
-      'setup.connectors.notion.featureAi',
+    subtitle: 'Bring your docs and wikis into your unified workspace.',
+    features: [
+      'Macro imports a small set of your pages as Macro docs.',
+      'Macro AI can search your pages and wikis.',
     ],
-    gatherHintKey: 'setup.connectors.notion.gatherHint',
+    gatherHint:
+      "We're already looking through your Notion — you'll see what we found before you finish.",
   },
   Slack: {
-    subtitleKey: 'setup.connectors.slack.subtitle',
-    featureKeys: [
-      'setup.connectors.slack.featureImport',
-      'setup.connectors.slack.featureAi',
+    subtitle: 'Bring your conversations into your unified workspace.',
+    features: [
+      'Macro creates channels based on your existing Slack channels, with the right participants.',
+      'Macro AI can search conversations and post updates for you.',
     ],
-    gatherHintKey: 'setup.connectors.slack.gatherHint',
+    gatherHint:
+      "We're already looking through your Slack — you'll see what we found before you finish.",
   },
   GitHub: {
-    subtitleKey: 'setup.connectors.github.subtitle',
-    featureKeys: [
-      'setup.connectors.github.featurePullRequests',
-      'setup.connectors.github.featureBranches',
-      'setup.connectors.github.featureAi',
+    subtitle: 'Bring your repos into your unified workspace.',
+    features: [
+      'Pull requests show up in Macro.',
+      'Tasks get auto-updating branch names.',
+      'Macro AI can answer questions about your repos, pull requests, and issues.',
     ],
   },
 };
@@ -150,16 +158,16 @@ function buildSteps(
     return [
       {
         key: `connect-${name.toLowerCase()}`,
-        title: t('setup.connectors.stepTitle', { connector: name }),
-        subtitle: t(copy.subtitleKey),
+        title: `Connect ${name}`,
+        subtitle: copy.subtitle,
         ...(logo && {
           module: { kind: 'connector', serverName: name, logo },
         }),
         render: (controls: StepControls) => (
           <ConnectorStep
             server={server}
-            features={copy.featureKeys.map((key) => t(key))}
-            gatherHint={copy.gatherHintKey ? t(copy.gatherHintKey) : undefined}
+            features={copy.features}
+            gatherHint={copy.gatherHint}
             onContinue={controls.next}
             onSkip={controls.skip}
           />
@@ -171,8 +179,9 @@ function buildSteps(
   return [
     {
       key: 'email',
-      title: t('setup.email.title'),
-      subtitle: t('setup.email.subtitle'),
+      title: 'Connect your Google accounts',
+      subtitle:
+        'Macro builds one unified memory across everything you do. Connecting multiple email accounts brings your email, docs, and calendar together, so nothing lives in a silo.',
       module: { kind: 'email', logo: MODULE_LOGOS.Google },
       render: (controls) => (
         <EmailStep onContinue={controls.next} onSkip={controls.skip} />
@@ -181,8 +190,9 @@ function buildSteps(
     ...connectorSteps,
     {
       key: 'team',
-      title: t('setup.team.title'),
-      subtitle: t('setup.team.subtitle'),
+      title: 'Macro is meant for teams',
+      subtitle:
+        'Macro is built to be used with others. Invite your team to share docs, channels, and context from day one.',
       render: (controls) => (
         <TeamStep onContinue={controls.next} onSkip={controls.skip} />
       ),
@@ -202,27 +212,24 @@ function buildSteps(
     },
     {
       key: 'summary',
-      title: t('setup.summary.title'),
-      subtitle: t('setup.summary.subtitle'),
+      title: 'Your workspace is taking shape',
+      subtitle:
+        "Here's what we're bringing into Macro. Imports keep running in the background — no need to wait.",
       wide: true,
       render: (controls) => <SummaryStep onContinue={controls.next} />,
     },
     {
-      key: 'agent-mode',
-      title: t('setup.agentMode.title'),
-      subtitle: t('setup.agentMode.subtitle'),
-      wide: true,
-      render: (controls) => <AgentModeStep onContinue={controls.next} />,
-    },
-    {
       key: 'plan',
-      title: t('setup.plan.title'),
-      subtitle: t('setup.plan.subtitle'),
+      title: 'Choose your plan',
+      subtitle: 'Start free, or go Premium. You can change this anytime.',
       wide: true,
       render: (controls) => (
         <PlanStep
           finishing={controls.finishing()}
-          onContinue={controls.finish}
+          inviteOffer={controls.inviteOffer()}
+          onFree={controls.finishFree}
+          onStartCheckout={controls.startPremiumCheckout}
+          onPremiumPaid={controls.finishPremium}
         />
       ),
     },
@@ -268,6 +275,12 @@ function FlowContent() {
   // Analytics inputs; read only from handlers/effects so they never
   // suspend this boundary.
   const linksQuery = useEmailLinksQuery();
+  // An account that signed up through a GTM invite link holds a free-month
+  // promotion; the plan step shows it in place of the picker. Guarded read so
+  // a pending fetch never suspends the flow.
+  const inviteOfferQuery = useGtmInviteOfferQuery({ enabled: needsOnboarding });
+  const inviteOffer = () =>
+    inviteOfferQuery.isSuccess ? inviteOfferQuery.data : null;
   const serversQuery = useMcpServersQuery({ neverSuspend: true });
   const pipedreamQuery = usePipedreamConnectionsQuery({ neverSuspend: true });
   const analytics = useAnalytics();
@@ -299,7 +312,7 @@ function FlowContent() {
 
   // The building → summary brand handoff. BuildingStep provides the exact
   // powered SVG plus its logo geometry; the overlay carries that scene into
-  // the summary header while dissolving it into the flat Conation mark.
+  // the summary header while dissolving it into the flat Macro logo.
   const [handoff, setHandoff] = createSignal<BrandHandoffSource | null>(null);
   // Summary reveal gates: the logo slot + rest of the content appear once the
   // handoff lands. Default shown, for a summary reached without a handoff
@@ -344,6 +357,16 @@ function FlowContent() {
   );
   const currentStep = createMemo(() => steps()[stepIndex()]);
   const currentStepKey = createMemo(() => currentStep().key);
+  // The plan step's header follows the offer without rebuilding the steps
+  // (which would remount the step mid-flow).
+  const stepTitle = () =>
+    currentStep().key === 'plan' && inviteOffer()
+      ? 'Your first month is on us'
+      : currentStep().title;
+  const stepSubtitle = () =>
+    currentStep().key === 'plan' && inviteOffer()
+      ? 'Your invite comes with Macro Premium free for the first month. You can change plans anytime.'
+      : currentStep().subtitle;
   const userId = () => userInfoQuery.data?.userId;
 
   // The current step's hero-module state: the email module lights once any
@@ -435,7 +458,10 @@ function FlowContent() {
     next: () => advance('completed'),
     skip: () => advance('skipped'),
     finishing: finish.finishing,
-    finish: () => void finish.finish(),
+    finishFree: (planSkipped) => void finish.finishFree(planSkipped),
+    startPremiumCheckout: (tier) => void finish.startPremiumCheckout(tier),
+    finishPremium: () => void finish.finishPremium(),
+    inviteOffer,
   };
 
   // Heal a half-landed finish: NewOnboardingRedirect keys off
@@ -456,7 +482,7 @@ function FlowContent() {
   };
 
   // Redirect out when there is nothing to onboard. finishing() guards the
-  // window between our own completion call and the navigation.
+  // window between our own complete call and the checkout redirect.
   createEffect(() => {
     const info = userInfoQuery.data;
     if (info?.authenticated === false) {
@@ -544,11 +570,11 @@ function FlowContent() {
                     }}
                   >
                     <h1 class="text-2xl font-semibold tracking-tight text-ink">
-                      {currentStep().title}
+                      {stepTitle()}
                     </h1>
-                    <Show when={currentStep().subtitle}>
+                    <Show when={stepSubtitle()}>
                       <p class="max-w-md text-sm leading-relaxed text-ink-muted">
-                        {currentStep().subtitle}
+                        {stepSubtitle()}
                       </p>
                     </Show>
                   </div>

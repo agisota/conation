@@ -22,7 +22,12 @@
 
 import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
+import { markMessageSent } from '@core/util/message-send-motion';
 import { agentHarnessServiceClient } from '@service-agent-harness/client';
+import type {
+  CreateAgentSessionRequest,
+  PromptAttachment,
+} from '@service-agent-harness/generated/schemas';
 import { type Accessor, createSignal } from 'solid-js';
 
 /**
@@ -36,6 +41,8 @@ export type PendingSession = {
   sessionId: Accessor<string | undefined>;
   /** The create failed — this block has nothing to become. */
   failed: Accessor<boolean>;
+  /** The startup error returned by the service. */
+  error: Accessor<string | undefined>;
 };
 
 const pending = new Map<string, PendingSession>();
@@ -46,25 +53,60 @@ export function isPlaceholderSessionId(id: string): boolean {
 }
 
 /**
+ * Options captured by the preflight composer before a session exists.
+ */
+export type StartPendingSessionOptions = {
+  /** Persisted managed persona to run; omitted for Macro Coder. */
+  botId?: string;
+  /** First prompt, delivered after any model override. */
+  prompt?: string;
+  /** Uploaded SFS files delivered with the first prompt. */
+  attachments?: PromptAttachment[];
+  /** Optional model switch applied before the first prompt. */
+  modelOverride?: string;
+  /**
+   * Explicit GitHub repository for the managed Cursor session.
+   */
+  repoUrl?: string;
+  /** Starting branch for the selected repository. */
+  repoBranch?: string;
+};
+
+/**
  * Start creating a managed session and return the placeholder to open a block
  * against right now. The POST runs unattended; nothing awaits it.
  */
-export function startPendingSession(): string {
+export function startPendingSession(
+  options: StartPendingSessionOptions = {}
+): string {
   const placeholder = `${PLACEHOLDER_PREFIX}${crypto.randomUUID()}`;
   const [sessionId, setSessionId] = createSignal<string>();
-  const [failed, setFailed] = createSignal(false);
-  pending.set(placeholder, { sessionId, failed });
+  const [error, setError] = createSignal<string>();
+  pending.set(placeholder, {
+    sessionId,
+    failed: () => error() !== undefined,
+    error,
+  });
 
-  const failSpawn = () => {
-    setFailed(true);
-    toast.failure(t('agent.empty.createFailed'));
+  const failSpawn = (message?: string) => {
+    const msg = message?.trim() || t('agent.empty.createFailed');
+    setError(msg);
+    toast.failure(msg);
   };
 
   void agentHarnessServiceClient
-    .create({})
-    .then((result) => {
+    .create({
+      ...(options.botId ? { botId: options.botId } : {}),
+      ...(options.repoUrl
+        ? { repoUrl: options.repoUrl, repoBranch: options.repoBranch }
+        : {}),
+    } satisfies CreateAgentSessionRequest)
+    .then(async (result) => {
       if (result.isErr()) {
-        failSpawn();
+        failSpawn(
+          result.error.map((error) => error.message).join(' ') ||
+            t('agent.empty.createFailed')
+        );
         return;
       }
       const id = result.value.session?.id;
@@ -75,10 +117,41 @@ export function startPendingSession(): string {
         failSpawn();
         return;
       }
+      if (options.modelOverride) {
+        const changed = await agentHarnessServiceClient.control(id, {
+          type: 'setModel',
+          model: options.modelOverride,
+        });
+        if (changed.isErr()) {
+          failSpawn(
+            changed.error.map((error) => error.message).join(' ') ||
+              t('agent.error.modelChangeFailed')
+          );
+          return;
+        }
+      }
+      const prompt = options.prompt?.trim() ?? '';
+      if (prompt || options.attachments?.length) {
+        const delivered = await agentHarnessServiceClient.control(id, {
+          type: 'prompt',
+          prompt,
+          ...(options.attachments?.length
+            ? { attachments: options.attachments }
+            : {}),
+        });
+        if (delivered.isErr()) {
+          failSpawn(
+            delivered.error.map((error) => error.message).join(' ') ||
+              t('agent.error.sendFailed')
+          );
+          return;
+        }
+        markMessageSent(`agent:${id}:${delivered.value.actionId}`);
+      }
       setSessionId(id);
     })
     .catch(() => {
-      failSpawn();
+      failSpawn(t('agent.error.runtimeDisconnected'));
     });
 
   return placeholder;

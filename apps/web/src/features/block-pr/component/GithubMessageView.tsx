@@ -1,11 +1,9 @@
-import { ConationMark } from '@app/components/brand';
-import { t } from '@app/lib/i18n';
 import { Message } from '@channel/Message/Message';
-import type { MessageData } from '@channel/Message/types';
 import { Thread } from '@channel/Thread/Thread';
 import { ThreadReplyRail } from '@channel/Thread/ThreadReplyRail';
+import type { MessageData } from '@core/messages/types';
+import MacroLogo from '@icon/macro-logo.svg';
 import type { GithubPullRequestComment } from '@service-storage/generated/schemas';
-import type { ApiChannelMessage } from '@service-storage/generated/schemas/apiChannelMessage';
 import { Key } from '@solid-primitives/keyed';
 import { createResizeObserver } from '@solid-primitives/resize-observer';
 import { Button, cn } from '@ui';
@@ -19,7 +17,7 @@ const PREVIEW_MAX_HEIGHT = 180;
 function GithubAvatarFallback() {
   return (
     <div class="size-full rounded-full bg-surface flex items-center justify-center">
-      <ConationMark class="size-6" />
+      <MacroLogo class="size-6 text-edge" />
     </div>
   );
 }
@@ -45,9 +43,9 @@ function GithubAvatar(props: { login: string }) {
 function sourceLabel(source: string): string | null {
   switch (source) {
     case 'review':
-      return t('pullRequest.comment.review');
+      return 'review';
     case 'review_comment':
-      return t('pullRequest.comment.onDiff');
+      return 'on diff';
     default:
       return null;
   }
@@ -101,14 +99,18 @@ function toMessageData(comment: GithubPullRequestComment): MessageData {
 function toThreadRowMessage(
   comment: GithubPullRequestComment,
   replies: GithubPullRequestComment[]
-): ApiChannelMessage {
+): MessageData & {
+  thread: {
+    reply_count: number;
+    latest_reply_at?: string | null;
+    preview: MessageData[];
+  };
+} {
   const message = toMessageData(comment);
   const login = comment.authorLogin ?? 'github';
   return {
     ...message,
-    channel_id: '',
     content: message.content ?? '',
-    suppress_link_previews: false,
     sender: {
       type: 'bot',
       id: `github:${login}`,
@@ -205,9 +207,7 @@ function GithubCommentMessage(props: {
               class="mt-2"
               onClick={() => setExpanded(!expanded())}
             >
-              {expanded()
-                ? t('pullRequest.comment.showLess')
-                : t('pullRequest.comment.showMore')}
+              {expanded() ? 'Show less' : 'Show more'}
             </Button>
           </Show>
         </Message.Slot>

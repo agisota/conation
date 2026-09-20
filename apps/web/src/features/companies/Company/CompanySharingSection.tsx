@@ -1,4 +1,3 @@
-import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { toast } from '@core/component/Toast/Toast';
 import type { CrmCompanyEntity } from '@entity';
@@ -13,7 +12,10 @@ import { Show } from 'solid-js';
 const TOGGLE_BUTTON_CLASS =
   'inline-flex items-center gap-2 rounded-md h-7 px-2.5 text-xs select-none w-fit border border-ink-muted/[0.08] bg-ink-muted/[0.025] text-ink hover:bg-ink-muted/[0.06]';
 
-export function CompanySharingSection(props: { company?: CrmCompanyEntity }) {
+export function CompanySharingSection(props: {
+  company?: CrmCompanyEntity;
+  onHidden?: () => void;
+}) {
   const hideMutation = useSetCompanyHiddenMutation();
   const emailSyncMutation = useSetEmailSyncMutation();
   const { replaceOrInsertSplit } = useSplitLayout();
@@ -32,12 +34,13 @@ export function CompanySharingSection(props: { company?: CrmCompanyEntity }) {
       // On hide (un-share), drop the user back to the companies list and toast.
       // Un-hide leaves them on the block.
       if (willHide) {
-        toast.success(t('companies.sharing.hidden'));
-        replaceOrInsertSplit({ type: 'component', id: 'companies' });
+        toast.success('Company hidden.');
+        if (props.onHidden) props.onHidden();
+        else replaceOrInsertSplit({ type: 'component', id: 'companies' });
       }
     } catch (error) {
       console.error('failed to update company sharing', error);
-      toast.failure(t('companies.sharing.visibilityUpdateFailed'));
+      toast.failure('Could not update company visibility');
     }
   };
 
@@ -52,14 +55,14 @@ export function CompanySharingSection(props: { company?: CrmCompanyEntity }) {
       });
     } catch (error) {
       console.error('failed to update company email sync', error);
-      toast.failure(t('companies.sharing.emailSyncUpdateFailed'));
+      toast.failure('Could not update email sync');
     }
   };
 
   return (
     <Show
       when={props.company}
-      fallback={<div class="text-xs text-ink-muted">{t('common.loading')}</div>}
+      fallback={<div class="text-xs text-ink-muted">Loading…</div>}
     >
       {(company) => {
         const isShared = () => !company().hidden;
@@ -89,12 +92,11 @@ export function CompanySharingSection(props: { company?: CrmCompanyEntity }) {
                   class={cn(TOGGLE_BUTTON_CLASS)}
                 >
                   <InlineCheckbox checked={isShared()} />
-                  <span class="whitespace-nowrap">
-                    {t('companies.sharing.visibleInCrm')}
-                  </span>
+                  <span class="whitespace-nowrap">Visible in CRM</span>
                 </button>
                 <p class="text-ink-muted leading-5">
-                  {t('companies.sharing.visibleInCrmHelp')}
+                  Shows this company in your team's CRM lists and search. Hide
+                  companies that aren't relevant to your team's CRM.
                 </p>
               </div>
             </Show>
@@ -114,15 +116,14 @@ export function CompanySharingSection(props: { company?: CrmCompanyEntity }) {
                 )}
               >
                 <InlineCheckbox checked={isSyncing()} />
-                <span class="whitespace-nowrap">
-                  {t('companies.sharing.syncEmails')}
-                </span>
+                <span class="whitespace-nowrap">Sync Emails</span>
               </button>
               <p class="text-ink-muted leading-5">
-                {t('companies.sharing.syncEmailsHelp')}
+                Lets everyone on your team see each other's emails with this
+                company.
                 <Show when={!isTeamAdmin()}>
                   {' '}
-                  {t('companies.sharing.adminRequired')}
+                  Contact a team admin or owner to toggle.
                 </Show>
               </p>
             </div>

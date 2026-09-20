@@ -1,4 +1,3 @@
-import { formatDateTime, t } from '@app/lib/i18n';
 import CorvuCalendar, {
   type RootSingleProps as CorvuCalendarRootSingleProps,
 } from '@corvu/calendar';
@@ -22,10 +21,12 @@ import { cn } from '../utils/classname';
 import { Button } from './Button';
 import { Dropdown } from './Dropdown';
 
-const formatWeekdayLong = (date: Date) =>
-  formatDateTime(date, { weekday: 'long' });
-const formatWeekdayNarrow = (date: Date) =>
-  formatDateTime(date, { weekday: 'narrow' });
+const formatWeekdayLong = new Intl.DateTimeFormat(undefined, {
+  weekday: 'long',
+}).format;
+const formatWeekdayNarrow = new Intl.DateTimeFormat(undefined, {
+  weekday: 'narrow',
+}).format;
 
 type HighlightedRange = { start: Date; end: Date };
 
@@ -85,14 +86,14 @@ export function Calendar(props: CalendarProps) {
             <div class="ml-auto flex shrink-0 items-center gap-0.5">
               <CorvuCalendar.Nav
                 action="prev-month"
-                aria-label={t('shell.calendar.previousMonth')}
+                aria-label="Go to previous month"
                 class="flex size-7 items-center justify-center rounded-md text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring focus-visible:ring-accent"
               >
                 <CaretLeftIcon class="size-3" />
               </CorvuCalendar.Nav>
               <CorvuCalendar.Nav
                 action="next-month"
-                aria-label={t('shell.calendar.nextMonth')}
+                aria-label="Go to next month"
                 class="flex size-7 items-center justify-center rounded-md text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring focus-visible:ring-accent"
               >
                 <CaretRightIcon class="size-3" />
@@ -169,8 +170,10 @@ const MONTH_RANGE_YEARS = 100;
 const MONTH_OPTION_HEIGHT = 32;
 const DRAWER_MONTH_OPTION_HEIGHT = 44;
 
-export const formatCalendarMonth = (date: Date) =>
-  formatDateTime(date, { month: 'long', year: 'numeric' });
+export const formatCalendarMonth = new Intl.DateTimeFormat(undefined, {
+  month: 'long',
+  year: 'numeric',
+}).format;
 
 type MonthOption = {
   date: Date;
@@ -202,7 +205,7 @@ function CalendarMonthDropdown(props: CalendarMonthSelectorProps) {
   return (
     <Dropdown open={open()} onOpenChange={setOpen} placement="bottom-start">
       <Dropdown.Trigger
-        aria-label={t('shell.calendar.chooseMonth')}
+        aria-label="Choose month"
         class="h-7 max-w-full min-w-0 justify-start gap-1 border-none bg-transparent px-1 text-xs font-medium text-ink hover:bg-hover"
       >
         <span class="min-w-0 truncate">{formatCalendarMonth(props.month)}</span>
@@ -385,7 +388,7 @@ export function CalendarMonthMenu(props: CalendarMonthMenuProps) {
       <div
         class={cn(
           'h-72 overflow-y-auto overscroll-contain',
-          props.presentation === 'radio-group' && 'rounded-2xl'
+          props.presentation === 'radio-group' && 'rounded-[20px]'
         )}
         style={{ contain: 'strict' }}
       >
@@ -411,11 +414,12 @@ export function CalendarMonthMenu(props: CalendarMonthMenuProps) {
                 aria-current={option.value === todayValue ? 'date' : undefined}
                 data-month-index={index()}
                 class={cn(
-                  'flex w-full items-center gap-1.5 text-left outline-none hover:bg-hover focus-visible:bg-hover',
-                  selected() ? 'text-accent' : 'text-ink',
+                  'flex w-full items-center gap-1.5 text-left outline-none',
                   props.presentation === 'radio-group'
-                    ? 'relative h-11 bg-surface px-4 text-sm'
-                    : 'h-8 rounded-lg px-2 text-xs'
+                    ? 'relative h-11 rounded-[20px] px-3 text-sm text-ink transition-colors hover:bg-ink/6 active:bg-ink/10 aria-checked:bg-ink/8 focus-visible:outline-2 focus-visible:outline-accent'
+                    : 'h-8 rounded-lg px-2 text-xs hover:bg-hover focus-visible:bg-hover',
+                  props.presentation !== 'radio-group' &&
+                    (selected() ? 'text-accent' : 'text-ink')
                 )}
                 tabIndex={selected() ? 0 : -1}
                 onClick={() => props.onChange(option.date)}
@@ -433,17 +437,6 @@ export function CalendarMonthMenu(props: CalendarMonthMenuProps) {
                   class="ml-auto size-3.5 text-accent"
                   classList={{ invisible: !selected() }}
                 />
-                <Show
-                  when={
-                    props.presentation === 'radio-group' &&
-                    index() < options().length - 1
-                  }
-                >
-                  <span
-                    aria-hidden="true"
-                    class="absolute inset-x-2 bottom-0 h-px bg-edge-muted"
-                  />
-                </Show>
               </button>
             );
           }}
@@ -454,11 +447,11 @@ export function CalendarMonthMenu(props: CalendarMonthMenuProps) {
         <div class="flex pt-3">
           <Button
             fullWidth
-            variant="outline"
+            variant="ghost"
             size="sm"
             depth={3}
-            class="rounded-full bg-surface px-3 text-ink shadow-menu"
-            label={t('shell.calendar.goToToday')}
+            class="min-h-11 rounded-[20px] bg-ink/6 px-3 text-ink"
+            label="Go To Today"
             onClick={() => {
               if (props.onToday) {
                 props.onToday();
@@ -467,7 +460,7 @@ export function CalendarMonthMenu(props: CalendarMonthMenuProps) {
               focusIndex(todayIndex());
             }}
           >
-            {t('shell.calendar.goToToday')}
+            Go To Today
           </Button>
         </div>
       </Show>
@@ -497,7 +490,7 @@ export function CalendarMonthMenu(props: CalendarMonthMenuProps) {
             >
               <ArrowUpIcon aria-hidden="true" class="size-3" />
             </Show>
-            {t('shell.calendar.today')}
+            Today
           </button>
         </div>
       </Show>

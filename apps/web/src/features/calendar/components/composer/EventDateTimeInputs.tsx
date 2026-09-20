@@ -1,4 +1,3 @@
-import { formatDateTime, t } from '@app/lib/i18n';
 import type { CollectionNode } from '@kobalte/core';
 import { Listbox } from '@kobalte/core/listbox';
 import { Popover } from '@kobalte/core/popover';
@@ -8,71 +7,38 @@ import CheckIcon from '@phosphor/check.svg';
 import { Calendar } from '@ui/components/Calendar';
 import { Layer } from '@ui/components/Layer';
 import { cn } from '@ui/utils/classname';
-import { createMemo, createSignal } from 'solid-js';
+import { createMemo, createSignal, Show } from 'solid-js';
 import { formatLocalDate, parseLocalDate } from '../../utils/calendar-date';
+import {
+  DAY_TIME_OPTIONS,
+  type EventTimeOption,
+  resolveTimeOption,
+  selectedTimeOptionId,
+} from './event-time-options';
 
-interface EventTimeOption {
-  value: string;
-}
-
-export function formatEventTimeLabel(date: Date) {
-  return formatDateTime(date, { hour: 'numeric', minute: '2-digit' });
-}
-
-export function formatEventDateLabel(date: Date) {
-  return formatDateTime(date, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
-/** Every quarter-hour in a day, with canonical values and localized labels. */
-const EVENT_TIME_OPTIONS: EventTimeOption[] = Array.from(
-  { length: 24 * 4 },
-  (_, index) => {
-    const hour = Math.floor(index / 4);
-    const minute = (index % 4) * 15;
-    return {
-      value: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
-    };
-  }
-);
-
-function eventTimeOptionLabel(value: string) {
-  const [hour = 0, minute = 0] = value.split(':').map(Number);
-  return formatEventTimeLabel(new Date(2000, 0, 1, hour, minute));
-}
-
-export function splitLocalDateTime(value: string) {
-  const separator = value.indexOf('T');
-  if (separator === -1) return { date: value, time: '' };
-  return {
-    date: value.slice(0, separator),
-    time: value.slice(separator + 1, separator + 6),
-  };
-}
-
-export function withLocalDate(value: string, date: string) {
-  return `${date}T${splitLocalDateTime(value).time}`;
-}
-
-export function withLocalTime(value: string, time: string) {
-  return `${splitLocalDateTime(value).date}T${time}`;
-}
+export const dateLabelFormatter = new Intl.DateTimeFormat(undefined, {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
 
 function TimeOptionItem(props: CollectionNode<EventTimeOption>) {
   return (
     <Listbox.Item
       item={props}
-      class="group flex cursor-default items-center justify-between rounded-lg px-3 py-2 text-sm text-ink outline-none hover:bg-hover data-selected:bg-active data-highlighted:bg-hover"
+      class="group flex cursor-default items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm text-ink outline-none hover:bg-hover data-selected:bg-active data-highlighted:bg-hover"
     >
-      <Listbox.ItemLabel>
-        {eventTimeOptionLabel(props.rawValue.value)}
-      </Listbox.ItemLabel>
-      <Listbox.ItemIndicator class="text-accent">
-        <CheckIcon class="size-3.5" />
-      </Listbox.ItemIndicator>
+      <Listbox.ItemLabel>{props.rawValue.label}</Listbox.ItemLabel>
+      <div class="flex shrink-0 items-center gap-2">
+        <Show when={props.rawValue.detail}>
+          {(detail) => (
+            <span class="text-xs text-ink-extra-muted">{detail()}</span>
+          )}
+        </Show>
+        <Listbox.ItemIndicator class="text-accent">
+          <CheckIcon class="size-3.5" />
+        </Listbox.ItemIndicator>
+      </div>
     </Listbox.Item>
   );
 }
@@ -81,7 +47,11 @@ interface EventTimeInputProps {
   id: string;
   label: string;
   value: string;
-  onChange: (value: string) => void;
+  /** Selectable times; defaults to every quarter-hour in a day. */
+  options?: EventTimeOption[];
+  /** Highlighted option; defaults to `value` on the anchor day. */
+  selectedId?: string;
+  onChange: (option: EventTimeOption) => void;
   onFocus?: () => void;
   disabled?: boolean;
   hideLabel?: boolean;
@@ -93,7 +63,10 @@ export function EventTimeInput(props: EventTimeInputProps) {
   let control: HTMLDivElement | undefined;
   let listbox: HTMLElement | undefined;
 
-  const selectedTime = createMemo(() => [props.value]);
+  const options = createMemo(() => props.options ?? DAY_TIME_OPTIONS);
+  const selectedTime = createMemo(() => [
+    props.selectedId ?? selectedTimeOptionId(props.value),
+  ]);
   const scrollToSelectedTime = () => {
     requestAnimationFrame(() => {
       listbox
@@ -107,9 +80,10 @@ export function EventTimeInput(props: EventTimeInputProps) {
     if (nextOpen) scrollToSelectedTime();
   };
   const selectTime = (values: Set<string>) => {
-    const value = values.values().next().value;
-    if (typeof value !== 'string') return;
-    if (value !== props.value) props.onChange(value);
+    const id = values.values().next().value;
+    if (typeof id !== 'string') return;
+    const option = options().find((candidate) => candidate.id === id);
+    if (option && id !== selectedTime()[0]) props.onChange(option);
     setOpen(false);
   };
 
@@ -148,7 +122,9 @@ export function EventTimeInput(props: EventTimeInputProps) {
           onClick={() => setDropdownOpen(true)}
           onInput={(event) => {
             const value = event.currentTarget.value;
-            if (value && value !== props.value) props.onChange(value);
+            if (value && value !== props.value) {
+              props.onChange(resolveTimeOption(options(), value));
+            }
           }}
           onKeyDown={(event) => {
             if (event.key !== 'Escape' || !open()) return;
@@ -166,7 +142,7 @@ export function EventTimeInput(props: EventTimeInputProps) {
       <Popover.Portal>
         <Layer depth={4}>
           <Popover.Content
-            class="z-action-menu max-h-64 min-w-[var(--kb-popper-anchor-width)] overflow-y-auto rounded-xl border border-edge bg-menu p-1.5 shadow-menu menu-open-animation"
+            class="z-action-menu max-h-64 min-w-[var(--kb-popper-anchor-width)] overflow-y-auto rounded-xl border border-edge bg-menu-glass p-1.5 glass menu-open-animation"
             style={{
               'z-index': 'calc(var(--z-index-action-menu) + 1)',
             }}
@@ -186,17 +162,15 @@ export function EventTimeInput(props: EventTimeInputProps) {
             }}
           >
             <Popover.Title class="sr-only">
-              {t('calendar.event.form.dateTime.chooseTime', {
-                field: props.label,
-              })}
+              Choose {props.label.toLowerCase()}
             </Popover.Title>
             <Listbox<EventTimeOption>
               ref={(element) => {
                 listbox = element;
               }}
-              options={EVENT_TIME_OPTIONS}
-              optionValue="value"
-              optionTextValue={(option) => eventTimeOptionLabel(option.value)}
+              options={options()}
+              optionValue="id"
+              optionTextValue="label"
               value={selectedTime()}
               onChange={selectTime}
               selectionMode="single"
@@ -228,10 +202,6 @@ export function EventDateField(props: EventDateFieldProps) {
   const [open, setOpen] = createSignal(false);
   const [portalSearchRef, setPortalSearchRef] = createSignal<HTMLDivElement>();
   const selectedDate = () => parseLocalDate(props.value);
-  const selectedDateLabel = () => {
-    const date = selectedDate();
-    return date ? formatEventDateLabel(date) : undefined;
-  };
   const portalMount = () => {
     if (props.portalScope !== 'local') return undefined;
     return (
@@ -249,12 +219,10 @@ export function EventDateField(props: EventDateFieldProps) {
       slide
     >
       <Popover.Trigger
-        aria-label={t('calendar.event.form.dateTime.dateLabel', {
-          field: props.label,
-        })}
+        aria-label={`${props.label} date`}
         aria-describedby={props.describedBy}
         aria-invalid={props.invalid || undefined}
-        title={selectedDateLabel() ?? ''}
+        title={selectedDate() ? dateLabelFormatter.format(selectedDate()) : ''}
         disabled={props.disabled}
         class={cn(
           'flex min-w-0 items-center justify-start gap-1 truncate bg-transparent text-xs font-normal outline-none disabled:cursor-not-allowed',
@@ -267,18 +235,16 @@ export function EventDateField(props: EventDateFieldProps) {
       >
         <CalendarBlankIcon class="size-3 shrink-0 text-ink-extra-muted" />
         <span class="truncate">
-          {selectedDateLabel() ?? t('calendar.event.form.dateTime.date')}
+          {selectedDate() ? dateLabelFormatter.format(selectedDate()) : 'Date'}
         </span>
       </Popover.Trigger>
 
       <div class="hidden" ref={setPortalSearchRef} />
       <Popover.Portal mount={portalMount()}>
         <Layer depth={3}>
-          <Popover.Content class="z-action-menu w-72 max-w-[calc(100vw-1rem)] rounded-xl border border-edge bg-menu p-3 shadow-menu menu-open-animation">
+          <Popover.Content class="z-action-menu w-72 max-w-[calc(100vw-1rem)] rounded-xl border border-edge bg-menu-glass p-3 glass menu-open-animation">
             <Popover.Title class="sr-only">
-              {t('calendar.event.form.dateTime.chooseDate', {
-                field: props.label,
-              })}
+              Choose {props.label.toLowerCase()} date
             </Popover.Title>
             <Calendar
               required

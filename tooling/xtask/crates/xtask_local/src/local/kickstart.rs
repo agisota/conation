@@ -3,11 +3,11 @@
 //! Replaces the Pulumi-driven local FusionAuth configuration with a single
 //! declarative kickstart that FusionAuth applies once against an empty DB:
 //! API key, HS256 signing key, the (unlicensed) populate-JWT lambda, and the
-//! tenant and Conation application with fixed ids + a fixed client secret. Every
+//! tenant and Macro application with fixed ids + a fixed client secret. Every
 //! id/secret is fixed (see `identity`) so services and FusionAuth always agree
-//! without any API read-back or patch step. Passwordless login auto-creates
-//! users on demand; the kickstart deliberately creates no privileged user or
-//! static password.
+//! without any API read-back or patch step. The admin user is provisioned last
+//! (after the app it registers against exists); passwordless login auto-creates
+//! all other users on demand.
 
 use std::collections::BTreeMap;
 
@@ -20,7 +20,7 @@ mod test;
 
 /// The Google OAuth web client the local `google`/`google_gmail` OIDC identity
 /// providers authenticate against (the Internal client in the
-/// configured local GCP project). Optional:
+/// `macro-email-testing` GCP project — see the macro-2634 proposal). Optional:
 /// without it the kickstart is unchanged and the email connect flows stay
 /// unreachable locally, exactly as before.
 pub struct GoogleIdp {
@@ -112,7 +112,7 @@ impl GithubIdp {
 pub fn build(
     frontend_port: u16,
     auth_port: u16,
-    mcp_public_url: &str,
+    doc_cognition_port: u16,
     lambda_body: &str,
     reconcile_lambda_body: &str,
     google: Option<&GoogleIdp>,
@@ -124,20 +124,27 @@ pub fn build(
     let lambda_id = identity::POPULATE_JWT_LAMBDA_ID;
     let template_id = identity::PASSWORDLESS_EMAIL_TEMPLATE_ID;
 
-    let mcp_oauth_callback = format!("{}/oauth/callback", mcp_public_url.trim_end_matches('/'));
     let redirect_urls = json!([
         format!("http://localhost:{frontend_port}/app"),
         identity::oauth_redirect_uri(auth_port),
         "http://authentication-service:8080/oauth/redirect",
-        "http://localhost:8085/oauth/redirect",
-        mcp_oauth_callback,
+        // MCP client-connector callback on document_cognition_service. Must
+        // track the instance host port: a named `--port-base` stack publishes
+        // DCS somewhere other than 8085, and FusionAuth rejects (or the
+        // browser cannot reach) a callback that still points at 8085.
+        identity::oauth_redirect_uri(doc_cognition_port),
+        "https://mcp-server-local.macro.com/oauth/callback",
     ]);
 
     // Kickstart executes these in order, so each request must come after the
     // entities it references. Dependency chain:
     //   key + email template -> tenant
     //   tenant + key + lambda -> application
-    //   tenant + key + lambda -> application
+    //   application (incl. its `admin` role) + tenant -> user registration
+    // The user registration is also kept BEFORE the webhooks on purpose: the
+    // tenant marks `user.create` as AbsoluteMajority, so once the global
+    // user.create webhook exists, creating a user would roll back unless
+    // auth-service returns 2xx — which it isn't guaranteed to during kickstart.
     let mut requests = vec![
         // 1. HS256 signing key.
         json!({
@@ -171,9 +178,9 @@ pub fn build(
             "url": format!("/api/email/template/{template_id}"),
             "body": { "emailTemplate": {
                 "name": "Passwordless Login (local)",
-                "defaultSubject": "Your Conation login code",
-                "defaultHtmlTemplate": "<p>Your Conation login code:</p><h1>${code}</h1>",
-                "defaultTextTemplate": "Your Conation login code: ${code}",
+                "defaultSubject": "Your Macro login code",
+                "defaultHtmlTemplate": "<p>Your Macro login code:</p><h1>${code}</h1>",
+                "defaultTextTemplate": "Your Macro login code: ${code}",
                 "fromEmail": identity::MAIL_FROM,
             }}
         }),
@@ -189,7 +196,7 @@ pub fn build(
             "method": "PATCH",
             "url": format!("/api/tenant/{tenant_id}"),
             "body": { "tenant": {
-                "name": "Conation Local",
+                "name": "Macro Local",
                 "issuer": identity::ISSUER,
                 // Enable the events the create/delete user webhooks consume, so
                 // FusionAuth notifies auth-service to register new users for the
@@ -212,7 +219,7 @@ pub fn build(
                     "port": 1025,
                     "security": "NONE",
                     "defaultFromEmail": identity::MAIL_FROM,
-                    "defaultFromName": "Conation Local",
+                    "defaultFromName": "Macro Local",
                     "passwordlessEmailTemplateId": template_id,
                 },
                 // Make the passwordless code a 6-digit number (matches the dev
@@ -225,14 +232,14 @@ pub fn build(
                 },
             }}
         }),
-        // 5. Conation application. `tenantId` sets the X-FusionAuth-TenantId header
+        // 5. Macro application. `tenantId` sets the X-FusionAuth-TenantId header
         // (required for tenant-scoped ops once a second tenant exists).
         json!({
             "method": "POST",
             "url": format!("/api/application/{app_id}"),
             "tenantId": tenant_id,
             "body": { "application": {
-                "name": "Conation",
+                "name": "Macro",
                 "tenantId": tenant_id,
                 // The passwordless /login endpoint issues a refresh token based
                 // on loginConfiguration.generateRefreshTokens; without it FA omits
@@ -247,7 +254,7 @@ pub fn build(
                     "clientSecret": identity::CLIENT_SECRET,
                     "enabledGrants": ["authorization_code", "refresh_token"],
                     "authorizedRedirectURLs": redirect_urls,
-                    "authorizedURLValidationPolicy": "ExactMatch",
+                    "authorizedURLValidationPolicy": "AllowWildcards",
                     "logoutBehavior": "AllApplications",
                     "generateRefreshTokens": true,
                     "requireClientAuthentication": false,
@@ -261,12 +268,27 @@ pub fn build(
                     "refreshTokenExpirationPolicy": "SlidingWindow",
                 },
                 "lambdaConfiguration": { "accessTokenPopulateId": lambda_id },
-                // Conation logs users in with email codes; enable passwordless.
+                // Macro logs users in with email codes; enable passwordless.
                 "passwordlessConfiguration": { "enabled": true },
             }}
         }),
-        // 6. Webhooks: on user.create FusionAuth calls auth-service, which
-        // registers the new user for the Conation app (so passwordless completes
+        // 6. Admin user.
+        json!({
+            "method": "POST",
+            "url": "/api/user/registration",
+            "body": {
+                "user": {
+                    "email": "admin@macro.com",
+                    "password": "macroIsGreat!",
+                },
+                "registration": {
+                    "applicationId": "3c219e58-ed0e-4b18-ad48-f4f92793ae32", // FusionAuth's reserved client application id
+                    "roles": ["admin"],
+                }
+            }
+        }),
+        // 7. Webhooks: on user.create FusionAuth calls auth-service, which
+        // registers the new user for the Macro app (so passwordless completes
         // with 200). `x-internal-auth-key` must equal the services'
         // INTERNAL_API_SECRET_KEY (set to "local" in local mode).
         json!({
@@ -373,7 +395,7 @@ pub fn build(
     // out, like the Google providers above - FusionAuth has no GitHub provider
     // type at all (it rejects one with `[invalidJSON]`, listing the types it
     // does accept), and GitHub publishes no discovery document to point at.
-    // Nothing drives this provider's own OAuth flow: Conation builds the
+    // Nothing drives this provider's own OAuth flow: Macro builds the
     // authorization URL and only uses FusionAuth to record the resulting link,
     // so these endpoints exist to make the provider well-formed rather than to
     // be dialled.
@@ -381,7 +403,7 @@ pub fn build(
     // The name is fixed and the id is the service's own `GITHUB_IDP_ID`.
     // `authentication_service` resolves this provider by name to start a link,
     // then addresses it by that id for the link itself, so one provider has to
-    // answer to both. Conation builds the authorization URL itself and only uses
+    // answer to both. Macro builds the authorization URL itself and only uses
     // FusionAuth to record the link, which is why the client here must be the
     // same one the service holds.
     if let Some(github) = github {

@@ -12,9 +12,10 @@ use tracing::Instrument as _;
 
 use super::client::DaytonaClient;
 use super::errors::DaytonaError;
-use super::types::{DaytonaSettings, Env, Labels, PortPreview, Snapshot};
+use super::types::{AnthropicApiKey, DaytonaSettings, Env, Labels, PortPreview, Snapshot};
 use crate::domain::error::{HarnessError, Result};
 use crate::domain::model::SpawnContainer;
+use crate::domain::pending::PendingCommands;
 use crate::domain::ports::ContainerManager;
 use crate::domain::sandbox::{
     SandboxResizeEffect, SandboxResources, resize_effect_from_resources, resources,
@@ -49,6 +50,10 @@ struct DaytonaContainerManagerState {
     shutdown_complete: CancellationToken,
     lifecycle: Mutex<ManagerLifecycle>,
     tasks: TaskTracker,
+    /// Sessions the harness has a command in flight for right now; consulted
+    /// by the idle reaper so it never stops a sandbox a command is already
+    /// on its way to.
+    pending: PendingCommands,
 }
 
 #[derive(Default)]
@@ -57,17 +62,18 @@ struct ManagerLifecycle {
 }
 
 impl DaytonaContainerManagerState {
-    fn new() -> Self {
+    fn new(pending: PendingCommands) -> Self {
         Self {
             containers: ManagedContainers::new(),
             shutdown: CancellationToken::new(),
             shutdown_complete: CancellationToken::new(),
             lifecycle: Mutex::new(ManagerLifecycle::default()),
             tasks: TaskTracker::new(),
+            pending,
         }
     }
 
-    fn register(&self, id: DaytonaSandboxId) -> bool {
+    fn register(&self, id: DaytonaSandboxId, session: AgentSessionId) -> bool {
         let lifecycle = self
             .lifecycle
             .lock()
@@ -75,7 +81,7 @@ impl DaytonaContainerManagerState {
         if lifecycle.shutting_down {
             return false;
         }
-        self.containers.register(id);
+        self.containers.register(id, session);
         true
     }
 }
@@ -85,26 +91,29 @@ impl DaytonaContainerManagerState {
 pub struct DaytonaContainerManager {
     client: DaytonaClient,
     snapshot: Snapshot,
+    anthropic_api_key: AnthropicApiKey,
     managed: Arc<DaytonaContainerManagerState>,
 }
 
 impl DaytonaContainerManager {
     /// Build the manager from its settings.
     #[must_use]
-    pub fn new(settings: DaytonaSettings) -> Self {
+    pub fn new(settings: DaytonaSettings, pending: PendingCommands) -> Self {
         let DaytonaSettings {
             api_url,
             api_key,
             snapshot,
+            anthropic_api_key,
         } = settings;
         let client = DaytonaClient::new(api_url, api_key);
-        let managed = Arc::new(DaytonaContainerManagerState::new());
+        let managed = Arc::new(DaytonaContainerManagerState::new(pending));
         managed
             .tasks
             .spawn(reap_idle_containers(client.clone(), managed.clone()));
         Self {
             client,
             snapshot,
+            anthropic_api_key,
             managed,
         }
     }
@@ -351,26 +360,27 @@ impl ContainerManager for DaytonaContainerManager {
         skip(self),
         fields(agent.container.provider = "daytona")
     )]
-    async fn spawn(&self, command: SpawnContainer) -> Result<DaytonaContainer> {
-        if !self.client.is_armed() {
-            return Err(HarnessError::Container(
-                "DAYTONA_API_KEY is unset: cannot spawn a sandbox".to_owned(),
-            ));
-        }
+    async fn spawn(
+        &self,
+        command: SpawnContainer,
+    ) -> Result<agent_session::domain::connection::RuntimeAttachment<DaytonaContainer>> {
         let SpawnContainer {
             session_id,
             size,
             egress,
             ..
         } = command;
-        // Sandboxes receive only session-scoped egress capabilities. The
-        // deployment's OmniRoute key stays behind the egress listener.
-        let env = Env::from(
-            egress
-                .environment()
-                .into_iter()
-                .collect::<HashMap<String, String>>(),
-        );
+        // `ANTHROPIC_API_KEY` is what activates opencode's `anthropic`
+        // provider — with `enabled_providers` pinned in
+        // `container/opencode.json`, it is the sandbox's only model source.
+        // Nothing else goes in: the repository and its credential now reach
+        // the sandbox through the egress proxy.
+        let mut env = HashMap::from([(
+            "ANTHROPIC_API_KEY".to_owned(),
+            self.anthropic_api_key.expose().to_owned(),
+        )]);
+        env.extend(egress.environment());
+        let env = Env::from(env);
         let labels = Labels::from(HashMap::from([(
             SESSION_LABEL.to_owned(),
             session_id.to_string(),
@@ -382,7 +392,7 @@ impl ContainerManager for DaytonaContainerManager {
                 .map_err(unavailable)?,
         );
         tracing::info!(sandbox_id = %id.as_str(), session = %session_id, "sandbox created");
-        if !self.managed.register(id.clone()) {
+        if !self.managed.register(id.clone(), session_id) {
             if !stop_sandbox(&self.client, &id, "shutdown during sandbox creation").await {
                 self.managed
                     .containers
@@ -394,7 +404,9 @@ impl ContainerManager for DaytonaContainerManager {
         }
 
         match self.align_size_then_bring_up(&id, size).await {
-            Ok(container) => Ok(container),
+            Ok(container) => Ok(agent_session::domain::connection::RuntimeAttachment::solo(
+                container,
+            )),
             Err(error) => {
                 self.managed.containers.remove(&id);
                 if !self.discard(&id).await {
@@ -454,7 +466,10 @@ impl ContainerManager for DaytonaContainerManager {
     }
 
     #[tracing::instrument(err, skip(self))]
-    async fn resume(&self, session: AgentSessionId) -> Result<DaytonaContainer> {
+    async fn resume(
+        &self,
+        session: AgentSessionId,
+    ) -> Result<agent_session::domain::connection::RuntimeAttachment<DaytonaContainer>> {
         let id = DaytonaSandboxId::new(
             self.client
                 .find_by_label(SESSION_LABEL, &session.to_string())
@@ -464,7 +479,7 @@ impl ContainerManager for DaytonaContainerManager {
                     HarnessError::Container(format!("session {session} has no sandbox to resume"))
                 })?,
         );
-        if !self.managed.register(id.clone()) {
+        if !self.managed.register(id.clone(), session) {
             return Err(HarnessError::Container(
                 "the container manager is shutting down".to_owned(),
             ));
@@ -479,7 +494,9 @@ impl ContainerManager for DaytonaContainerManager {
             return Err(unavailable(error));
         }
         match self.bring_up(&id).await {
-            Ok(container) => Ok(container),
+            Ok(container) => Ok(agent_session::domain::connection::RuntimeAttachment::solo(
+                container,
+            )),
             Err(error) => {
                 self.managed.containers.remove(&id);
                 if !stop_sandbox(&self.client, &id, "failed sandbox resume").await {
@@ -546,7 +563,12 @@ async fn reap_idle_containers(client: DaytonaClient, managed: Arc<DaytonaContain
             biased;
             () = managed.shutdown.cancelled() => return,
             _ = interval.tick() => {
-                let stale = managed.containers.reap_stale(Instant::now(), IDLE_TIMEOUT);
+                let stale = managed.containers.reap_stale(Instant::now(), IDLE_TIMEOUT, |id| {
+                    managed
+                        .containers
+                        .session_of(id)
+                        .is_some_and(|session| managed.pending.is_pending(session))
+                });
                 stop_reaped(&client, &managed, stale).await;
             }
         }

@@ -1,5 +1,5 @@
 use super::*;
-use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use macro_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::Pool;
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]

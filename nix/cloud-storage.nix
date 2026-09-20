@@ -522,6 +522,7 @@
 
       localStackDeployServiceNames = [
         "agent-harness-service"
+        "agent-schedule-service"
         "connection-gateway"
         "contacts-service"
         "document-cognition-service"

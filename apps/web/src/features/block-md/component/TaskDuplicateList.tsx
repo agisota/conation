@@ -1,11 +1,7 @@
 import { QUERY_FILTERS_BASE } from '@app/features/next-soup/filters/query-filters';
 import { TaskListEntity } from '@app/features/next-soup/soup-view/views/tasks/TaskListEntity';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
-import { t } from '@app/lib/i18n';
-import {
-  ENABLE_TASK_DUPLICATES_FLAG,
-  ENABLE_TASK_DUPLICATES_OVERRIDE,
-} from '@core/constant/featureFlags';
+import { enableTaskDuplicates } from '@core/constant/featureFlags';
 import { ListLayoutProvider } from '@entity';
 import CaretRightIcon from '@phosphor/caret-right.svg';
 import CopyIcon from '@phosphor/copy.svg';
@@ -92,7 +88,7 @@ function SimilarTasksInner(props: {
             )}
           />
           <CopyIcon class="size-3.5 shrink-0" />
-          <span>{t('markdown.task.duplicates.similar')}</span>
+          <span>Similar Tasks</span>
         </button>
         <Show when={expanded()}>
           <TagSetsQueryProvider>
@@ -133,9 +129,7 @@ export function SimilarTasksSection(props: {
   content: Accessor<string>;
   onOpenTask: (taskId: string) => void;
 }) {
-  const flag = useFeatureFlag(ENABLE_TASK_DUPLICATES_FLAG, {
-    enabledOverride: ENABLE_TASK_DUPLICATES_OVERRIDE,
-  });
+  const flag = useFeatureFlag(enableTaskDuplicates);
 
   const [debounced, setDebounced] = createSignal<DebouncedInput>({
     title: props.title(),

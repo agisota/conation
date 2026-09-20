@@ -26,7 +26,7 @@ name = "connection_gateway_openapi"
 path = "src/openapi.rs"
 
 [features]
-local_auth = ["conation_authorization/local_auth"]
+local_auth = ["macro_authorization/local_auth"]
 
 [dependencies]
 anyhow = { workspace = true }
@@ -49,16 +49,17 @@ futures = { workspace = true }
 http-body-util = { workspace = true }
 itertools = { workspace = true }
 last_online_tracker = { path = "../../crates/last_online_tracker" }
-conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization" }
-conation_user_id = { path = "../../crates/conation_user_id" }
-conation_aws_config = { path = "../../crates/conation_aws_config" }
-conation_config = { path = "../../crates/conation_config" }
-conation_cors = { path = "../../crates/conation_cors" }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
-conation_env = { path = "../../crates/conation_env" }
-conation_env_var = { path = "../../crates/conation_env_var" }
-conation_tower_layers = { path = "../../crates/conation_tower_layers" }
+macro_auth = { path = "../../crates/macro_auth" }
+macro_authorization = { path = "../../crates/macro_authorization", features = [
+  "postgres",
+] }
+macro_user_id = { path = "../../crates/macro_user_id" }
+macro_aws_config = { path = "../../crates/macro_aws_config" }
+macro_config = { path = "../../crates/macro_config" }
+macro_entrypoint = { path = "../../crates/macro_entrypoint" }
+macro_env = { path = "../../crates/macro_env" }
+macro_env_var = { path = "../../crates/macro_env_var" }
+macro_tower_layers = { path = "../../crates/macro_tower_layers" }
 mockall.workspace = true
 model = { path = "../../crates/model" }
 model-entity = { path = "../../crates/model-entity" }
@@ -92,4 +93,4 @@ doppler-config = { workspace = true }
 
 [dev-dependencies]
 cool_asserts = "2"
-conation_auth = { path = "../../crates/conation_auth", features = ["testing"] }
+macro_auth = { path = "../../crates/macro_auth", features = ["testing"] }

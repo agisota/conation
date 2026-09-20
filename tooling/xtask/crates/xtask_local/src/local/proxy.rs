@@ -9,7 +9,6 @@
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
-use sha2::{Digest, Sha256};
 
 use super::gen_compose::caddyfile_path;
 use super::instance::{Instance, Port};
@@ -20,11 +19,13 @@ pub fn url(instance: &Instance) -> String {
     format!("http://localhost:{}", instance.port(Port::Proxy))
 }
 
-/// Write the instance Caddyfile and return its path. Both local and dev route
-/// the frontend through this single origin to the local service containers; the
-/// only difference is the static-file block (dev has no local LocalStack).
-/// With `static_frontend` the proxy also serves the built app bundle at `/app`,
-/// making it the one origin for the whole product.
+/// Write the instance Caddyfile and return its path. Both local and dev keep a
+/// single frontend origin; Local fans every inventory prefix to a local
+/// container, while Dev fans Local-only prefixes (services that must not run
+/// against shared-dev) to the deployed gateway. The static-file block also
+/// differs (dev has no local LocalStack). With `static_frontend` the proxy also
+/// serves the built app bundle at `/app`, making it the one origin for the
+/// whole product.
 pub fn write_caddyfile(instance: &Instance, mode: Mode, static_frontend: bool) -> Result<PathBuf> {
     let path = caddyfile_path(instance);
     if let Some(dir) = path.parent() {
@@ -36,18 +37,9 @@ pub fn write_caddyfile(instance: &Instance, mode: Mode, static_frontend: bool) -
     Ok(path)
 }
 
-/// Stable marker for the generated Caddyfile shape. Stored in stack state only
-/// after the proxy container has been recreated against this content.
-pub(super) fn caddyfile_fingerprint(mode: Mode, static_frontend: bool) -> String {
-    let digest = Sha256::digest(caddyfile(mode, static_frontend).as_bytes());
-    format!("caddyfile-v1:{digest:x}")
-}
-
 /// Assemble the Caddyfile: the listener head, the generated per-service routes
 /// (from the inventory), the special non-inventory routes, the mode's
 /// static-file block, the optional static-frontend block, then the tail.
-/// Service routes are identical across modes (they hit the local containers);
-/// only the static-file and frontend blocks differ.
 fn caddyfile(mode: Mode, static_frontend: bool) -> String {
     let static_block = if mode.spec().static_files_via_localstack {
         STATIC_FILE_LOCAL
@@ -62,32 +54,44 @@ fn caddyfile(mode: Mode, static_frontend: bool) -> String {
     let frontend_block = if static_frontend { FRONTEND_STATIC } else { "" };
     format!(
         "{CADDY_HEAD}{routes}{SPECIAL_ROUTES}{mailpit_block}{static_block}{frontend_block}{CADDY_TAIL}",
-        routes = service_routes()
+        routes = service_routes(mode)
     )
 }
 
+/// Shared-dev gateway origin for Local-only inventory prefixes under `run-dev`.
+/// Keep the path (no strip) — gateway tenants are mounted under this prefix.
+const DEV_GATEWAY_ORIGIN: &str = "https://dev-gateway.macro.com";
+
 /// Generate the reverse-proxy routes for every inventoried service that exposes
 /// a path prefix. The inventory is the single source, so adding a service's
-/// proxy route is one field there — not a hand-edit here that can drift. MCP is
-/// the one protocol ingress defined in [`SPECIAL_ROUTES`]: unlike application
-/// API prefixes, its `/mcp` path must reach the service without being stripped
-/// and its OAuth endpoints live at the origin root.
-fn service_routes() -> String {
+/// proxy route is one field there — not a hand-edit here that can drift.
+fn service_routes(mode: Mode) -> String {
     let mut out = String::new();
     for svc in inventory::RUST_SERVICES {
-        if let Some(prefix) = svc.path_prefix {
-            out.push_str(&route_block(prefix, svc.compose_name, svc.is_websocket));
+        let Some(prefix) = svc.path_prefix else {
+            continue;
+        };
+        if svc.in_mode(mode) {
+            out.push_str(&local_route_block(
+                prefix,
+                svc.compose_name,
+                svc.is_websocket,
+            ));
+        } else if mode == Mode::Dev && svc.in_mode(Mode::Local) {
+            // Local-only: do not start the binary against shared-dev, but keep
+            // the single-origin proxy by fanning out to the deployed gateway.
+            out.push_str(&dev_gateway_route_block(prefix, svc.is_websocket));
         }
     }
     out
 }
 
-/// One Caddy route to a service container (always on `:8080`). HTTP uses
+/// One Caddy route to a local service container (always on `:8080`). HTTP uses
 /// `handle_path` (which strips the prefix); WebSocket needs the bare-prefix
 /// `@matcher` + explicit strip so the frontend's trailing-slash-less connect URL
 /// still matches. The target is the canonical compose service name, which always
 /// resolves on the proxy's networks.
-fn route_block(prefix: &str, target: &str, is_websocket: bool) -> String {
+fn local_route_block(prefix: &str, target: &str, is_websocket: bool) -> String {
     if is_websocket {
         let m = matcher_name(prefix);
         format!(
@@ -95,6 +99,24 @@ fn route_block(prefix: &str, target: &str, is_websocket: bool) -> String {
         )
     } else {
         format!("    handle_path {prefix}/* {{\n        reverse_proxy {target}:8080\n    }}\n")
+    }
+}
+
+/// Dev route to the shared gateway: keep the path prefix (gateway mounts are
+/// prefixed) and set `Host` so TLS/SNI + ALB host routing work.
+fn dev_gateway_route_block(prefix: &str, is_websocket: bool) -> String {
+    let host = DEV_GATEWAY_ORIGIN
+        .trim_start_matches("https://")
+        .trim_start_matches("http://");
+    if is_websocket {
+        let m = matcher_name(prefix);
+        format!(
+            "    {m} path {prefix} {prefix}/*\n    handle {m} {{\n        reverse_proxy {DEV_GATEWAY_ORIGIN} {{\n            header_up Host {host}\n        }}\n    }}\n"
+        )
+    } else {
+        format!(
+            "    handle {prefix}/* {{\n        reverse_proxy {DEV_GATEWAY_ORIGIN} {{\n            header_up Host {host}\n        }}\n    }}\n"
+        )
     }
 }
 
@@ -148,25 +170,6 @@ const SPECIAL_ROUTES: &str = r#"    @websocket path /websocket /websocket/*
     handle_path /ai-editing/* {
         reverse_proxy ai-editing-worker:8933
     }
-    # These are sandbox-egress routes, never public MCP ingress. Reject the
-    # internal Conation route instead of letting the generic local-proxy
-    # fallback make it look like a healthy endpoint.
-    @non_public_mcp_egress path /mcp-conation /mcp-conation/*
-    handle @non_public_mcp_egress {
-        respond "Not Found" 404
-    }
-    # MCP's streamable transport owns /mcp and expects that prefix unchanged.
-    # Its OAuth broker also owns these exact origin-root endpoints. Keep the
-    # well-known matcher narrow so unrelated association files remain available
-    # to the frontend/ingress.
-    @mcp path /mcp /mcp/*
-    handle @mcp {
-        reverse_proxy mcp_service:8080
-    }
-    @mcp_oauth path /authorize /register /token /oauth/callback /.well-known/oauth-protected-resource /.well-known/oauth-protected-resource/mcp /.well-known/oauth-authorization-server /.well-known/oauth-authorization-server/mcp
-    handle @mcp_oauth {
-        reverse_proxy mcp_service:8080
-    }
 "#;
 
 const MAILPIT_ROUTE: &str = r#"    # Mailpit serves itself under /mailpit (MP_WEBROOT), so no prefix strip —
@@ -186,11 +189,6 @@ const STATIC_FILE_LOCAL: &str = r#"    route /static-file/* {
         reverse_proxy @svc static-file-service:8080
         rewrite * /static-file-storage{uri}
         reverse_proxy localstack:4566
-    }
-    handle_path /s3/* {
-        reverse_proxy localstack:4566 {
-            header_up Host localstack:4566
-        }
     }
 "#;
 
@@ -216,7 +214,7 @@ const FRONTEND_STATIC: &str = r#"    redir / "/app/?{query}" 302
 "#;
 
 const CADDY_TAIL: &str = r#"
-    respond "Conation local proxy" 200
+    respond "macro local proxy" 200
 }
 "#;
 

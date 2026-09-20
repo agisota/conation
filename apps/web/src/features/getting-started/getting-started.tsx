@@ -1,34 +1,30 @@
-import { mailboxCreateLocalPart } from '@app/features/auth/signup-antibot';
 import { DOCS_BASE } from '@app/constants/docs-links';
 import { HomeBackfillProgress } from '@app/features/home/home-backfill-progress';
 import { InteractiveOnboardingModal } from '@app/features/onboarding/InteractiveOnboardingModal';
-import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import type { SplitContent } from '@components/app/split-layout/layoutManager';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
-import { useHasFeatureAccess } from '@core/auth/license';
+import { useHasPaidAccess } from '@core/auth/license';
 import { defaultModelForPlan } from '@core/component/AI/constant';
 import { setPendingSendData } from '@core/component/AI/signal/pendingSend';
 import { deriveChatName } from '@core/component/AI/util/deriveName';
 import { toast } from '@core/component/Toast/Toast';
-import { getConfiguredClientProfile } from '@core/constant/clientProfile';
 import {
   type SettingsTab,
   useSettingsState,
 } from '@core/constant/SettingsState';
 import { useUserId, useUserInfo } from '@core/context/user';
-import { useEmailLinks } from '@core/email-link';
 import { isMobile } from '@core/mobile/isMobile';
 import { setActiveTabId } from '@core/signal/settingsTab';
 import { createChat } from '@core/util/create';
-import { AnimatedProfileIcon } from '@icon/wide-profile';
 import BookOpenIcon from '@phosphor/book-open.svg';
-import EnvelopeIcon from '@phosphor/envelope.svg';
 import PaletteIcon from '@phosphor/palette.svg';
 import PlayCircleIcon from '@phosphor/play-circle.svg';
 import PlugsIcon from '@phosphor/plugs.svg';
+import ProfileIcon from '@phosphor/user-circle.svg';
 import { useGithubLinkStatusQuery } from '@queries/auth/github-link';
 import { isRealNamePart, useOwnUserName } from '@queries/auth/user-name-self';
+import { useEmailLinksQuery } from '@queries/email/link';
 import { useMcpServersQuery } from '@queries/mcp-servers';
 import { usePipedreamConnectionsQuery } from '@queries/pipedream-connectors';
 import { useStarterDocsQuery } from '@queries/starter-docs';
@@ -85,12 +81,12 @@ function GettingStartedContent() {
     refetchInterval: 4_000,
     neverSuspend: true,
   });
-  const { query: emailLinks, initEmailLink } = useEmailLinks();
+  const emailLinks = useEmailLinksQuery();
   const githubLink = useGithubLinkStatusQuery();
   const userInfo = useUserInfo();
   const ownUserName = useOwnUserName();
   const starterDocs = useStarterDocsQuery();
-  const hasFeatureAccess = useHasFeatureAccess();
+  const hasPaidAccess = useHasPaidAccess();
 
   // The interactive tutorial, replayed on demand. Root auto-opens its own copy
   // for first-time users; this one is always a replay, so it never passes
@@ -115,13 +111,12 @@ function GettingStartedContent() {
   };
 
   const openSettingsTab = (tab: SettingsTab) => {
-    setActiveTabId(tab);
     if (isMobile()) {
-      // Mobile has no Preview Pair; the docked settings split is the
-      // full-screen path there.
+      // The mobile entry point opens this section in the settings sheet.
       openSettingsInSplit(tab);
       return;
     }
+    setActiveTabId(tab);
     // Deliberately not openSettings(): on desktop it collapses to solo
     // settings, destroying the Controller/Viewer pair.
     openInPreview({ type: 'component', id: 'settings' });
@@ -133,7 +128,7 @@ function GettingStartedContent() {
       { source: 'getting-started' }
     );
     if ('error' in result || !result.chatId) {
-      toast.failure(t('shell.gettingStarted.errors.startChat'));
+      toast.failure('Unable to start chat');
       return false;
     }
     // The chat block consumes this on mount and sends immediately. The model
@@ -144,7 +139,7 @@ function GettingStartedContent() {
     setPendingSendData({
       content: prompt,
       attachments: [],
-      model: defaultModelForPlan(hasFeatureAccess()),
+      model: defaultModelForPlan(hasPaidAccess()),
     });
     openInPreview({ type: 'chat', id: result.chatId });
     return true;
@@ -158,86 +153,43 @@ function GettingStartedContent() {
   const howToGuideId = () =>
     starterDocs.isSuccess ? starterDocs.data.howToGuideId : undefined;
 
-  const standalone = getConfiguredClientProfile() === 'standalone';
-
-  const connectToolsAction: GettingStartedAction = {
-    id: 'connect-tools',
-    icon: PlugsIcon,
-    title: t('shell.gettingStarted.connectToolsTitle'),
-    description: t('shell.gettingStarted.connectToolsDescription'),
-    onActivate: () => openSettingsTab('Connected'),
-    // Hosted: a second inbox (onboarding links the first), GitHub, or MCP.
-    // Standalone: mailbox is a separate first action, so extra tools only.
-    isComplete: () => {
-      const extraTools =
-        githubLink.data?.status === 'linked' ||
-        (pipedreamConnections.data ?? []).length > 0 ||
-        (mcpServers.data ?? []).some((server) => server.authenticated);
-      return standalone
-        ? extraTools
-        : (emailLinks.data?.links.length ?? 0) > 1 || extraTools;
-    },
-  };
-
-  const createMailboxAction: GettingStartedAction = {
-    id: 'create-mailbox',
-    icon: EnvelopeIcon,
-    title: t('shell.gettingStarted.createMailboxTitle'),
-    description: t('shell.gettingStarted.createMailboxDescription', {
-      local: userInfo()?.email?.split('@')[0] || 'you',
-    }),
-    onActivate: async () => {
-      const localPart = mailboxCreateLocalPart();
-      if (!localPart) {
-        // Signup is the place to pick a local. Do not mint a derived
-        // @conation.dev address from this checklist row.
-        toast.failure(t('auth.mailbox.createNeedsLocal'));
-        return false;
-      }
-      let succeeded = false;
-      await initEmailLink({ localPart }).match(
-        async () => {
-          await emailLinks.refetch();
-          succeeded = true;
-        },
-        async (err) => {
-          if (err.tag === 'AlreadyInitialized') {
-            await emailLinks.refetch();
-            succeeded = true;
-            return;
-          }
-          toast.failure(t('auth.errors.mailboxCreateFailed'));
-        }
-      );
-      return succeeded;
-    },
-    isComplete: () => (emailLinks.data?.links.length ?? 0) >= 1,
-  };
-
   const sections: GettingStartedSectionConfig[] = [
     {
       id: 'connect-tools',
-      title: t('shell.gettingStarted.connectToolsTitle'),
-      actions: standalone
-        ? [createMailboxAction, connectToolsAction]
-        : [connectToolsAction],
+      title: 'Connect your tools',
+      actions: [
+        {
+          id: 'connect-tools',
+          icon: PlugsIcon,
+          title: 'Connect your tools',
+          description: 'Link your inbox, GitHub, Linear, Notion & more',
+          onActivate: () => openSettingsTab('Connected'),
+          // Any real connection counts: a second inbox (onboarding links the
+          // first), the GitHub account link, or any authenticated MCP server.
+          isComplete: () =>
+            (emailLinks.data?.links.length ?? 0) > 1 ||
+            githubLink.data?.status === 'linked' ||
+            (pipedreamConnections.data ?? []).length > 0 ||
+            (mcpServers.data ?? []).some((server) => server.authenticated),
+        },
+      ],
     },
     {
       id: 'basics',
-      title: t('shell.gettingStarted.accountSection'),
+      title: 'Set up your account',
       actions: [
         {
           id: 'play-tutorial',
           icon: PlayCircleIcon,
-          title: t('shell.gettingStarted.tutorialTitle'),
-          description: t('shell.gettingStarted.tutorialDescription'),
+          title: 'Play the Macro tutorial',
+          description: "Take a quick tour of Macro's core features",
           onActivate: () => setTutorialOpen(true),
         },
         {
           id: 'how-to-guide',
           icon: BookOpenIcon,
-          title: t('shell.gettingStarted.guideTitle'),
-          description: t('shell.gettingStarted.guideDescription'),
+          title: 'Macro how to guide',
+          description: 'Learn about how Macro works',
           // Falls back to the public docs site when the id can't be resolved.
           onActivate: () => {
             const documentId = howToGuideId();
@@ -250,9 +202,9 @@ function GettingStartedContent() {
         },
         {
           id: 'set-name',
-          icon: AnimatedProfileIcon,
-          title: t('shell.gettingStarted.profileTitle'),
-          description: t('shell.gettingStarted.profileDescription'),
+          icon: ProfileIcon,
+          title: 'Set your name & profile picture',
+          description: 'Introduce yourself in Account settings',
           onActivate: () => openSettingsTab('Account'),
           // The editable first/last name (what Account settings writes); the
           // legacy identity-provider display name also counts.
@@ -264,8 +216,8 @@ function GettingStartedContent() {
         {
           id: 'choose-theme',
           icon: PaletteIcon,
-          title: t('shell.gettingStarted.themeTitle'),
-          description: t('shell.gettingStarted.themeDescription'),
+          title: 'Choose your theme',
+          description: 'Light, dark, or completely custom',
           onActivate: () => openSettingsTab('Appearance'),
           // Any theme-picker interaction while the page is mounted; defer
           // skips the mount value.
@@ -282,14 +234,13 @@ function GettingStartedContent() {
     },
     {
       id: 'agent-examples',
-      title: t('shell.gettingStarted.agentSection'),
+      title: "Put Macro's agent to work",
       actions: AGENT_EXAMPLES.map((example) => ({
         id: example.id,
         icon: example.icon,
-        title: t(example.titleKey),
-        description: t(example.descriptionKey),
-        onActivate: () =>
-          openChatPrompt(t(example.promptKey, example.promptValues)),
+        title: example.title,
+        description: example.description,
+        onActivate: () => openChatPrompt(example.prompt),
       })),
     },
   ];
@@ -319,7 +270,7 @@ function GettingStartedContent() {
   });
 
   onMount(() => {
-    panel.handle.setDisplayName(t('shell.gettingStarted.title'));
+    panel.handle.setDisplayName('Getting started');
     // Preview is always on for Getting Started (no user toggle): engage
     // whenever this panel isn't itself someone's Viewer. engagePreview
     // no-ops on mobile and when there's no room; action opens re-engage if
@@ -333,11 +284,9 @@ function GettingStartedContent() {
       <div class="min-h-0 flex-1 overflow-y-auto">
         <div class="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 pb-6 pt-6">
           <header class="px-1">
-            <h1 class="text-xl font-semibold text-ink">
-              {t('shell.gettingStarted.title')}
-            </h1>
+            <h1 class="text-xl font-semibold text-ink">Getting Started</h1>
             <p class="text-sm text-ink-muted">
-              {t('shell.gettingStarted.subtitle')}
+              A few actions to get the most out of Macro.
             </p>
           </header>
           {/* Renders nothing once no inbox is importing. */}

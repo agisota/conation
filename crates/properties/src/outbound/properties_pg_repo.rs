@@ -1,7 +1,7 @@
 //! PostgreSQL implementation for properties repository.
 
-use conation_user_id::user_id::MacroUserIdStr;
 use document_sub_type::DocumentSubType;
+use macro_user_id::user_id::MacroUserIdStr;
 use models_properties::service::entity_property_with_definition::EntityPropertyWithDefinition;
 use models_properties::service::property_value::PropertyValue;
 use models_properties::{EntityReference, EntityType};
@@ -15,9 +15,10 @@ use super::{
     task_property_queries,
 };
 use crate::domain::model::{
-    CreatePropertyDefinitionOutcome, EntityPropertiesKey, EntityPropertyInfo,
-    EntityPropertyMutationSnapshot, GetOrCreateTagDefinitionResult, PropertyDefinitionOwner,
-    TagPromotionOutcome, TagRemapOutcome, UpdatePropertyOptionOutcome,
+    EntityPropertiesKey, EntityPropertyInfo, EntityPropertyMutationSnapshot,
+    GetOrCreatePropertyOptionResult, GetOrCreateTagDefinitionResult, PropertyDefinitionOwner,
+    PropertyOptionReplaceOutcome, PropertyOptionReplacePlan, TagPromotionOutcome, TagRemapOutcome,
+    UpdatePropertyOptionOutcome,
 };
 use crate::domain::ports::PropertiesRepo;
 use models_properties::DataType;
@@ -131,7 +132,7 @@ impl PropertiesRepo for PropertiesPgRepo {
         is_multi_select: bool,
         specific_entity_type: Option<EntityType>,
         options: Vec<PropertyOption>,
-    ) -> Result<CreatePropertyDefinitionOutcome, Self::Err> {
+    ) -> Result<PropertyDefinition, Self::Err> {
         property_definition_queries::create_property_definition(
             &self.pool,
             owner,
@@ -188,6 +189,24 @@ impl PropertiesRepo for PropertiesPgRepo {
     }
 
     #[tracing::instrument(skip(self), err)]
+    async fn get_or_create_property_option(
+        &self,
+        property_definition_id: Uuid,
+        display_order: i32,
+        value: PropertyOptionValue,
+        color: Option<String>,
+    ) -> Result<GetOrCreatePropertyOptionResult, Self::Err> {
+        property_option_queries::get_or_create_property_option(
+            &self.pool,
+            property_definition_id,
+            display_order,
+            value,
+            color,
+        )
+        .await
+    }
+
+    #[tracing::instrument(skip(self), err)]
     async fn update_property_option(
         &self,
         option_id: Uuid,
@@ -203,6 +222,16 @@ impl PropertiesRepo for PropertiesPgRepo {
             display_order,
         )
         .await
+    }
+
+    #[tracing::instrument(skip(self, plan), err)]
+    async fn replace_property_options(
+        &self,
+        property_definition_id: Uuid,
+        plan: &PropertyOptionReplacePlan,
+    ) -> Result<PropertyOptionReplaceOutcome, Self::Err> {
+        property_option_queries::replace_property_options(&self.pool, property_definition_id, plan)
+            .await
     }
 
     #[tracing::instrument(skip(self), err)]

@@ -2,22 +2,17 @@ import type {
   SortConfig,
   SoupEntity,
 } from '@app/features/next-soup/create-soup-state';
-import { t } from '@app/lib/i18n';
 import { compareDateDesc } from '@core/util/date';
-import type {
-  EntityData,
-  TaskEntityWithProperties,
-  WithNotification,
-} from '@entity';
+import type { EntityData, TaskEntityWithProperties } from '@entity';
 import {
   getTaskPriorityOptionId,
   getTaskStatusOptionId,
 } from '@entity/utils/task-properties';
-import ArrowClockwiseIcon from '@phosphor/arrow-clockwise.svg';
-import ClockIcon from '@phosphor/clock.svg';
+import CalendarIcon from '@phosphor/calendar.svg';
 import EyeIcon from '@phosphor/eye.svg';
 import FlagIcon from '@phosphor/flag.svg';
 import ListChecksIcon from '@phosphor/list-checks.svg';
+import EditIcon from '@phosphor/pencil-simple.svg';
 import { PROPERTY_OPTION_IDS } from '@property/constants';
 import type { JSX } from 'solid-js';
 
@@ -34,15 +29,16 @@ export interface SortOption {
   icon?: () => JSX.Element;
 }
 
-function _sortByNotifiedAt<T extends WithNotification<EntityData>>(a: T, b: T) {
-  const aNotification = a.notifications?.()[0];
-  const bNotification = b.notifications?.()[0];
-
-  if (aNotification && bNotification) {
-    return compareDateDesc(aNotification.created_at, bNotification.created_at);
-  } else if (aNotification) {
+// The inbox's order: when the viewer was last notified about each row,
+// newest first. Only `notified_at` pages carry the stamp, so a row without
+// one (a websocket insert, or a tab served by a recency sort) falls back to
+// update recency — which keeps the All and Reminders tabs ordered as before.
+function sortByNotifiedAt<T extends EntityData>(a: T, b: T): number {
+  if (a.notifiedAt && b.notifiedAt) {
+    return compareDateDesc(a.notifiedAt, b.notifiedAt);
+  } else if (a.notifiedAt) {
     return -1;
-  } else if (bNotification) {
+  } else if (b.notifiedAt) {
     return 1;
   }
 
@@ -160,6 +156,10 @@ export const SORT_CONFIGS = {
     id: 'touched_at',
     fn: sortByTouchedAt,
   },
+  notified_at: {
+    id: 'notified_at',
+    fn: sortByNotifiedAt,
+  },
   priority: {
     id: 'priority',
     fn: sortByPriority,
@@ -173,37 +173,27 @@ export const SORT_CONFIGS = {
 const SORT_OPTIONS = [
   {
     value: 'viewed_at',
-    get label() {
-      return t('soup.sort.lastViewed');
-    },
+    label: 'Last viewed',
     icon: () => <EyeIcon class="size-3.5" />,
   },
   {
     value: 'updated_at',
-    get label() {
-      return t('soup.sort.lastUpdated');
-    },
-    icon: () => <ArrowClockwiseIcon class="size-3.5" />,
+    label: 'Last updated',
+    icon: () => <EditIcon class="size-3.5" />,
   },
   {
     value: 'created_at',
-    get label() {
-      return t('soup.sort.dateCreated');
-    },
-    icon: () => <ClockIcon class="size-3.5" />,
+    label: 'Date created',
+    icon: () => <CalendarIcon class="size-3.5" />,
   },
   {
     value: 'priority',
-    get label() {
-      return t('soup.fields.priority');
-    },
+    label: 'Priority',
     icon: () => <FlagIcon class="size-3.5" />,
   },
   {
     value: 'status',
-    get label() {
-      return t('soup.fields.status');
-    },
+    label: 'Status',
     icon: () => <ListChecksIcon class="size-3.5" />,
   },
 ] as const satisfies SortOption[];

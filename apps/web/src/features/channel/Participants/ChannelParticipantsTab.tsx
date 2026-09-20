@@ -30,7 +30,7 @@ export function ChannelParticipantsTab(props: {
   onCreateBot: () => void;
   onOpenBot: (botId: string) => void;
 }) {
-  const { replaceOrInsertSplit } = useSplitLayout();
+  const { openWithSplit } = useSplitLayout();
   const userId = useUserId();
   const channel = useChannel(props.channelId);
   const channelType = useChannelType(props.channelId);
@@ -128,12 +128,15 @@ export function ChannelParticipantsTab(props: {
     });
   };
 
-  const openDirectMessage = (participantId: string) => {
+  const openDirectMessage = (participantId: string, event: MouseEvent) => {
     getOrCreateDmMutation.mutate(
       { recipient_id: participantId },
       {
         onSuccess: ({ channel_id }) => {
-          replaceOrInsertSplit({ type: 'channel', id: channel_id });
+          openWithSplit(
+            { type: 'channel', id: channel_id },
+            { activate: true, preferNewSplit: event.shiftKey }
+          );
         },
       }
     );

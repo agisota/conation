@@ -92,11 +92,11 @@ impl EmailPreset {
 pub enum ItemType {
     /// Calendar event.
     CalendarEvent,
-    /// Conation document.
+    /// Macro document.
     Document,
     /// AI chat conversation.
     AiChat,
-    /// Conation project.
+    /// Macro project.
     Project,
     /// Email thread.
     Email,
@@ -135,7 +135,7 @@ pub enum EntityItem {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         tags: Vec<AppliedTag>,
     },
-    /// Conation document item.
+    /// Macro document item.
     #[serde(rename_all = "camelCase")]
     Document {
         /// Document id.
@@ -145,8 +145,8 @@ pub enum EntityItem {
         /// The document's file type (e.g. md, pdf, docx), when known.
         #[serde(skip_serializing_if = "Option::is_none")]
         file_type: Option<String>,
-        /// The document's sub type: "task" for Conation tasks, "snippet" for snippets,
-        /// "skill" for skills.
+        /// The document's sub type: "task" for Macro tasks, "snippet" for snippets,
+        /// "skill" for skills, "initiative_description" for an initiative's description.
         #[serde(skip_serializing_if = "Option::is_none")]
         sub_type: Option<String>,
         /// Tags on the document visible to the user.
@@ -262,6 +262,7 @@ impl EntityItem {
                         SoupDocumentSubType::Task { .. } => "task",
                         SoupDocumentSubType::Snippet {} => "snippet",
                         SoupDocumentSubType::Skill {} => "skill",
+                        SoupDocumentSubType::InitiativeDescription {} => "initiative_description",
                     }
                     .to_string()
                 }),
@@ -310,6 +311,9 @@ impl EntityItem {
             }
             SoupItem::Reminder(_) => {
                 unreachable!("ListEntities tool does not surface Reminder rows")
+            }
+            SoupItem::AgentSession(_) => {
+                unreachable!("ListEntities tool does not surface AgentSession rows")
             }
             SoupItem::ForeignEntity(foreign_entity) => EntityItem::ForeignEntity {
                 id: foreign_entity.id,
@@ -360,7 +364,8 @@ fn any_item_has_tags(items: &[EnrichedSoupItem]) -> bool {
             | SoupItem::ChannelThread(_)
             | SoupItem::Call(_)
             | SoupItem::ForeignEntity(_)
-            | SoupItem::Reminder(_) => return false,
+            | SoupItem::Reminder(_)
+            | SoupItem::AgentSession(_) => return false,
         };
         properties
             .iter()
@@ -383,12 +388,12 @@ pub struct ListEntitiesResponse {
 #[serde(rename_all = "camelCase")]
 #[schemars(
     title = "ListEntities",
-    description = "Browse the user's Conation workspace to see recent items they have access to. Returns Conation documents, AI conversations, projects, emails, chat channels, call records, and foreign entities. Use this to get an overview of what the user has been working on or to find items by type. Start here for activity-summary questions such as \"what happened today\", \"what's going on\", \"catch me up\", or \"what happened in standup today\"; apply precise time, type, channel, or mailbox filters when the user gives that scope. For Conation task requests such as \"list my tasks\", \"tasks assigned to me\", or \"tasks I completed yesterday\", prefer this tool over external task trackers such as Linear unless the user explicitly asks for Linear. Conation tasks are document items with df subtype {\"l\":{\"dst\":\"task\"}} and includeTypes [\"document\"]. Filter task Status and Assignees through propf using entity_type TASK: Status property 00000001-0000-0000-0000-000000000002, Completed option 00000001-0000-0000-0002-000000000004, Assignees property 00000001-0000-0000-0000-000000000001. The current user's assignee entity id is their Conation user id, usually conation|<their email address from context>. For \"completed yesterday\", combine status Completed, assigned-to-me, and a df updatedAt yesterday window with ua gte/lt ISO timestamps. Returned documents, AI chats, projects, emails, and call records include the tags visible to the user as {label, scope} pairs. To filter by tag (e.g. \"my items tagged bug-report\"), pass the tag labels in the tags argument — ListTags shows which tags exist. For finding specific items by name or content, use the search tool instead."
+    description = "Browse the user's Macro workspace to see recent items they have access to. Returns Macro documents, AI conversations, projects, emails, chat channels, call records, and foreign entities. Use this to get an overview of what the user has been working on or to find items by type. Start here for activity-summary questions such as \"what happened today\", \"what's going on\", \"catch me up\", or \"what happened in standup today\"; apply precise time, type, channel, or mailbox filters when the user gives that scope. For Macro task requests such as \"list my tasks\", \"tasks assigned to me\", or \"tasks I completed yesterday\", prefer this tool over external task trackers such as Linear unless the user explicitly asks for Linear. Macro tasks are document items with df subtype {\"l\":{\"dst\":\"task\"}} and includeTypes [\"document\"]. Filter task Status and Assignees through propf using entity_type TASK: Status property 00000001-0000-0000-0000-000000000002, Completed option 00000001-0000-0000-0002-000000000004, Assignees property 00000001-0000-0000-0000-000000000001. The current user's assignee entity id is their Macro user id, usually macro|<their email address from context>. For \"completed yesterday\", combine status Completed, assigned-to-me, and a df updatedAt yesterday window with ua gte/lt ISO timestamps. Returned documents, AI chats, projects, emails, and call records include the tags visible to the user as {label, scope} pairs. To filter by tag (e.g. \"my items tagged bug-report\"), pass the tag labels in the tags argument — ListTags shows which tags exist. For finding specific items by name or content, use the search tool instead."
 )]
 pub struct ListEntities {
     /// Filter returned items to specific item types.
     #[schemars(
-        description = "Filter returned items to specific item types. If not provided, returns all types. Example: [\"document\", \"email\"] returns only documents and emails. Conation tasks are returned as document items, so use includeTypes=[\"document\"] with df subtype task for task requests. This is folded into the AST and applied as part of cursor-level filtering."
+        description = "Filter returned items to specific item types. If not provided, returns all types. Example: [\"document\", \"email\"] returns only documents and emails. Macro tasks are returned as document items, so use includeTypes=[\"document\"] with df subtype task for task requests. This is folded into the AST and applied as part of cursor-level filtering."
     )]
     #[serde(default)]
     pub include_types: Option<Vec<ItemType>>,
@@ -402,7 +407,7 @@ pub struct ListEntities {
 
     /// Document entity AST filter.
     #[schemars(
-        description = "Full soup AST document filter (df). Use the same shape as /items/soup/ast, e.g. {\"l\":{\"id\":\"...\"}}. For Conation tasks, use {\"l\":{\"dst\":\"task\"}}; for skills, {\"l\":{\"dst\":\"skill\"}}. For \"completed yesterday\", AND the task subtype with updatedAt bounds, e.g. {\"&\":[{\"l\":{\"dst\":\"task\"}},{\"&\":[{\"l\":{\"ua\":{\"gte\":\"<start>\"}}},{\"l\":{\"ua\":{\"lt\":\"<end>\"}}}]}]} using ISO timestamps.",
+        description = "Full soup AST document filter (df). Use the same shape as /items/soup/ast, e.g. {\"l\":{\"id\":\"...\"}}. For Macro tasks, use {\"l\":{\"dst\":\"task\"}}; for skills, {\"l\":{\"dst\":\"skill\"}}. For \"completed yesterday\", AND the task subtype with updatedAt bounds, e.g. {\"&\":[{\"l\":{\"dst\":\"task\"}},{\"&\":[{\"l\":{\"ua\":{\"gte\":\"<start>\"}}},{\"l\":{\"ua\":{\"lt\":\"<end>\"}}}]}]} using ISO timestamps.",
         with = "Option<serde_json::Value>"
     )]
     #[serde(default, rename = "df")]
@@ -473,7 +478,7 @@ pub struct ListEntities {
 
     /// Entity property AST filter.
     #[schemars(
-        description = "Full soup AST property filter (propf). Use this for Conation task Status, Assignees, Priority, and other entity properties. For task Status Completed: {\"l\":{\"pd\":\"00000001-0000-0000-0000-000000000002\",\"et\":\"TASK\",\"v\":{\"so\":\"00000001-0000-0000-0002-000000000004\"}}}. For tasks assigned to the current user: {\"l\":{\"pd\":\"00000001-0000-0000-0000-000000000001\",\"et\":\"TASK\",\"v\":{\"er\":\"conation|user@example.com\"}}}. Combine both with &: {\"&\":[statusCompleted, assignedToMe]}. Prefer this over Linear tools for unqualified task requests.",
+        description = "Full soup AST property filter (propf). Use this for Macro task Status, Assignees, Priority, and other entity properties. For task Status Completed: {\"l\":{\"pd\":\"00000001-0000-0000-0000-000000000002\",\"et\":\"TASK\",\"v\":{\"so\":\"00000001-0000-0000-0002-000000000004\"}}}. For tasks assigned to the current user: {\"l\":{\"pd\":\"00000001-0000-0000-0000-000000000001\",\"et\":\"TASK\",\"v\":{\"er\":\"macro|user@example.com\"}}}. Combine both with &: {\"&\":[statusCompleted, assignedToMe]}. Prefer this over Linear tools for unqualified task requests.",
         with = "Option<serde_json::Value>"
     )]
     #[serde(default, rename = "propf")]
@@ -563,6 +568,8 @@ impl ListEntities {
             // Reminders are opt-in in Soup, so leaving this unset is already
             // what keeps them out of the tool surface — no force-filter needed.
             reminder_filter: None,
+            // Agent sessions are opt-in too; unset keeps them off the tool surface.
+            agent_session_filter: None,
             properties_filter,
         };
 
@@ -637,6 +644,7 @@ impl ListEntities {
             },
             // Same as CrmCompany — no ItemType::Reminder to toggle against.
             reminder_filter: ast.reminder_filter,
+            agent_session_filter: ast.agent_session_filter,
             properties_filter: ast.properties_filter,
         }
     }
@@ -753,10 +761,10 @@ where
             .filter(|s| !s.is_empty())
         {
             Some(inbox) => {
-                let caller_conation_id = request_context.user_id.to_string();
+                let caller_macro_id = request_context.user_id.to_string();
                 let link = email::inbound::toolset::resolve_inbox_selector(
                     &inboxes,
-                    &caller_conation_id,
+                    &caller_macro_id,
                     Some(inbox),
                 )?;
                 vec![link.id]

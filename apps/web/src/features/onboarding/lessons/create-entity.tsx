@@ -7,10 +7,9 @@ import {
   createSoupState,
   type SoupState,
 } from '@app/features/next-soup/create-soup-state';
-import { t } from '@app/lib/i18n';
 import { createHotkeyGroup, registerHotkey } from '@core/hotkey/hotkeys';
-import { AnimatedPlusIcon } from '@icon/wide-plus';
 import { Dialog } from '@kobalte/core/dialog';
+import PlusIcon from '@phosphor/plus.svg';
 import {
   createEffect,
   createSignal,
@@ -78,7 +77,7 @@ function CreateEntityContent(props: LessonContentProps) {
     registerHotkey({
       scopeId: props.scopeId,
       hotkey: 'c',
-      description: t('onboarding.hotkeys.openCreateMenu'),
+      description: 'Open Create menu',
       keyDownHandler: () => {
         setLauncherOpen((open) => !open);
         return true;
@@ -110,17 +109,20 @@ function CreateEntityContent(props: LessonContentProps) {
       tabIndex={0}
       class="flex flex-col gap-8 outline-none onboarding-stagger"
     >
-      <p class="mt-2">{t('onboarding.lessons.create.description')}</p>
+      <p class="mt-2">
+        The <strong>Create Launcher</strong> lets you create Macro Editor
+        quickly, from anywhere.
+      </p>
       <div class="flex flex-col gap-3">
         <HotkeyCallout keys={['C']} label="" completed={completed()} />
         <div class="flex items-center gap-3 text-sm text-ink/40">
           <div class="h-px w-8 bg-edge-muted" />
-          {t('onboarding.callout.or')}
+          or
           <div class="h-px flex-1 bg-edge-muted" />
         </div>
         <ClickCallout
-          icon={AnimatedPlusIcon}
-          label={t('onboarding.callout.inSidebar')}
+          icon={PlusIcon}
+          label="in the sidebar"
           completed={completed()}
         />
       </div>
@@ -183,7 +185,7 @@ function CreateEntityDemo(props: LessonContentProps) {
 
       <Dialog open={launcherOpen()} onOpenChange={setLauncherOpen} modal={true}>
         <Dialog.Portal>
-          <Dialog.Overlay class="fixed inset-0 z-modal bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
+          <Dialog.Overlay class="fixed inset-0 z-modal scrim-glass" />
           <Dialog.Content
             class="[--color-surface:var(--color-dialog)]"
             onCloseAutoFocus={(e) => {
@@ -217,8 +219,8 @@ function CreateEntityDemo(props: LessonContentProps) {
 
 export const createEntityLesson: LessonDefinition = {
   id: 'create-entity',
-  title: 'onboarding.lessons.create.title',
-  subtitle: 'onboarding.lessons.create.subtitle',
+  title: 'Create',
+  subtitle: 'Use the launcher to create docs, emails, and more.',
   content: CreateEntityContent,
   demo: CreateEntityDemo,
   order: 40,

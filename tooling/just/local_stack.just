@@ -158,14 +158,15 @@ create_local_tables:
 
 # Create S3 buckets in LocalStack
 create_local_buckets:
-  aws --endpoint-url=http://localhost:4566 s3 mb s3://conation-email-attachments || true
+  aws --endpoint-url=http://localhost:4566 s3 mb s3://macro-email-attachments || true
   aws --endpoint-url=http://localhost:4566 s3 mb s3://doc-storage || true
   aws --endpoint-url=http://localhost:4566 s3 mb s3://docx-upload || true
   aws --endpoint-url=http://localhost:4566 s3 mb s3://static-file-storage || true
   aws --endpoint-url=http://localhost:4566 s3 mb s3://bulk-upload-staging || true
-  aws --endpoint-url=http://localhost:4566 s3 mb s3://conation-call-recording-local || true
+  aws --endpoint-url=http://localhost:4566 s3 mb s3://macro-call-recording-local || true
+  aws --endpoint-url=http://localhost:4566 s3 mb s3://agent-session-changes || true
   # Apply CORS configuration to all buckets
-  for bucket in conation-email-attachments doc-storage docx-upload static-file-storage bulk-upload-staging conation-call-recording-local; do \
+  for bucket in macro-email-attachments doc-storage docx-upload static-file-storage bulk-upload-staging macro-call-recording-local agent-session-changes; do \
     aws --endpoint-url=http://localhost:4566 s3api put-bucket-cors --bucket $bucket --cors-configuration '{"CORSRules":[{"AllowedOrigins":["http://localhost:3000","http://localhost:3001","http://localhost:3002","http://localhost:3003","http://localhost:3004","http://localhost:3005","http://localhost:3006","http://localhost:3007","http://localhost:3008","http://localhost:3009"],"AllowedMethods":["GET","PUT","POST","DELETE","HEAD"],"AllowedHeaders":["*"],"ExposeHeaders":["ETag"],"MaxAgeSeconds":3600}]}' || true; \
   done
   @echo "S3 buckets created"

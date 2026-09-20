@@ -13,14 +13,14 @@ use axum::{
     response::{IntoResponse, Json, Redirect, Response},
     routing,
 };
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use macro_auth::middleware::decode_jwt::JwtValidationArgs;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
 use crate::domain::{
-    models::{AuthorizeRequest, CallbackRequest, ClientRegistrationRequest, TokenRequest},
+    models::{AuthorizeRequest, CallbackRequest, TokenRequest},
     service::{
         CompleteCallbackError, InflightAuthStore, McpAuthProxyService, McpAuthProxyServiceImpl,
-        RegisterClientError, StartAuthorizationError, TokenExchangeError,
+        StartAuthorizationError, TokenExchangeError,
     },
 };
 
@@ -43,42 +43,9 @@ async fn protected_resource_metadata<I: InflightAuthStore + 'static>(
 
 async fn register<I: InflightAuthStore + 'static>(
     State(auth_proxy): State<McpAuthProxyServiceImpl<I>>,
-    axum::Json(body): axum::Json<ClientRegistrationRequest>,
-) -> Response {
-    match auth_proxy.register_client(body).await {
-        // RFC 7591 section 3.2.1 only says SHOULD for 201, and clients already
-        // work against the 200 this endpoint has always returned.
-        Ok(registration) => Json(registration).into_response(),
-        Err(RegisterClientError::RedirectUrisRequired) => (
-            axum::http::StatusCode::BAD_REQUEST,
-            "at least one redirect_uri is required",
-        )
-            .into_response(),
-        Err(RegisterClientError::TooManyRedirectUris) => (
-            axum::http::StatusCode::BAD_REQUEST,
-            "too many redirect_uris",
-        )
-            .into_response(),
-        Err(RegisterClientError::UnsupportedRedirectUri { uri }) => {
-            tracing::warn!(
-                rejected_redirect_uri = %uri,
-                "client registration used a redirect_uri this deployment does not trust"
-            );
-            (
-                axum::http::StatusCode::BAD_REQUEST,
-                "redirect_uri must be a loopback address or a trusted MCP client host",
-            )
-                .into_response()
-        }
-        Err(RegisterClientError::ClientRegistrationStore(error)) => {
-            tracing::error!(error=?error, "failed to persist client registration");
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                "failed to persist client registration",
-            )
-                .into_response()
-        }
-    }
+    axum::Json(body): axum::Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    Json(auth_proxy.register_client(body))
 }
 
 async fn authorize<I: InflightAuthStore + 'static>(
@@ -99,25 +66,9 @@ async fn authorize<I: InflightAuthStore + 'static>(
             .into_response(),
         Err(StartAuthorizationError::InvalidRedirectUri) => (
             axum::http::StatusCode::BAD_REQUEST,
-            "redirect_uri must be a loopback address or a trusted MCP client host",
+            "redirect_uri must be https or a loopback address",
         )
             .into_response(),
-        Err(StartAuthorizationError::UnregisteredRedirectUri) => (
-            axum::http::StatusCode::BAD_REQUEST,
-            "redirect_uri was not registered for this client",
-        )
-            .into_response(),
-        Err(StartAuthorizationError::UnknownClient) => {
-            (axum::http::StatusCode::BAD_REQUEST, "unknown client_id").into_response()
-        }
-        Err(StartAuthorizationError::ClientRegistrationStore(error)) => {
-            tracing::error!(error=?error, "failed to read client registrations");
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                "failed to read client registrations",
-            )
-                .into_response()
-        }
         Err(StartAuthorizationError::InflightStore(error)) => {
             tracing::error!(error=?error, "failed to persist inflight auth state");
             (
@@ -223,32 +174,11 @@ async fn token<I: InflightAuthStore + 'static>(
             "refresh_token required",
         )
             .into_response(),
-        Err(TokenExchangeError::ClientIdRequired) => {
-            (axum::http::StatusCode::BAD_REQUEST, "client_id required").into_response()
-        }
-        Err(TokenExchangeError::ClientMismatch) => (
-            axum::http::StatusCode::BAD_REQUEST,
-            "grant was not issued to this client",
-        )
-            .into_response(),
-        Err(TokenExchangeError::UnboundRefreshToken) => (
-            axum::http::StatusCode::BAD_REQUEST,
-            "refresh token is not bound to a client",
-        )
-            .into_response(),
         Err(TokenExchangeError::InflightStore(error)) => {
             tracing::error!(error=?error, "failed to access inflight auth state");
             (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 "failed to access inflight auth state",
-            )
-                .into_response()
-        }
-        Err(TokenExchangeError::RefreshTokenBindingStore(error)) => {
-            tracing::error!(error=?error, "failed to access refresh token bindings");
-            (
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                "failed to access refresh token bindings",
             )
                 .into_response()
         }
@@ -263,13 +193,24 @@ async fn token<I: InflightAuthStore + 'static>(
     }
 }
 
-/// Builds the unauthenticated OAuth broker routes: discovery metadata,
-/// dynamic client registration, authorize, upstream callback, and token.
-pub fn oauth_router<I>(auth_proxy: McpAuthProxyServiceImpl<I>) -> Router
+/// Builds the complete MCP router: unauthenticated OAuth broker routes plus
+/// the Bearer-protected `/mcp` service route.
+pub fn mcp_router<I, S>(
+    auth_proxy: McpAuthProxyServiceImpl<I>,
+    jwt_args: JwtValidationArgs,
+    mcp_service: S,
+) -> Router
 where
-    I: InflightAuthStore + 'static,
+    I: InflightAuthStore + Clone + Send + Sync + 'static,
+    S: tower::Service<axum::http::Request<axum::body::Body>, Error = std::convert::Infallible>
+        + Clone
+        + Send
+        + Sync
+        + 'static,
+    S::Response: axum::response::IntoResponse,
+    S::Future: Send + 'static,
 {
-    Router::new()
+    let oauth_routes = Router::new()
         .route("/health", routing::get(health))
         .route(
             "/.well-known/oauth-protected-resource",
@@ -280,10 +221,6 @@ where
             routing::get(protected_resource_metadata),
         )
         .route(
-            "/mcp/.well-known/oauth-protected-resource",
-            routing::get(protected_resource_metadata),
-        )
-        .route(
             "/.well-known/oauth-authorization-server",
             routing::get(authorization_server_metadata),
         )
@@ -291,34 +228,12 @@ where
             "/.well-known/oauth-authorization-server/mcp",
             routing::get(authorization_server_metadata),
         )
-        .route(
-            "/mcp/.well-known/oauth-authorization-server",
-            routing::get(authorization_server_metadata),
-        )
         .route("/authorize", routing::get(authorize))
         .route("/register", routing::post(register))
         .route("/oauth/callback", routing::get(oauth_callback))
         .route("/token", routing::post(token))
-        .with_state(auth_proxy)
-}
+        .with_state(auth_proxy);
 
-/// Builds the complete MCP router: unauthenticated OAuth broker routes plus
-/// the Bearer-protected `/mcp` service route.
-pub fn mcp_router<I, S>(
-    auth_proxy: McpAuthProxyServiceImpl<I>,
-    jwt_args: JwtValidationArgs,
-    mcp_service: S,
-) -> Router
-where
-    I: InflightAuthStore + 'static,
-    S: tower::Service<axum::http::Request<axum::body::Body>, Error = std::convert::Infallible>
-        + Clone
-        + Send
-        + Sync
-        + 'static,
-    S::Response: axum::response::IntoResponse,
-    S::Future: Send + 'static,
-{
     let mcp_route =
         Router::new()
             .nest_service("/mcp", mcp_service)
@@ -327,9 +242,13 @@ where
                 super::middleware::validate_bearer,
             ));
 
-    oauth_router(auth_proxy)
-        .merge(mcp_route)
-        .layer(mcp_cors_layer())
+    mount_at_root_and_prefix(oauth_routes.merge(mcp_route)).layer(mcp_cors_layer())
+}
+
+fn mount_at_root_and_prefix(inner: Router) -> Router {
+    Router::new()
+        .merge(inner.clone())
+        .nest(super::GATEWAY_PATH_PREFIX, inner)
 }
 
 /// CORS layer for the MCP router.

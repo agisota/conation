@@ -1,22 +1,17 @@
-use anyhow::Context;
-use conation_auth::InternalApiKey;
-use conation_env::Environment;
-use conation_env_var::{env_var, env_vars, maybe_env_var};
-use database_env_vars::{DatabaseUrl, RedisUri};
-use std::sync::LazyLock;
+//! Configuration for the notification service, loaded via the standard
+//! `macro_config` pattern so it gets a `doppler_config` validation binary.
+//!
+//! Required env vars are declared here as typed fields. The `doppler_config`
+//! binary loads this `Config` from Doppler for both the dev and prod
+//! environments, surfacing any missing or mistyped values at CI time.
 
-// We load this through `conation_config` at startup as part of [`Config`]. This lazy is retained for
-// older notification template code paths that do not receive `Config` directly.
-pub static BASE_URL: LazyLock<String> = LazyLock::new(|| {
-    BaseUrl::new()
-        .expect("BASE_URL must be provided via APP_SECRETS_JSON or env")
-        .as_ref()
-        .to_string()
-});
+use anyhow::Context;
+use database_env_vars::{DatabaseUrl, RedisUri};
+use macro_auth::InternalApiKey;
+use macro_env::Environment;
+use macro_env_var::{env_var, env_vars, maybe_env_var};
 
 env_vars! {
-    #[derive(Debug, Clone)]
-    pub(crate) struct BaseUrl;
     #[derive(Debug, Clone)]
     pub(crate) struct AppleBundleId;
     #[derive(Debug, Clone)]
@@ -45,13 +40,9 @@ env_var!(
 /// The configuration parameters for the application.
 ///
 /// These are loaded from `APP_SECRETS_JSON` when present, otherwise from environment variables.
-#[derive(conation_config::MacroConfig)]
+#[derive(macro_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
-    /// The service's base url including the scheme.
-    #[allow(dead_code)]
-    pub(crate) base_url: BaseUrl,
-
     /// The connection URL for the Postgres database this application should use.
     pub(crate) database_url: DatabaseUrl,
 
@@ -62,19 +53,19 @@ pub struct Config {
     pub(crate) url_signing_hmac: UrlSigningHmac,
 
     /// The port to listen for HTTP requests on.
-    #[conation_config_default(8080)]
+    #[macro_config_default(8080)]
     pub(crate) port: usize,
 
     /// The environment we are in.
-    #[conation_config_default(Environment::new_or_prod())]
+    #[macro_config_default(Environment::new_or_prod())]
     pub(crate) environment: Environment,
 
     /// The notification queue max messages per poll.
-    #[conation_config_default(9)]
+    #[macro_config_default(9)]
     pub(crate) notification_queue_max_messages: i32,
 
     /// The notification queue wait time seconds.
-    #[conation_config_default(4)]
+    #[macro_config_default(4)]
     pub(crate) notification_queue_wait_time_seconds: i32,
 
     /// Redis used by notification-service for digest batching, rate limiting, etc.
@@ -101,7 +92,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        let config = conation_config::ConfigLoader::load::<Config>()
+        let config = macro_config::ConfigLoader::load::<Config>()
             .context("failed to load notification service config")?;
 
         if !matches!(config.environment, Environment::Local)

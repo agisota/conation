@@ -5,12 +5,6 @@ use calendar_events::{
     domain::{mutations::CalendarMutationServiceImpl, service::CalendarService},
     outbound::{google::GoogleCalendarClient, pg::PgCalendarRepository},
 };
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
-use conation_entrypoint::MacroEntrypoint;
-use conation_env::Environment;
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
-use conation_service_urls::{AuthServiceUrl, DocumentStorageServiceUrl, StaticFileServiceUrl};
 use document_storage_service_client::DocumentStorageServiceClient;
 use email::{
     domain::service::EmailServiceImpl,
@@ -21,6 +15,7 @@ use email::{
     outbound::{EmailPgRepo, GmailTokenProviderImpl},
 };
 use email_api_client::GmailApiClientRepository;
+use email_service::calendar_refresh::ConnectionGatewayCalendarRefresh;
 use email_service::calendar_tokens::CalendarTokenProviderAdapter;
 use email_service::outbound::email_api::{
     EmailServiceTokenSource, GmailApi, RateBudget, RedisProviderRateLimiter,
@@ -28,6 +23,17 @@ use email_service::outbound::email_api::{
 use email_service::pubsub::calendar_backfill_adapters::RedisCalendarRequestGate;
 use entity_access::{domain::service::EntityAccessServiceImpl, outbound::PgAccessRepository};
 use frecency::{domain::services::FrecencyQueryServiceImpl, outbound::postgres::FrecencyPgStorage};
+use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use macro_authorization::{
+    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState,
+    PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
+};
+use macro_entrypoint::MacroEntrypoint;
+use macro_env::Environment;
+use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use macro_service_urls::{
+    AuthServiceUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, StaticFileServiceUrl,
+};
 use sqlx::postgres::PgPoolOptions;
 use static_file_service_client::StaticFileServiceClient;
 use std::{sync::Arc, time::Duration};
@@ -43,9 +49,9 @@ async fn main() -> anyhow::Result<()> {
     MacroEntrypoint::default().init();
     let env = Environment::new_or_prod();
 
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
+    let aws_config = macro_aws_config::get_macro_aws_config().await;
 
-    let s3_client = s3_client::S3::new(conation_aws_config::s3_client().await);
+    let s3_client = s3_client::S3::new(macro_aws_config::s3_client().await);
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
@@ -58,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("expected to be able to resolve config secrets")?;
 
-    // Limit to max of 200 connections (12.5% of the Conation database total) in prod.
+    // limiting to max of 200 connections (12.5% of macrodb total) in prod.
     let (min_connections, max_connections): (u32, u32) = match config.environment {
         Environment::Production => (3, 20),
         Environment::Develop => (1, 10),
@@ -68,18 +74,18 @@ async fn main() -> anyhow::Result<()> {
     let db = PgPoolOptions::new()
         .min_connections(min_connections)
         .max_connections(max_connections)
-        .connect(config.conation_db_url.as_ref())
+        .connect(&config.macro_db_url)
         .await
         .context("could not connect to db")?;
 
-    let gmail_inbox_sync_queue = conation_queues::GmailInboxSyncQueue::new();
-    let gmail_inbox_sync_retry_queue = conation_queues::GmailInboxSyncRetryQueue::new();
-    let gmail_ops_queue = conation_queues::GmailOpsQueue::new();
-    let backfill_queue = conation_queues::EmailBackfillQueue::new();
-    let email_scheduled_queue = conation_queues::EmailScheduledQueue::new();
-    let sfs_uploader_queue = conation_queues::SfsUploaderQueue::new();
-    let link_manager_queue = conation_queues::LinkManagerQueue::new();
-    let sqs_client = sqs_client::SQS::new(conation_aws_config::sqs_client().await)
+    let gmail_inbox_sync_queue = macro_queues::GmailInboxSyncQueue::new();
+    let gmail_inbox_sync_retry_queue = macro_queues::GmailInboxSyncRetryQueue::new();
+    let gmail_ops_queue = macro_queues::GmailOpsQueue::new();
+    let backfill_queue = macro_queues::EmailBackfillQueue::new();
+    let email_scheduled_queue = macro_queues::EmailScheduledQueue::new();
+    let sfs_uploader_queue = macro_queues::SfsUploaderQueue::new();
+    let link_manager_queue = macro_queues::LinkManagerQueue::new();
+    let sqs_client = sqs_client::SQS::new(macro_aws_config::sqs_client().await)
         .gmail_inbox_sync_queue(&gmail_inbox_sync_queue)
         .gmail_inbox_sync_retry_queue(&gmail_inbox_sync_retry_queue)
         .gmail_ops_queue(&gmail_ops_queue)
@@ -139,9 +145,10 @@ async fn main() -> anyhow::Result<()> {
         MacroAuthJwtValidator::new(jwt_args.clone()),
         InternalAuthConfig {
             api_key: config.internal_api_key.to_string(),
-            default_user_id: Some("conation|INTERNAL@conation.dev".to_string()),
+            default_user_id: Some("macro|INTERNAL@macro.com".to_string()),
         },
-        conation_authorization::NoBotAuthorizer,
+        macro_authorization::NoBotAuthorizer,
+        PgUserApiKeyAuthorizer::new(PgUserApiKeyAuthorizationRepo::new(db.clone())),
     )));
 
     let sqs_client = Arc::new(sqs_client);
@@ -154,7 +161,7 @@ async fn main() -> anyhow::Result<()> {
         crm::outbound::no_op_resolver::NoOpCompanyMetadataResolver,
     );
     let event_broker_tracker = TaskTracker::new();
-    let conation_event_broker = MacroEventBrokerService::new(
+    let macro_event_broker = MacroEventBrokerService::new(
         KafkaEventPublisher::new(config.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
         event_broker_tracker.clone(),
@@ -170,7 +177,7 @@ async fn main() -> anyhow::Result<()> {
             ),
             config.sent_undo_delay_secs,
         )
-        .with_conation_event_broker(conation_event_broker.clone()),
+        .with_macro_event_broker(macro_event_broker.clone()),
     );
     let entity_access_service = Arc::new(EntityAccessServiceImpl::new(PgAccessRepository::new(
         db.clone(),
@@ -202,6 +209,10 @@ async fn main() -> anyhow::Result<()> {
         auth_service_client.clone(),
     ));
     let calendar_service = Arc::new(CalendarService::new(PgCalendarRepository::new(db.clone())));
+    let connection_gateway_client = connection_gateway_client::client::ConnectionGatewayClient::new(
+        config.internal_api_key.to_string(),
+        ConnectionGatewayUrl::new()?.to_string(),
+    );
     let calendar_mutation_service = Arc::new(CalendarMutationServiceImpl::new(
         PgCalendarRepository::new(db.clone()),
         GoogleCalendarClient::with_gate(
@@ -212,7 +223,8 @@ async fn main() -> anyhow::Result<()> {
             RedisCalendarRequestGate::new((*redis_client).clone()),
         ),
         CalendarTokenProviderAdapter::new(redis_conn.clone(), auth_service_client.clone()),
-        conation_event_broker.clone(),
+        macro_event_broker.clone(),
+        ConnectionGatewayCalendarRefresh::new(connection_gateway_client, db.clone()),
     ));
     let api_result = api::setup_and_serve(ApiContext {
         db,
@@ -233,7 +245,7 @@ async fn main() -> anyhow::Result<()> {
         entity_access_service,
         email_thread_state,
         gmail_token_state,
-        conation_event_broker: Arc::new(conation_event_broker),
+        macro_event_broker: Arc::new(macro_event_broker),
         calendar_service,
         calendar_mutation_service,
     })

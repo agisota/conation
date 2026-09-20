@@ -13,7 +13,7 @@ vi.mock('@phosphor-icons/core/regular/x.svg?component-solid', () => ({
 }));
 
 const deleteInput = {
-  channelID: 'channel-1',
+  parent: { type: 'channel' as const, id: 'channel-1' },
   messageID: 'message-1',
   threadID: 'thread-1',
 };

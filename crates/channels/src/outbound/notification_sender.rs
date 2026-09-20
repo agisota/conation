@@ -202,6 +202,9 @@ where
                                     Some("task") => Some(NotificationDocumentSubType::Task),
                                     Some("snippet") => Some(NotificationDocumentSubType::Snippet),
                                     Some("skill") => Some(NotificationDocumentSubType::Skill),
+                                    Some("initiative_description") => {
+                                        Some(NotificationDocumentSubType::InitiativeDescription)
+                                    }
                                     _ => None,
                                 },
                                 channel: to_channel_mention_metadata(mention),

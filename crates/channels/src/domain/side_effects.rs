@@ -12,8 +12,7 @@ use crate::domain::{
     mention_events::{EntityRef, MentionMacroEvent, MentionMetadata},
     models::{
         BotId, BotSenderProfile, ChannelMetadata, ChannelParticipant, ChannelType, CountedReaction,
-        MutatedAttachment, MutatedMessage, PostMessageNotificationPolicy, SimpleMention,
-        TypingAction,
+        MutatedAttachment, MutatedMessage, TypingAction,
     },
     ports::{
         ChannelContactsDispatcher, ChannelEventDispatcher, ChannelEventHandler,
@@ -21,8 +20,9 @@ use crate::domain::{
     },
 };
 use bot_id::BotIdStr;
-use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_event_broker::{MacroEventBroker, NoopMacroEventBroker};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use messages::domain::models::{PostMessageNotificationPolicy, SimpleMention};
 use std::collections::HashSet;
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::Instrument as _;
@@ -54,8 +54,8 @@ pub type ChannelBotTriggerSender = UnboundedSender<ChannelBotTrigger>;
 
 /// Collect the bot ids mentioned in a message.
 ///
-/// Bot mentions normally arrive tagged `bot`, but Conation AI is surfaced through
-/// the user-mention UI, so a `user` mention whose id is exactly the Conation AI
+/// Bot mentions normally arrive tagged `bot`, but Macro AI is surfaced through
+/// the user-mention UI, so a `user` mention whose id is exactly the Macro AI
 /// bot is recognized as a bot mention too.
 ///
 /// Ids must be in the canonical `bot|<uuid>` principal form; bare UUIDs are
@@ -72,7 +72,7 @@ pub fn bot_mention_ids(mentions: &[SimpleMention]) -> Vec<BotId> {
         .filter_map(|mention| match mention.entity_type.as_str() {
             BOT_MENTION_ENTITY_TYPE => mention_bot_id(&mention.entity_id),
             "user" => {
-                mention_bot_id(&mention.entity_id).filter(|id| *id == bot_id::CONATION_AI_BOT_ID)
+                mention_bot_id(&mention.entity_id).filter(|id| *id == bot_id::MACRO_AI_BOT_ID)
             }
             _ => None,
         })
@@ -99,8 +99,8 @@ fn active_bot_mention_ids(
         .collect();
     // Code-defined system bots are available in every channel and have no
     // participant rows.
-    active_bot_ids.insert(bot_id::CONATION_AI_BOT_ID);
-    active_bot_ids.insert(bot_id::CONATION_CODER_BOT_ID);
+    active_bot_ids.insert(bot_id::MACRO_AI_BOT_ID);
+    active_bot_ids.insert(bot_id::MACRO_CODER_BOT_ID);
 
     bot_mention_ids(mentions)
         .into_iter()
@@ -116,17 +116,24 @@ fn mention_bot_id(entity_id: &str) -> Option<BotId> {
 }
 
 /// Whether a `user`-tagged mention actually targets a bot (and so must not be
-/// treated as a user recipient). Real user ids are `conation|<email>` strings,
-/// never `bot|<uuid>` principals, so this only matches the Conation AI bot
+/// treated as a user recipient). Real user ids are `macro|<email>` strings,
+/// never `bot|<uuid>` principals, so this only matches the Macro AI bot
 /// surfaced through the user-mention UI.
 fn is_bot_user_mention(mention: &SimpleMention) -> bool {
     mention.entity_type == "user"
-        && mention_bot_id(&mention.entity_id) == Some(bot_id::CONATION_AI_BOT_ID)
+        && mention_bot_id(&mention.entity_id) == Some(bot_id::MACRO_AI_BOT_ID)
 }
 
 /// Realtime update requested by the channel domain.
 #[derive(Debug, Clone)]
 pub enum ChannelRealtimeEffect {
+    /// Invalidate a channel picture after a durable change.
+    PictureChanged {
+        /// Recipients whose picture caches should be refreshed.
+        recipients: Vec<MacroUserIdStr<'static>>,
+        /// Channel whose picture changed.
+        channel_id: Uuid,
+    },
     /// A message was created or changed.
     Message {
         /// Recipients that should receive the update.
@@ -342,7 +349,7 @@ pub struct ChannelSideEffectService<C, R, N, K, B = NoopMacroEventBroker> {
     notifications: N,
     contacts: K,
     bot_triggers: Option<ChannelBotTriggerSender>,
-    conation_event_broker: B,
+    macro_event_broker: B,
 }
 
 struct MessagePostedSideEffects {
@@ -370,7 +377,7 @@ struct InviteNotificationRequest {
 impl<C, R, N, K> ChannelSideEffectService<C, R, N, K> {
     /// Create a channel side-effect service that drops broker events.
     ///
-    /// Use [`Self::with_conation_event_broker`] to publish channel events to the
+    /// Use [`Self::with_macro_event_broker`] to publish channel events to the
     /// macro event broker.
     pub fn new(context: C, realtime: R, notifications: N, contacts: K) -> Self {
         Self {
@@ -379,7 +386,7 @@ impl<C, R, N, K> ChannelSideEffectService<C, R, N, K> {
             notifications,
             contacts,
             bot_triggers: None,
-            conation_event_broker: NoopMacroEventBroker,
+            macro_event_broker: NoopMacroEventBroker,
         }
     }
 }
@@ -392,9 +399,9 @@ impl<C, R, N, K, B> ChannelSideEffectService<C, R, N, K, B> {
     }
 
     /// Configure a macro event broker to publish channel events to.
-    pub fn with_conation_event_broker<B2: MacroEventBroker>(
+    pub fn with_macro_event_broker<B2: MacroEventBroker>(
         self,
-        conation_event_broker: B2,
+        macro_event_broker: B2,
     ) -> ChannelSideEffectService<C, R, N, K, B2> {
         ChannelSideEffectService {
             context: self.context,
@@ -402,7 +409,7 @@ impl<C, R, N, K, B> ChannelSideEffectService<C, R, N, K, B> {
             notifications: self.notifications,
             contacts: self.contacts,
             bot_triggers: self.bot_triggers,
-            conation_event_broker,
+            macro_event_broker,
         }
     }
 
@@ -415,7 +422,7 @@ impl<C, R, N, K, B> ChannelSideEffectService<C, R, N, K, B> {
         participants: &[ChannelParticipant],
     ) {
         // Only user-authored messages can trigger bots; this prevents bots
-        // (including Conation AI) from triggering each other in a loop.
+        // (including Macro AI) from triggering each other in a loop.
         if message.sender_id.as_user().is_none() {
             return;
         }
@@ -485,6 +492,22 @@ where
         let mention_broker_events = mention_broker_events_for_event(&event);
 
         match event {
+            ChannelEvent::PictureChanged {
+                channel_id,
+                recipients,
+            } => {
+                if let Err(error) = self
+                    .realtime
+                    .publish(ChannelRealtimeEffect::PictureChanged {
+                        channel_id,
+                        recipients,
+                    })
+                    .await
+                {
+                    let error: anyhow::Error = error.into();
+                    tracing::error!(error=?error, "unable to publish channel picture change");
+                }
+            }
             ChannelEvent::ChannelCreated { .. } => {}
             ChannelEvent::ChannelUpdated { .. } => {}
             ChannelEvent::ParticipantsRemoved { .. } => {}
@@ -647,7 +670,7 @@ where
         // dropped.
         for broker_event in broker_events {
             let _ = self
-                .conation_event_broker
+                .macro_event_broker
                 .send_event(&broker_event)
                 .inspect_err(|e| {
                     tracing::error!(error=?e, "failed to publish channel event");
@@ -655,7 +678,7 @@ where
         }
         for mention_event in mention_broker_events {
             let _ = self
-                .conation_event_broker
+                .macro_event_broker
                 .send_event(&mention_event)
                 .inspect_err(|e| {
                     tracing::error!(error=?e, "failed to publish mention event");
@@ -723,9 +746,9 @@ where
     /// Resolve the public bot profile when the message sender is a bot.
     async fn bot_profile_for_message(&self, message: &MutatedMessage) -> Option<BotSenderProfile> {
         let bot_id = message.sender_id.as_bot()?.bot_id();
-        if bot_id == bot_id::CONATION_AI_BOT_ID {
+        if bot_id == bot_id::MACRO_AI_BOT_ID {
             return Some(BotSenderProfile {
-                name: bot_id::CONATION_AI_NAME.to_string(),
+                name: bot_id::MACRO_AI_NAME.to_string(),
                 avatar_url: None,
             });
         }
@@ -852,7 +875,7 @@ where
             (Vec::new(), Vec::new()),
             |(mut users, mut docs), mention| {
                 match mention.entity_type.as_str() {
-                    // The Conation AI bot is mentioned via the user-mention UI; it
+                    // The Macro AI bot is mentioned via the user-mention UI; it
                     // is handled as a bot trigger, not a user notification.
                     "user" if !is_bot_user_mention(&mention) => users.push(mention.entity_id),
                     "document" => docs.push(mention.entity_id),
@@ -1220,9 +1243,12 @@ fn contact_sync_users_for_event(event: &ChannelEvent) -> Option<HashSet<MacroUse
         ChannelEvent::ChannelCreated {
             channel_type: ChannelType::Private | ChannelType::DirectMessage,
             actor,
+            on_behalf_of,
             participant_user_ids,
             ..
-        } if actor.as_user().is_some() => Some(participant_user_ids.iter().cloned().collect()),
+        } if actor.as_user().is_some() || on_behalf_of.is_some() => {
+            Some(participant_user_ids.iter().cloned().collect())
+        }
         ChannelEvent::ParticipantsAdded {
             channel_type: ChannelType::Private | ChannelType::Team,
             invited_by,
@@ -1252,12 +1278,14 @@ fn broker_events_for_event(event: &ChannelEvent) -> Vec<ChannelMacroEvent> {
         ChannelEvent::ChannelCreated {
             channel_id,
             actor,
+            on_behalf_of,
             channel_type,
             channel_name,
             participant_user_ids,
         } => vec![ChannelMacroEvent::created(ChannelCreatedMetadata {
             channel_id: *channel_id,
             actor: actor.clone(),
+            on_behalf_of: on_behalf_of.clone(),
             channel_type: *channel_type,
             channel_name: channel_name.clone(),
             participant_user_ids: participant_user_ids.clone(),
@@ -1459,7 +1487,9 @@ fn broker_events_for_event(event: &ChannelEvent) -> Vec<ChannelMacroEvent> {
                 removed_user_ids: removed_user_ids.clone(),
             },
         )],
-        ChannelEvent::ReactionChanged { .. } | ChannelEvent::TypingChanged { .. } => Vec::new(),
+        ChannelEvent::ReactionChanged { .. }
+        | ChannelEvent::TypingChanged { .. }
+        | ChannelEvent::PictureChanged { .. } => Vec::new(),
         ChannelEvent::EntityMentionCreated { .. } | ChannelEvent::EntityMentionDeleted { .. } => {
             Vec::new()
         }

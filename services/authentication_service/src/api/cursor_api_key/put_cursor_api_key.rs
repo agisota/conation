@@ -2,8 +2,8 @@ use axum::{
     Json,
     extract::{self, State},
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOnly};
 use cursor_api_key::cipher::CursorApiKey;
+use macro_authorization::{MacroAuthorizationExtractor, UserOnly};
 use utoipa::ToSchema;
 
 use super::{CursorApiKeyError, CursorApiKeyStatus};
@@ -32,6 +32,7 @@ pub struct PutCursorApiKeyRequest {
         (status = 200, body = CursorApiKeyStatus),
         (status = 400, body = model::response::ErrorResponse),
         (status = 401, body = String),
+        (status = 403, body = model::response::ErrorResponse),
     )
 )]
 // `req` is skipped: it is the key itself, and an instrumented span field would
@@ -43,6 +44,7 @@ pub async fn handler(
     extract::Json(req): extract::Json<PutCursorApiKeyRequest>,
 ) -> Result<Json<CursorApiKeyStatus>, CursorApiKeyError> {
     let user_id = &user_context.authorization.macro_user_id;
+
     let cipher = &ctx.cursor_api_key_cipher;
 
     // Parsed before anything else, so a malformed key never reaches KMS.

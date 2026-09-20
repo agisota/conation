@@ -7,7 +7,7 @@ import {
 import type { FieldFilters } from '@app/features/next-soup/filters/filter-store/types';
 import { soupItemMatchesQuery } from '@app/features/next-soup/filters/query-filters';
 import { openEntityInSplitFromUnifiedList } from '@app/features/next-soup/utils';
-import { t } from '@app/lib/i18n';
+import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import { ListEntityMetadataQueryProvider } from '@entity';
 import { CollapsibleList } from '@entity/components/CollapsibleList';
 import { ListEntity, ListLayoutProvider } from '@entity/composed/ListEntity';
@@ -119,11 +119,16 @@ const GROUP_BY_BY_NAME: Record<
  * `email` included.
  */
 function Row(props: { entity: EntityData }) {
+  const notificationSource = useGlobalNotificationSource();
   return (
     <ListEntity
       entity={props.entity as WithNotification<EntityData>}
       hideCheckbox
-      onClick={() => openEntityInSplitFromUnifiedList(props.entity, {})}
+      onClick={() =>
+        openEntityInSplitFromUnifiedList(props.entity, {
+          notificationSource,
+        })
+      }
     />
   );
 }
@@ -170,7 +175,7 @@ function Rows(props: {
       when={entities().length > 0}
       fallback={
         <div class={cn('px-3 py-6 text-center text-sm', TEXT.tertiary)}>
-          {t('dynamicUi.widgets.list.empty')}
+          No items.
         </div>
       }
     >
@@ -221,7 +226,7 @@ export function List(props: ListProps) {
             <Suspense
               fallback={
                 <div class={cn('px-3 py-6 text-center text-sm', TEXT.tertiary)}>
-                  {t('common.loading')}
+                  Loading…
                 </div>
               }
             >

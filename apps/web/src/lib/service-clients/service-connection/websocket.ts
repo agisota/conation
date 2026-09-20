@@ -1,3 +1,7 @@
+import { createBlockEffect, inBlock } from '@core/block';
+import { ENABLE_BEARER_TOKEN_AUTH } from '@core/constant/featureFlags';
+import { SERVER_HOSTS } from '@core/constant/servers';
+import { fetchToken } from '@core/util/fetchWithToken';
 import {
   ArrayQueue,
   createSocketEffect,
@@ -5,13 +9,9 @@ import {
   LinearBackoff,
   type Websocket,
   WebsocketBuilder,
-} from '@conation/collaboration/websocket';
-import { createWebsocketStateSignal } from '@conation/collaboration/websocket/solid/state-signal';
-import { createBlockEffect, inBlock } from '@core/block';
-import { ENABLE_BEARER_TOKEN_AUTH } from '@core/constant/featureFlags';
-import { SERVER_HOSTS } from '@core/constant/servers';
-import { fetchToken } from '@core/util/fetchWithToken';
-import { getConationApiToken } from '@service-auth/fetch';
+} from '@macro-inc/collaboration/websocket';
+import { createWebsocketStateSignal } from '@macro-inc/collaboration/websocket/solid/state-signal';
+import { getMacroApiToken } from '@service-auth/fetch';
 import { createCallback } from '@solid-primitives/rootless';
 import type { ToWebsocketMessage } from './generated/schemas/toWebsocketMessage';
 
@@ -31,14 +31,10 @@ export type FromWebsocketMessage = {
 
 async function resolveWsUrl() {
   if (ENABLE_BEARER_TOKEN_AUTH) {
-    try {
-      const apiToken = await getConationApiToken();
-      if (!apiToken) return wsHost;
-      return `${wsHost}/?conation-api-token=${apiToken}`;
-    } catch {
-      // Login / logged-out pages must still render if JWT mint 401s.
-      return wsHost;
-    }
+    const apiToken = await getMacroApiToken();
+    if (!apiToken) throw new Error('No Macro API token');
+
+    return `${wsHost}?macro-api-token=${apiToken}`;
   }
   await fetchToken();
   return wsHost;

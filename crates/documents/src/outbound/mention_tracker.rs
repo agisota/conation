@@ -1,13 +1,13 @@
 //! Outbound adapter for recording the mentions embedded in document content.
 
 use lexical_client::LexicalClient;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 use std::sync::Arc;
 
 use crate::domain::ports::mentions::DocumentMentionTrackingPort;
 
-/// Mention tracker backed by lexical-service and Conation DB.
+/// Mention tracker backed by lexical-service and MacroDB.
 #[derive(Clone)]
 pub struct LexicalCommsMentionTracker {
     db: PgPool,

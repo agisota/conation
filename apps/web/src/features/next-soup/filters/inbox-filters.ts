@@ -98,6 +98,7 @@ export function signalFilter(entity: EntityData): boolean {
   switch (entity.type) {
     case 'channel':
       return true;
+    case 'agent_session':
     case 'chat':
       return true;
     case 'document':

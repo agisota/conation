@@ -2,7 +2,6 @@ import { DEFAULT_ROUTE } from '@app/constants/defaultRoute';
 import { ShareInboxConflictDialog } from '@app/features/inbox/ShareInboxConflictDialog';
 import { useOnboardingV4Flag } from '@app/features/setup/flow/useOnboardingV4Flag';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
-import { t } from '@app/lib/i18n';
 import { updateUserAuth } from '@core/auth';
 import { redirectToEmailAuth } from '@core/auth/email';
 import { publishLoginSuccess } from '@core/auth/login-events';
@@ -87,8 +86,8 @@ function EmailSignupCallback(props: Pick<EmailAuthParams, 'successPath'>) {
           onSuccess();
           return;
         }
-        toast.alert(t('auth.emailConnect.failed'), {
-          subtext: t('auth.emailConnect.permissionHint'),
+        toast.alert('Failed to connect email', {
+          subtext: 'Select email permissions on sign-in to enable',
         });
         navigateToSuccess();
       });
@@ -186,7 +185,7 @@ function EmailLinkCallback(props: Pick<EmailAuthParams, 'successPath'>) {
         // callback so the inbox panel shows it immediately on return rather
         // than flashing a stale list until its own refetch lands.
         await query.refetch();
-        toast.success(t('auth.emailConnect.inboxConnected'));
+        toast.success('Account connected');
         navigateAfterLink(linkId);
       },
       async (err) => {
@@ -206,11 +205,13 @@ function EmailLinkCallback(props: Pick<EmailAuthParams, 'successPath'>) {
           return;
         }
         if (err.tag === 'NoGmailGrant') {
-          toast.failure(t('auth.emailConnect.gmailGrantRequired'));
+          toast.failure(
+            'Gmail access was not granted. Please allow all requested permissions and try again.'
+          );
           navigateAfterLink(linkId);
           return;
         }
-        toast.failure(t('auth.emailConnect.addInboxFailed'));
+        toast.failure('Failed to add inbox');
         navigateAfterLink(linkId);
       }
     );
@@ -222,7 +223,7 @@ function EmailLinkCallback(props: Pick<EmailAuthParams, 'successPath'>) {
       const linkId =
         typeof searchParams.link_id === 'string' ? searchParams.link_id : null;
       if (!linkId) {
-        toast.failure(t('auth.emailConnect.missingLinkId'));
+        toast.failure('Missing link id in callback URL');
         navigateToSuccess();
         return;
       }

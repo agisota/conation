@@ -6,54 +6,57 @@
 //! projection is read-your-writes fresh and the next incremental sync
 //! no-ops on the idempotency short-circuit.
 
+use std::collections::HashMap;
+
 use chrono::Utc;
 use uuid::Uuid;
 
 use super::{
     models::{
         ActorInboxes, AttendeeResponseStatus, CalendarAttendee, CalendarAttendeeInput,
-        CalendarEvent, CalendarEventDraft, CalendarEventMutationTarget, CalendarEventPatch,
-        CalendarEventSource, CalendarEventUpsert, CalendarOccurrence, ConferenceChange,
-        ConferenceProvider, DisconnectedGoogleCalendar, EventReminderOverride, EventReminders,
-        EventStatus, EventTime, EventTransparency, EventType, EventVisibility, GoogleEventSource,
-        OccurrenceRange, REMINDER_METHOD_EMAIL, REMINDER_METHOD_POPUP, REMINDER_MINUTES_MAX,
-        REMINDER_OVERRIDES_MAX,
+        CalendarCreationTarget, CalendarEvent, CalendarEventDraft, CalendarEventMutationTarget,
+        CalendarEventPatch, CalendarEventUpsert, DisconnectedGoogleCalendar, EventReminders,
+        EventTime, OccurrenceRange, REMINDER_METHOD_EMAIL, REMINDER_METHOD_POPUP,
+        REMINDER_MINUTES_MAX, REMINDER_OVERRIDES_MAX,
     },
     ports::{
         CalendarAccessTokenProvider, CalendarDeletionScope, CalendarEventChange,
         CalendarEventWrite, CalendarEventWriteOutcome, CalendarMutationError,
-        CalendarMutationService, CalendarRepository, CalendarRsvpScope, CalendarTokenError,
-        CalendarUpdateScope, GoogleCalendarMutationProvider, GoogleInstanceUpdateOutcome,
-        GoogleProviderError, GoogleProviderErrorKind, GoogleRsvpOutcome,
-        GoogleSeriesMutationOutcome, RetiredCalendarEvent,
+        CalendarMutationService, CalendarRefreshNotifier, CalendarRepository, CalendarRsvpScope,
+        CalendarTokenError, CalendarUpdateScope, GoogleCalendarMutationProvider,
+        GoogleInstanceUpdateOutcome, GoogleProviderError, GoogleProviderErrorKind,
+        GoogleRsvpOutcome, GoogleSeriesMutationOutcome, RetiredCalendarEvent,
     },
 };
 use crate::domain::events::{CalendarEventMetadata, CalendarMacroEvent, CalendarTopicEvent};
-use conation_event_broker::MacroEventBroker;
+use macro_event_broker::MacroEventBroker;
 
 /// Calendar mutation use cases with provider, token, and persistence
 /// details behind ports.
-pub struct CalendarMutationServiceImpl<R, G, T, B> {
+pub struct CalendarMutationServiceImpl<R, G, T, B, N> {
     repository: R,
     provider: G,
     tokens: T,
-    conation_event_broker: B,
+    macro_event_broker: B,
+    refresh: N,
 }
 
-impl<R, G, T, B> CalendarMutationServiceImpl<R, G, T, B>
+impl<R, G, T, B, N> CalendarMutationServiceImpl<R, G, T, B, N>
 where
     R: CalendarRepository,
     G: GoogleCalendarMutationProvider,
     T: CalendarAccessTokenProvider,
     B: MacroEventBroker,
+    N: CalendarRefreshNotifier,
 {
     /// Construct the service from its ports.
-    pub fn new(repository: R, provider: G, tokens: T, conation_event_broker: B) -> Self {
+    pub fn new(repository: R, provider: G, tokens: T, macro_event_broker: B, refresh: N) -> Self {
         Self {
             repository,
             provider,
             tokens,
-            conation_event_broker,
+            macro_event_broker,
+            refresh,
         }
     }
 
@@ -63,7 +66,7 @@ where
     /// point, so a publish failure must not fail the mutation.
     fn publish_calendar_event(&self, event: CalendarTopicEvent) {
         let _ = self
-            .conation_event_broker
+            .macro_event_broker
             .send_event(&CalendarMacroEvent::for_change(event))
             .inspect_err(|error| {
                 tracing::error!(error=?error, "failed to publish calendar event");
@@ -88,6 +91,21 @@ where
         }
     }
 
+    /// Announce retired events and, when anything was actually retired, nudge
+    /// the link's calendar viewers to refetch their projections.
+    async fn announce_retirements(
+        &self,
+        owner_id: &str,
+        email_link_id: Uuid,
+        retired: Vec<RetiredCalendarEvent>,
+    ) {
+        if retired.is_empty() {
+            return;
+        }
+        self.publish_retirements(retired);
+        self.refresh.calendar_changed(owner_id, email_link_id).await;
+    }
+
     /// Announce what a write did to the canonical row. A write that changed
     /// nothing publishes nothing, so an idempotent replay stays quiet.
     fn publish_write_outcome(&self, outcome: &CalendarEventWriteOutcome) {
@@ -110,9 +128,10 @@ where
         &self,
         requester_id: &str,
         event_id: Uuid,
+        calendar_id: Option<Uuid>,
     ) -> Result<CalendarEventMutationTarget, CalendarMutationError> {
         self.repository
-            .get_event_mutation_target(requester_id, event_id)
+            .get_event_mutation_target(requester_id, event_id, calendar_id)
             .await
             .map_err(internal)?
             .ok_or(CalendarMutationError::NotFound)
@@ -140,7 +159,39 @@ where
         viewer: Option<&ActorInboxes>,
         upsert: CalendarEventUpsert,
     ) -> Result<CalendarEvent, CalendarMutationError> {
+        let event = upsert.event.clone();
+        self.persist_echo_as(viewer, upsert, event).await
+    }
+
+    /// Persist the provider echo of an occurrence-scoped write and return the
+    /// event as that occurrence reads: the series master is what gets stored,
+    /// but the caller changed one instance, so the exception's content,
+    /// time, and attendees overlay the canonical event in the response.
+    async fn persist_occurrence_echo(
+        &self,
+        viewer: Option<&ActorInboxes>,
+        upsert: CalendarEventUpsert,
+        recurrence_id: &str,
+    ) -> Result<CalendarEvent, CalendarMutationError> {
         let mut event = upsert.event.clone();
+        if let Some(exception) = upsert
+            .overrides
+            .iter()
+            .find(|exception| exception.recurrence_id == recurrence_id)
+        {
+            exception.apply_to(&mut event);
+        }
+        self.persist_echo_as(viewer, upsert, event).await
+    }
+
+    async fn persist_echo_as(
+        &self,
+        viewer: Option<&ActorInboxes>,
+        upsert: CalendarEventUpsert,
+        mut event: CalendarEvent,
+    ) -> Result<CalendarEvent, CalendarMutationError> {
+        let super::models::CalendarEventSource::Google(source) = &upsert.source;
+        let email_link_id = source.email_link_id;
         let outcome = self
             .repository
             .upsert_event(CalendarEventWrite::UserMutation(upsert))
@@ -148,54 +199,25 @@ where
             .map_err(|error| CalendarMutationError::PersistFailed(format!("{error:?}")))?;
         event.id = outcome.event_id;
         self.publish_write_outcome(&outcome);
+        if outcome.change != CalendarEventChange::Unchanged {
+            self.refresh
+                .calendar_changed(&outcome.owner_id, email_link_id)
+                .await;
+        }
         if let Some(viewer) = viewer {
             viewer.mark_attendees(&mut event.attendees);
         }
         Ok(event)
     }
-
-    async fn respond_to_stalwart_event(
-        &self,
-        target: &CalendarEventMutationTarget,
-        actor: &ActorInboxes,
-        response: AttendeeResponseStatus,
-    ) -> Result<CalendarEvent, CalendarMutationError> {
-        let emails: Vec<&str> = actor.iter().collect();
-        let pulled = match email_provider::StalwartProvider::from_env() {
-            Ok(stalwart) => match stalwart
-                .rsvp_calendar_event(
-                    &target.token_identity.email_address,
-                    target.master_provider_event_id(),
-                    &emails,
-                    jmap_participation_status(response),
-                )
-                .await
-            {
-                Ok(event) => Some(event),
-                Err(email_provider::ProviderError::NotFound(_)) => {
-                    return Err(CalendarMutationError::NotAttendee);
-                }
-                Err(error) => {
-                    return Err(CalendarMutationError::ProviderRejected(error.to_string()));
-                }
-            },
-            Err(_) => None,
-        };
-        let creation = creation_from_mutation_target(target);
-        let upsert = match pulled {
-            Some(event) => stalwart_upsert_from_remote(&creation, &event),
-            None => stalwart_upsert_from_rsvp(target, actor, response),
-        };
-        self.persist_echo(Some(actor), upsert).await
-    }
 }
 
-impl<R, G, T, B> CalendarMutationService for CalendarMutationServiceImpl<R, G, T, B>
+impl<R, G, T, B, N> CalendarMutationService for CalendarMutationServiceImpl<R, G, T, B, N>
 where
     R: CalendarRepository,
     G: GoogleCalendarMutationProvider,
     T: CalendarAccessTokenProvider,
     B: MacroEventBroker,
+    N: CalendarRefreshNotifier,
 {
     #[tracing::instrument(skip(self, requester_id, draft), err)]
     async fn create_event(
@@ -219,20 +241,12 @@ where
         if target.is_read_only {
             return Err(CalendarMutationError::ReadOnly);
         }
-        ensure_organizer_attendee(&mut draft.attendees, &target.token_identity.email_address);
-        if !target.token_identity.provider.eq_ignore_ascii_case("GMAIL") {
-            let mut provider_event_id = Uuid::now_v7().to_string();
-            if let Ok(stalwart) = email_provider::StalwartProvider::from_env() {
-                let write = stalwart_write_from_draft(&draft);
-                if let Ok(id) = stalwart
-                    .create_calendar_event(&target.token_identity.email_address, &write)
-                    .await
-                {
-                    provider_event_id = id;
-                }
-            }
-            let upsert = stalwart_upsert_from_draft(&target, &draft, provider_event_id);
-            return self.persist_echo(target.actor.as_ref(), upsert).await;
+        // An out-of-office event carries no attendees and Google auto-declines
+        // on the owner's behalf, so it must not gain an organizer guest.
+        if draft.out_of_office.is_some() {
+            validate_out_of_office_create(&draft, &target)?;
+        } else {
+            ensure_organizer_attendee(&mut draft.attendees, &target.token_identity.email_address);
         }
         let access_token = self.fetch_token(&target.token_identity).await?;
         let upsert = self
@@ -252,7 +266,8 @@ where
         &self,
         requester_id: &str,
         event_id: Uuid,
-        patch: CalendarEventPatch,
+        calendar_id: Option<Uuid>,
+        mut patch: CalendarEventPatch,
         scope: CalendarUpdateScope,
     ) -> Result<CalendarEvent, CalendarMutationError> {
         if patch.is_empty() {
@@ -278,56 +293,31 @@ where
                     .to_string(),
             ));
         }
-        let target = self.resolve_mutation_target(requester_id, event_id).await?;
+        let target = self
+            .resolve_mutation_target(requester_id, event_id, calendar_id)
+            .await?;
         if target.is_read_only {
             return Err(CalendarMutationError::ReadOnly);
         }
-        if !target.token_identity.provider.eq_ignore_ascii_case("GMAIL") {
-            let title = patch.title.clone().ok_or_else(|| {
-                CalendarMutationError::InvalidInput(
-                    "a Stalwart calendar update needs a title".to_string(),
-                )
-            })?;
-            let time = patch.time.clone().ok_or_else(|| {
-                CalendarMutationError::InvalidInput(
-                    "a Stalwart calendar update needs a time".to_string(),
-                )
-            })?;
-            let draft = CalendarEventDraft {
-                title,
-                description: patch.description.clone(),
-                location: patch.location.clone(),
-                time,
-                attendees: patch.attendees.clone().unwrap_or_default(),
-                recurrence_lines: patch.recurrence_lines.clone().unwrap_or_default(),
-                visibility: patch.visibility,
-                transparency: patch.transparency,
-                reminders: patch.reminders.clone(),
-                conference: patch.conference,
-            };
-            let creation = crate::domain::models::CalendarCreationTarget {
-                owner_id: target.owner_id.clone(),
-                email_link_id: target.email_link_id,
-                account_id: target.account_id,
-                calendar_id: target.calendar_id,
-                provider_calendar_id: target.provider_calendar_id.clone(),
-                is_read_only: target.is_read_only,
-                token_identity: target.token_identity.clone(),
-                actor: target.actor.clone(),
-            };
-            if let Ok(stalwart) = email_provider::StalwartProvider::from_env() {
-                let write = stalwart_write_from_draft(&draft);
-                let _ = stalwart
-                    .update_calendar_event(
-                        &target.token_identity.email_address,
-                        &target.provider_event_id,
-                        &write,
-                    )
-                    .await;
+        if let Some(attendees) = patch.attendees.as_mut() {
+            // The series attendees are the baseline; an occurrence-scoped patch
+            // overlays that occurrence's overrides on top, so a retained guest's
+            // per-instance RSVP wins over their series status.
+            let mut stored = self
+                .repository
+                .get_event_attendees(event_id)
+                .await
+                .map_err(internal)?;
+            if let CalendarUpdateScope::ThisEvent { recurrence_id } = &scope
+                && let Some(overrides) = self
+                    .repository
+                    .get_occurrence_override_attendees(event_id, recurrence_id)
+                    .await
+                    .map_err(internal)?
+            {
+                stored.extend(overrides);
             }
-            let upsert =
-                stalwart_upsert_from_draft(&creation, &draft, target.provider_event_id.clone());
-            return self.persist_echo(target.actor.as_ref(), upsert).await;
+            preserve_retained_attendee_state(attendees, &stored);
         }
         let access_token = self.fetch_token(&target.token_identity).await?;
         let google_target = target.google_target(OccurrenceRange::maintenance_horizon(Utc::now()));
@@ -365,7 +355,8 @@ where
                     .map_err(provider_error)?;
                 match outcome {
                     GoogleInstanceUpdateOutcome::Applied(upsert) => {
-                        self.persist_echo(target.actor.as_ref(), *upsert).await
+                        self.persist_occurrence_echo(target.actor.as_ref(), *upsert, &recurrence_id)
+                            .await
                     }
                     GoogleInstanceUpdateOutcome::OccurrenceGone(upsert) => {
                         // Nothing was written, but the provider's view of the
@@ -397,32 +388,14 @@ where
         &self,
         requester_id: &str,
         event_id: Uuid,
+        calendar_id: Option<Uuid>,
         scope: CalendarDeletionScope,
     ) -> Result<(), CalendarMutationError> {
-        let target = self.resolve_mutation_target(requester_id, event_id).await?;
+        let target = self
+            .resolve_mutation_target(requester_id, event_id, calendar_id)
+            .await?;
         if target.is_read_only {
             return Err(CalendarMutationError::ReadOnly);
-        }
-        if !target.token_identity.provider.eq_ignore_ascii_case("GMAIL") {
-            if let Ok(stalwart) = email_provider::StalwartProvider::from_env() {
-                let _ = stalwart
-                    .delete_calendar_event(
-                        &target.token_identity.email_address,
-                        target.master_provider_event_id(),
-                    )
-                    .await;
-            }
-            let retired = self
-                .repository
-                .remove_google_source(
-                    target.account_id,
-                    target.calendar_id,
-                    target.master_provider_event_id(),
-                )
-                .await
-                .map_err(|error| CalendarMutationError::PersistFailed(format!("{error:?}")))?;
-            self.publish_retirements(retired);
-            return Ok(());
         }
         let access_token = self.fetch_token(&target.token_identity).await?;
         let google_target = target.google_target(OccurrenceRange::maintenance_horizon(Utc::now()));
@@ -479,7 +452,8 @@ where
                     )
                     .await
                     .map_err(|error| CalendarMutationError::PersistFailed(format!("{error:?}")))?;
-                self.publish_retirements(retired);
+                self.announce_retirements(&target.owner_id, target.email_link_id, retired)
+                    .await;
                 Ok(())
             }
         }
@@ -490,21 +464,19 @@ where
         &self,
         requester_id: &str,
         event_id: Uuid,
+        calendar_id: Option<Uuid>,
         response: AttendeeResponseStatus,
         scope: CalendarRsvpScope,
     ) -> Result<CalendarEvent, CalendarMutationError> {
-        let target = self.resolve_mutation_target(requester_id, event_id).await?;
+        let target = self
+            .resolve_mutation_target(requester_id, event_id, calendar_id)
+            .await?;
         if target.is_read_only {
             return Err(CalendarMutationError::ReadOnly);
         }
         let Some(actor) = target.actor.as_ref() else {
             return Err(CalendarMutationError::NotAttendee);
         };
-        if !target.token_identity.provider.eq_ignore_ascii_case("GMAIL") {
-            return self
-                .respond_to_stalwart_event(&target, actor, response)
-                .await;
-        }
         let access_token = self.fetch_token(&target.token_identity).await?;
         let outcome = self
             .provider
@@ -519,9 +491,13 @@ where
             .await
             .map_err(provider_error)?;
         match outcome {
-            GoogleRsvpOutcome::Applied(upsert) => {
-                self.persist_echo(target.actor.as_ref(), *upsert).await
-            }
+            GoogleRsvpOutcome::Applied(upsert) => match &scope {
+                CalendarRsvpScope::All => self.persist_echo(target.actor.as_ref(), *upsert).await,
+                CalendarRsvpScope::ThisEvent { recurrence_id } => {
+                    self.persist_occurrence_echo(target.actor.as_ref(), *upsert, recurrence_id)
+                        .await
+                }
+            },
             GoogleRsvpOutcome::NotAttendee => Err(CalendarMutationError::NotAttendee),
             GoogleRsvpOutcome::Gone => {
                 self.retire_gone_source(&target).await;
@@ -555,16 +531,22 @@ where
             .ok_or(CalendarMutationError::NotFound)?;
         self.release_watch_channels(email_link_id, &disconnected)
             .await;
+        // The purge removed whole calendars, and no sync echo will ever
+        // arrive for a disconnected link, so viewers have to be nudged here.
+        self.refresh
+            .calendar_changed(requester_id, email_link_id)
+            .await;
         Ok(())
     }
 }
 
-impl<R, G, T, B> CalendarMutationServiceImpl<R, G, T, B>
+impl<R, G, T, B, N> CalendarMutationServiceImpl<R, G, T, B, N>
 where
     R: CalendarRepository,
     G: GoogleCalendarMutationProvider,
     T: CalendarAccessTokenProvider,
     B: MacroEventBroker,
+    N: CalendarRefreshNotifier,
 {
     /// Close the push channels a disconnected calendar left open. Best-effort:
     /// the local calendars are already gone, so a notification that still
@@ -635,7 +617,8 @@ where
             .unwrap_or_default();
         // The row may be gone now, so search cannot rediscover this by
         // re-reading Postgres — the retirement has to be announced.
-        self.publish_retirements(retired);
+        self.announce_retirements(&target.owner_id, target.email_link_id, retired)
+            .await;
     }
 }
 
@@ -643,6 +626,42 @@ fn validate_time(time: &EventTime) -> Result<(), CalendarMutationError> {
     if !time.is_valid() {
         return Err(CalendarMutationError::InvalidInput(
             "event end must be after its start".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+/// Enforce Google's rules for creating an out-of-office event so the provider
+/// never rejects a write we already accepted: primary calendar only, a timed
+/// span rather than whole days, and no attendees, conference, or description.
+fn validate_out_of_office_create(
+    draft: &CalendarEventDraft,
+    target: &CalendarCreationTarget,
+) -> Result<(), CalendarMutationError> {
+    if !target.is_primary {
+        return Err(CalendarMutationError::InvalidInput(
+            "out-of-office events can only be created on your primary calendar".to_string(),
+        ));
+    }
+    if !matches!(draft.time, EventTime::Timed { .. }) {
+        return Err(CalendarMutationError::InvalidInput(
+            "out-of-office events must have specific start and end times, not span whole days"
+                .to_string(),
+        ));
+    }
+    if !draft.attendees.is_empty() {
+        return Err(CalendarMutationError::InvalidInput(
+            "out-of-office events cannot have attendees".to_string(),
+        ));
+    }
+    if draft.conference.is_some() {
+        return Err(CalendarMutationError::InvalidInput(
+            "out-of-office events cannot have a video conference".to_string(),
+        ));
+    }
+    if draft.description.as_deref().is_some_and(|d| !d.is_empty()) {
+        return Err(CalendarMutationError::InvalidInput(
+            "out-of-office events cannot have a description".to_string(),
         ));
     }
     Ok(())
@@ -704,6 +723,36 @@ fn ensure_organizer_attendee(attendees: &mut Vec<CalendarAttendeeInput>, organiz
     );
 }
 
+/// Carries each retained attendee's stored RSVP and optional flag forward
+/// into a replacement attendee list. A patch replaces the whole list, and
+/// Google reads an attendee whose `responseStatus` is omitted as
+/// `needs_action` — so without this, adding or dropping one guest would reset
+/// everyone else's RSVP and clear their optional flag. The caller's own values
+/// still win when supplied (a set `response_status`, an explicit `optional`).
+///
+/// `stored` is matched by email, later entries winning — so an occurrence's
+/// override attendees, appended after the series attendees, take precedence.
+fn preserve_retained_attendee_state(
+    attendees: &mut [CalendarAttendeeInput],
+    stored: &[CalendarAttendee],
+) {
+    let mut by_email: HashMap<String, &CalendarAttendee> = HashMap::new();
+    for attendee in stored {
+        by_email.insert(attendee.email.to_lowercase(), attendee);
+    }
+    for attendee in attendees.iter_mut() {
+        let Some(existing) = by_email.get(&attendee.email.to_lowercase()) else {
+            continue;
+        };
+        if attendee.response_status.is_none() {
+            attendee.response_status = Some(existing.response_status);
+        }
+        if !attendee.is_optional {
+            attendee.is_optional = existing.is_optional;
+        }
+    }
+}
+
 fn validate_attendee_emails<'a>(
     emails: impl Iterator<Item = &'a String>,
 ) -> Result<(), CalendarMutationError> {
@@ -734,400 +783,6 @@ fn provider_error(error: GoogleProviderError) -> CalendarMutationError {
 
 fn internal(error: rootcause::Report) -> CalendarMutationError {
     CalendarMutationError::Retryable(format!("{error:?}"))
-}
-
-fn stalwart_upsert_from_draft(
-    target: &crate::domain::models::CalendarCreationTarget,
-    draft: &CalendarEventDraft,
-    provider_event_id: String,
-) -> CalendarEventUpsert {
-    let event_id = Uuid::now_v7();
-    let attendees = draft
-        .attendees
-        .iter()
-        .map(|attendee| CalendarAttendee {
-            email: attendee.email.clone(),
-            display_name: None,
-            response_status: attendee
-                .response_status
-                .unwrap_or(AttendeeResponseStatus::NeedsAction),
-            is_organizer: attendee
-                .email
-                .eq_ignore_ascii_case(&target.token_identity.email_address),
-            is_optional: attendee.is_optional,
-            is_self: attendee
-                .email
-                .eq_ignore_ascii_case(&target.token_identity.email_address),
-            comment: None,
-        })
-        .collect();
-    let conference_url = conference_url_from_draft(draft);
-    let conference_provider = conference_provider_from_url(conference_url.as_deref());
-    CalendarEventUpsert {
-        event: CalendarEvent {
-            id: event_id,
-            owner_id: target.owner_id.clone(),
-            ical_uid: format!("{event_id}@conation.dev"),
-            calendar_id: Some(target.calendar_id),
-            title: draft.title.clone(),
-            description: draft.description.clone(),
-            location: draft.location.clone(),
-            status: EventStatus::Confirmed,
-            visibility: draft.visibility.unwrap_or(EventVisibility::Default),
-            transparency: draft.transparency.unwrap_or(EventTransparency::Opaque),
-            event_type: EventType::Default,
-            time: draft.time.clone(),
-            recurrence_lines: draft.recurrence_lines.clone(),
-            organizer_email: Some(target.token_identity.email_address.clone()),
-            organizer_name: None,
-            creator_email: Some(target.token_identity.email_address.clone()),
-            creator_name: None,
-            conference_url,
-            conference_provider,
-            sequence: 0,
-            is_read_only: false,
-            attendees,
-            reminders: draft.reminders.clone().unwrap_or_default(),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        },
-        source: CalendarEventSource::Google(GoogleEventSource {
-            email_link_id: target.email_link_id,
-            account_id: target.account_id,
-            calendar_id: target.calendar_id,
-            provider_event_id,
-            provider_recurring_event_id: None,
-            provider_etag: None,
-            raw_payload: serde_json::json!({ "provider": "stalwart" }),
-        }),
-        overrides: Vec::new(),
-        occurrences: vec![CalendarOccurrence {
-            event_id,
-            occurrence_key: "main".to_string(),
-            recurrence_id: None,
-            time: draft.time.clone(),
-            is_cancelled: false,
-        }],
-    }
-}
-
-fn stalwart_write_from_draft(
-    draft: &CalendarEventDraft,
-) -> email_provider::StalwartCalendarEventWrite {
-    let write = match &draft.time {
-        EventTime::Timed {
-            starts_at, ends_at, ..
-        } => email_provider::StalwartCalendarEventWrite::timed(
-            draft.title.clone(),
-            *starts_at,
-            (*ends_at - *starts_at).num_seconds(),
-            &draft.recurrence_lines,
-        ),
-        EventTime::AllDay {
-            start_date,
-            end_date,
-        } => email_provider::StalwartCalendarEventWrite::all_day(
-            draft.title.clone(),
-            *start_date,
-            *end_date,
-            &draft.recurrence_lines,
-        ),
-    };
-    write
-        .with_alerts(stalwart_alerts_from_reminders(draft.reminders.as_ref()))
-        .with_conference_url(conference_url_write_from_draft(draft))
-        .with_location(location_write_from_draft(draft))
-        .with_free(free_write_from_draft(draft))
-        .with_description(draft.description.clone())
-}
-
-fn free_write_from_draft(draft: &CalendarEventDraft) -> Option<bool> {
-    draft
-        .transparency
-        .map(|transparency| matches!(transparency, EventTransparency::Transparent))
-}
-
-fn conference_url_from_draft(draft: &CalendarEventDraft) -> Option<String> {
-    if draft.conference == Some(ConferenceChange::Removed) {
-        return None;
-    }
-    http_join_url(draft.location.as_deref())
-}
-
-fn conference_url_write_from_draft(draft: &CalendarEventDraft) -> Option<String> {
-    if draft.conference == Some(ConferenceChange::Removed) {
-        return Some(String::new());
-    }
-    http_join_url(draft.location.as_deref())
-}
-
-fn location_write_from_draft(draft: &CalendarEventDraft) -> Option<String> {
-    let location = draft.location.as_deref()?.trim();
-    if location.is_empty() {
-        return Some(String::new());
-    }
-    if http_join_url(Some(location)).is_some() {
-        return None;
-    }
-    Some(location.to_owned())
-}
-
-fn http_join_url(value: Option<&str>) -> Option<String> {
-    let trimmed = value?.trim();
-    if trimmed.starts_with("https://") || trimmed.starts_with("http://") {
-        Some(trimmed.to_owned())
-    } else {
-        None
-    }
-}
-
-fn conference_provider_from_url(url: Option<&str>) -> Option<ConferenceProvider> {
-    let url = url?;
-    Some(if url.contains("meet.google.com") {
-        ConferenceProvider::GoogleMeet
-    } else {
-        ConferenceProvider::Other
-    })
-}
-
-fn stalwart_alerts_from_reminders(
-    reminders: Option<&EventReminders>,
-) -> Option<Vec<email_provider::StalwartCalendarAlert>> {
-    let reminders = reminders?;
-    if reminders.use_default {
-        return None;
-    }
-    Some(
-        reminders
-            .overrides
-            .iter()
-            .map(|reminder| email_provider::StalwartCalendarAlert {
-                method: reminder.method.clone(),
-                minutes: reminder.minutes,
-            })
-            .collect(),
-    )
-}
-
-fn reminders_from_stalwart_alerts(
-    alerts: &Option<Vec<email_provider::StalwartCalendarAlert>>,
-) -> EventReminders {
-    match alerts {
-        None => EventReminders::default(),
-        Some(alerts) => EventReminders {
-            use_default: false,
-            overrides: alerts
-                .iter()
-                .map(|alert| EventReminderOverride {
-                    method: alert.method.clone(),
-                    minutes: alert.minutes,
-                })
-                .collect(),
-        },
-    }
-}
-
-pub(crate) fn jmap_participation_status(status: AttendeeResponseStatus) -> &'static str {
-    match status {
-        AttendeeResponseStatus::NeedsAction => "needs-action",
-        AttendeeResponseStatus::Accepted => "accepted",
-        AttendeeResponseStatus::Declined => "declined",
-        AttendeeResponseStatus::Tentative => "tentative",
-    }
-}
-
-fn attendee_status_from_jmap(status: &str) -> AttendeeResponseStatus {
-    match status {
-        "accepted" => AttendeeResponseStatus::Accepted,
-        "declined" => AttendeeResponseStatus::Declined,
-        "tentative" => AttendeeResponseStatus::Tentative,
-        _ => AttendeeResponseStatus::NeedsAction,
-    }
-}
-
-fn event_status_from_jmap(status: Option<&str>) -> EventStatus {
-    match status {
-        Some("cancelled") => EventStatus::Cancelled,
-        Some("tentative") => EventStatus::Tentative,
-        _ => EventStatus::Confirmed,
-    }
-}
-
-fn creation_from_mutation_target(
-    target: &CalendarEventMutationTarget,
-) -> crate::domain::models::CalendarCreationTarget {
-    crate::domain::models::CalendarCreationTarget {
-        owner_id: target.owner_id.clone(),
-        email_link_id: target.email_link_id,
-        account_id: target.account_id,
-        calendar_id: target.calendar_id,
-        provider_calendar_id: target.provider_calendar_id.clone(),
-        is_read_only: target.is_read_only,
-        token_identity: target.token_identity.clone(),
-        actor: target.actor.clone(),
-    }
-}
-
-pub(crate) fn stalwart_upsert_from_remote(
-    target: &crate::domain::models::CalendarCreationTarget,
-    remote: &email_provider::StalwartCalendarEvent,
-) -> CalendarEventUpsert {
-    let event_id = Uuid::now_v7();
-    let time = if remote.show_without_time {
-        let start_date = remote.start.date_naive();
-        let days = (remote.duration_secs / 86_400).max(1);
-        EventTime::AllDay {
-            start_date,
-            end_date: start_date + chrono::Duration::days(days),
-        }
-    } else {
-        EventTime::Timed {
-            starts_at: remote.start,
-            ends_at: remote.start + chrono::Duration::seconds(remote.duration_secs.max(60)),
-            time_zone: remote.time_zone.clone(),
-        }
-    };
-    let attendees = remote
-        .participants
-        .iter()
-        .map(|participant| CalendarAttendee {
-            email: participant.email.clone(),
-            display_name: participant.name.clone(),
-            response_status: attendee_status_from_jmap(&participant.participation_status),
-            is_organizer: participant
-                .email
-                .eq_ignore_ascii_case(&target.token_identity.email_address),
-            is_optional: participant.is_optional,
-            is_self: participant
-                .email
-                .eq_ignore_ascii_case(&target.token_identity.email_address),
-            comment: None,
-        })
-        .collect();
-    CalendarEventUpsert {
-        event: CalendarEvent {
-            id: event_id,
-            owner_id: target.owner_id.clone(),
-            ical_uid: remote
-                .uid
-                .clone()
-                .unwrap_or_else(|| format!("{event_id}@conation.dev")),
-            calendar_id: Some(target.calendar_id),
-            title: remote.title.clone(),
-            description: remote.description.clone(),
-            location: remote.location.clone(),
-            status: event_status_from_jmap(remote.status.as_deref()),
-            visibility: EventVisibility::Default,
-            transparency: if remote.free {
-                EventTransparency::Transparent
-            } else {
-                EventTransparency::Opaque
-            },
-            event_type: EventType::Default,
-            time: time.clone(),
-            recurrence_lines: remote.recurrence_lines.clone(),
-            organizer_email: Some(target.token_identity.email_address.clone()),
-            organizer_name: None,
-            creator_email: Some(target.token_identity.email_address.clone()),
-            creator_name: None,
-            conference_url: remote.conference_url.clone(),
-            conference_provider: conference_provider_from_url(remote.conference_url.as_deref()),
-            sequence: 0,
-            is_read_only: false,
-            attendees,
-            reminders: reminders_from_stalwart_alerts(&remote.alerts),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        },
-        source: CalendarEventSource::Google(GoogleEventSource {
-            email_link_id: target.email_link_id,
-            account_id: target.account_id,
-            calendar_id: target.calendar_id,
-            provider_event_id: remote.id.clone(),
-            provider_recurring_event_id: None,
-            provider_etag: None,
-            raw_payload: serde_json::json!({ "provider": "stalwart" }),
-        }),
-        overrides: Vec::new(),
-        occurrences: vec![CalendarOccurrence {
-            event_id,
-            occurrence_key: "main".to_string(),
-            recurrence_id: None,
-            time,
-            is_cancelled: false,
-        }],
-    }
-}
-
-fn stalwart_upsert_from_rsvp(
-    target: &CalendarEventMutationTarget,
-    actor: &ActorInboxes,
-    response: AttendeeResponseStatus,
-) -> CalendarEventUpsert {
-    let starts_at = Utc::now();
-    let time = EventTime::Timed {
-        starts_at,
-        ends_at: starts_at + chrono::Duration::hours(1),
-        time_zone: Some("UTC".to_string()),
-    };
-    let attendees = actor
-        .iter()
-        .map(|email| CalendarAttendee {
-            email: email.to_string(),
-            display_name: None,
-            response_status: response,
-            is_organizer: email.eq_ignore_ascii_case(&target.token_identity.email_address),
-            is_optional: false,
-            is_self: true,
-            comment: None,
-        })
-        .collect();
-    CalendarEventUpsert {
-        event: CalendarEvent {
-            id: target.event_id,
-            owner_id: target.owner_id.clone(),
-            ical_uid: format!("{}@conation.dev", target.event_id),
-            calendar_id: Some(target.calendar_id),
-            title: String::new(),
-            description: None,
-            location: None,
-            status: EventStatus::Confirmed,
-            visibility: EventVisibility::Default,
-            transparency: EventTransparency::Opaque,
-            event_type: EventType::Default,
-            time: time.clone(),
-            recurrence_lines: Vec::new(),
-            organizer_email: Some(target.token_identity.email_address.clone()),
-            organizer_name: None,
-            creator_email: Some(target.token_identity.email_address.clone()),
-            creator_name: None,
-            conference_url: None,
-            conference_provider: None,
-            sequence: 0,
-            is_read_only: false,
-            attendees,
-            reminders: EventReminders::default(),
-            created_at: Utc::now(),
-            updated_at: Utc::now(),
-        },
-        source: CalendarEventSource::Google(GoogleEventSource {
-            email_link_id: target.email_link_id,
-            account_id: target.account_id,
-            calendar_id: target.calendar_id,
-            provider_event_id: target.master_provider_event_id().to_string(),
-            provider_recurring_event_id: None,
-            provider_etag: None,
-            raw_payload: serde_json::json!({ "provider": "stalwart" }),
-        }),
-        overrides: Vec::new(),
-        occurrences: vec![CalendarOccurrence {
-            event_id: target.event_id,
-            occurrence_key: "main".to_string(),
-            recurrence_id: None,
-            time,
-            is_cancelled: false,
-        }],
-    }
 }
 
 #[cfg(test)]

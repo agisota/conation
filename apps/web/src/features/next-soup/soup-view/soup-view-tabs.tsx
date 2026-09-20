@@ -29,13 +29,18 @@ import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import type { TabItem } from '@core/component/Tabs';
 import { TabsInset } from '@core/component/TabsInset';
 import { TabsInsetDropdown } from '@core/component/TabsInsetDropdown';
-import {
-  ENABLE_REMINDERS_FLAG,
-  ENABLE_REMINDERS_OVERRIDE,
-} from '@core/constant/featureFlags';
+import { enableReminders } from '@core/constant/featureFlags';
 import { useUserContext } from '@core/context/user';
 import { useIsTeamAdmin } from '@queries/team/teams';
-import { batch, createMemo, For, Match, Show, Switch } from 'solid-js';
+import {
+  batch,
+  createMemo,
+  For,
+  type JSX,
+  Match,
+  Show,
+  Switch,
+} from 'solid-js';
 
 const useCurrentListView = () => {
   const panel = useSplitPanelOrThrow();
@@ -56,9 +61,7 @@ const useCurrentListView = () => {
  * pills, and the number/cycle hotkeys — agrees on which tabs exist.
  */
 export const useVisibleViewTabs = () => {
-  const remindersFlag = useFeatureFlag(ENABLE_REMINDERS_FLAG, {
-    enabledOverride: ENABLE_REMINDERS_OVERRIDE,
-  });
+  const remindersFlag = useFeatureFlag(enableReminders);
 
   return (view: TabbedListView): TabItem[] =>
     view === 'inbox' && !remindersFlag().enabled
@@ -397,7 +400,7 @@ export const CollapsedSoupViewTabs = () => {
  * the scroll content. The drawer button leads the strip and scrolls along
  * with the pills.
  */
-export const MobileSoupViewTabs = () => {
+export const MobileSoupViewTabs = (props: { leading?: JSX.Element } = {}) => {
   const listView = useCurrentListView();
 
   return (
@@ -409,7 +412,7 @@ export const MobileSoupViewTabs = () => {
         <MobileSearchFilterDrawer />
       </Match>
       <Match when={listView() === 'companies'}>
-        <MobileCompanyModeTabs />
+        <MobileCompanyModeTabs leading={props.leading} />
       </Match>
       <For
         each={Object.keys(VIEW_TAB_LISTS) as (keyof typeof VIEW_TAB_LISTS)[]}
@@ -435,7 +438,7 @@ const MOBILE_TAB_STRIP_CLASS =
   '-ml-(--mobile-chrome-gutter) w-[100cqw] max-w-none flex-none';
 const MOBILE_TAB_CONTENT_CLASS = 'px-(--mobile-chrome-gutter)';
 
-const MobileCompanyModeTabs = () => {
+const MobileCompanyModeTabs = (props: { leading?: JSX.Element }) => {
   const { viewMode, setViewMode } = useSoupView();
 
   return (
@@ -443,7 +446,12 @@ const MobileCompanyModeTabs = () => {
       scrollable
       class={MOBILE_TAB_STRIP_CLASS}
       contentClass={MOBILE_TAB_CONTENT_CLASS}
-      leading={<MobileFilterDrawer />}
+      leading={
+        <>
+          {props.leading}
+          <MobileFilterDrawer />
+        </>
+      }
       items={COMPANY_MODE_TABS}
       value={viewMode()}
       onChange={(value) => setViewMode(value as SoupViewMode)}

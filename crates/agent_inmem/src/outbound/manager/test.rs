@@ -16,12 +16,16 @@ use agent_session::domain::ports::{AgentSessionLogRepo as _, NoOpRealtime};
 use agent_session::domain::service::{AgentSessionService, AgentSessionServiceImpl};
 use agent_session::testing::InMemoryAgentSessionRepo;
 use bot_id::BotId;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 use super::*;
 use crate::domain::engine::AgentIdentity;
 use crate::outbound::log_frames::LogFrameSource;
 use crate::testing::ScriptedEngine;
+use agent_session::domain::model::ReplicaId;
+use agent_session::domain::ports::{
+    NoOpAgentSessionNameGenerator, NoOpTurnObserver, NoopLifecyclePublisher,
+};
 
 /// Instructions long enough to be unmistakable in an assertion, and shaped
 /// like something a real session would carry.
@@ -41,7 +45,7 @@ async fn attach_retrying(
 ) {
     let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
     loop {
-        let transport = manager.attach(facts.clone()).await;
+        let transport = manager.attach(facts.clone(), None).await;
         match sessions
             .attach_session(id, RuntimeAttachment::solo(transport))
             .await
@@ -87,7 +91,11 @@ fn owner() -> MacroUserIdStr<'static> {
 }
 
 fn manager(repo: &InMemoryAgentSessionRepo, engine: Arc<ScriptedEngine>) -> InMemAgentManager {
-    InMemAgentManager::new(engine, Arc::new(LogFrameSource::new(repo.clone())))
+    InMemAgentManager::new(
+        engine,
+        Arc::new(LogFrameSource::new(repo.clone())),
+        Arc::new(crate::domain::mcp::NoMcpServers),
+    )
 }
 
 fn facts(id: AgentSessionId) -> SessionFacts {
@@ -150,11 +158,16 @@ async fn a_prompt_runs_end_to_end_through_the_real_session_machine() {
         repo.clone(),
         FoldedMessageService::new(repo.clone()),
         NoOpRealtime,
+        NoOpAgentSessionNameGenerator,
+        Arc::new(NoOpTurnObserver),
+        Arc::new(NoopLifecyclePublisher),
+        ReplicaId::mint(),
     );
 
     let id = AgentSessionId::new();
     sessions
         .create_session(CreateAgentSessionParams {
+            repo_branch: None,
             id,
             owner_id: owner(),
             bot_id: BotId::TEST_A,
@@ -166,6 +179,7 @@ async fn a_prompt_runs_end_to_end_through_the_real_session_machine() {
             workspace: "/workspace".to_owned(),
             sandbox_size: agent_session::domain::model::SandboxSize::Default,
             instructions: None,
+            mcp_servers: Default::default(),
             egress_token_hash: None,
         })
         .await
@@ -177,7 +191,7 @@ async fn a_prompt_runs_end_to_end_through_the_real_session_machine() {
             "streamed reply".to_owned(),
         )])),
     );
-    let transport = manager.attach(facts(id)).await;
+    let transport = manager.attach(facts(id), None).await;
     sessions
         .attach_session(id, RuntimeAttachment::solo(transport))
         .await
@@ -234,7 +248,7 @@ async fn a_prompt_runs_end_to_end_through_the_real_session_machine() {
     // disconnect-then-resume order the harness's deliver path drives.
     let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
     loop {
-        let transport = manager.attach(facts(id)).await;
+        let transport = manager.attach(facts(id), None).await;
         match sessions
             .attach_session(id, RuntimeAttachment::solo(transport))
             .await
@@ -284,11 +298,16 @@ async fn a_restarted_manager_rebuilds_the_conversation_from_the_log() {
         repo.clone(),
         FoldedMessageService::new(repo.clone()),
         NoOpRealtime,
+        NoOpAgentSessionNameGenerator,
+        Arc::new(NoOpTurnObserver),
+        Arc::new(NoopLifecyclePublisher),
+        ReplicaId::mint(),
     );
 
     let id = AgentSessionId::new();
     sessions
         .create_session(CreateAgentSessionParams {
+            repo_branch: None,
             id,
             owner_id: owner(),
             bot_id: BotId::TEST_A,
@@ -300,6 +319,7 @@ async fn a_restarted_manager_rebuilds_the_conversation_from_the_log() {
             workspace: "/workspace".to_owned(),
             sandbox_size: agent_session::domain::model::SandboxSize::Default,
             instructions: None,
+            mcp_servers: Default::default(),
             egress_token_hash: None,
         })
         .await
@@ -311,7 +331,7 @@ async fn a_restarted_manager_rebuilds_the_conversation_from_the_log() {
             "streamed reply".to_owned(),
         )])),
     );
-    let transport = before.attach(facts(id)).await;
+    let transport = before.attach(facts(id), None).await;
     sessions
         .attach_session(id, RuntimeAttachment::solo(transport))
         .await
@@ -353,10 +373,13 @@ async fn a_restarted_manager_rebuilds_the_conversation_from_the_log() {
     let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
     loop {
         let transport = after
-            .attach(SessionFacts {
-                acp_session_id: row.acp_session_id.clone(),
-                ..facts(id)
-            })
+            .attach(
+                SessionFacts {
+                    acp_session_id: row.acp_session_id.clone(),
+                    ..facts(id)
+                },
+                None,
+            )
             .await;
         match sessions
             .attach_session(id, RuntimeAttachment::solo(transport))
@@ -422,11 +445,16 @@ async fn instructions_reach_every_turn_including_after_a_reattach() {
         repo.clone(),
         FoldedMessageService::new(repo.clone()),
         NoOpRealtime,
+        NoOpAgentSessionNameGenerator,
+        Arc::new(NoOpTurnObserver),
+        Arc::new(NoopLifecyclePublisher),
+        ReplicaId::mint(),
     );
 
     let id = AgentSessionId::new();
     sessions
         .create_session(CreateAgentSessionParams {
+            repo_branch: None,
             id,
             owner_id: owner(),
             bot_id: BotId::TEST_A,
@@ -438,6 +466,7 @@ async fn instructions_reach_every_turn_including_after_a_reattach() {
             workspace: "/workspace".to_owned(),
             sandbox_size: agent_session::domain::model::SandboxSize::Default,
             instructions: Some(INSTRUCTIONS.to_owned()),
+            mcp_servers: Default::default(),
             egress_token_hash: None,
         })
         .await
@@ -491,11 +520,16 @@ async fn a_session_without_instructions_hands_the_engine_none() {
         repo.clone(),
         FoldedMessageService::new(repo.clone()),
         NoOpRealtime,
+        NoOpAgentSessionNameGenerator,
+        Arc::new(NoOpTurnObserver),
+        Arc::new(NoopLifecyclePublisher),
+        ReplicaId::mint(),
     );
 
     let id = AgentSessionId::new();
     sessions
         .create_session(CreateAgentSessionParams {
+            repo_branch: None,
             id,
             owner_id: owner(),
             bot_id: BotId::TEST_A,
@@ -507,6 +541,7 @@ async fn a_session_without_instructions_hands_the_engine_none() {
             workspace: "/workspace".to_owned(),
             sandbox_size: agent_session::domain::model::SandboxSize::Default,
             instructions: None,
+            mcp_servers: Default::default(),
             egress_token_hash: None,
         })
         .await
@@ -516,7 +551,7 @@ async fn a_session_without_instructions_hands_the_engine_none() {
         "acknowledged".to_owned(),
     )]));
     let manager = manager(&repo, Arc::clone(&engine));
-    let transport = manager.attach(facts(id)).await;
+    let transport = manager.attach(facts(id), None).await;
     sessions
         .attach_session(id, RuntimeAttachment::solo(transport))
         .await
@@ -554,6 +589,7 @@ async fn identity_reaches_every_turn_including_after_a_reattach() {
     let id = AgentSessionId::new();
     sessions
         .create_session(CreateAgentSessionParams {
+            repo_branch: None,
             id,
             owner_id: owner(),
             bot_id: BotId::TEST_A,

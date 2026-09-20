@@ -1,9 +1,6 @@
-import { t } from '@app/lib/i18n';
 import { ENABLE_EMAIL } from '@core/constant/featureFlags';
-import { useCursorAgentsAccess } from '@core/cursor/flag';
 import { usePipedreamMcpFlag } from '@core/pipedream/flag';
 import { Show, Suspense } from 'solid-js';
-import { CursorCard } from './Cursor';
 import { EmailCard } from './Email';
 import { GitHubCard } from './GitHub';
 import { IntegrationsSection } from './Integrations';
@@ -11,19 +8,20 @@ import { PipedreamIntegrationsSection } from './PipedreamIntegrations';
 import { SettingsPage, SettingsSection } from './primitives';
 
 /**
- * Consolidated "Connections" page: one card per external account the user can
- * link (Gmail, GitHub), then the agent's MCP integrations, then the coding
- * agents — so everything Conation is connected to lives in one place.
+ * The "Integrations" settings tab: one card per external account the user can
+ * link (Gmail, GitHub), followed by the agent's MCP integrations. The agents
+ * sidebar has its own MCP-only Connections page (see `McpConnections.tsx`);
+ * the MCP section stays here too because deep links (the agent reply's
+ * "Connect X" chip, the home hub's setup rows) open this tab to connect an app.
  */
 export function ConnectedAccounts() {
   const pipedreamMcp = usePipedreamMcpFlag();
-  const canUseCursor = useCursorAgentsAccess();
   return (
     <SettingsPage
-      title={t('settings.connections.title')}
-      description={t('settings.connections.description')}
+      title="Integrations"
+      description="Connect your accounts so Macro can work across the tools you already use."
     >
-      <SettingsSection title={t('settings.connections.accounts.title')}>
+      <SettingsSection title="Accounts">
         <div class="flex flex-col gap-3">
           <Show when={ENABLE_EMAIL}>
             <Suspense>
@@ -40,16 +38,6 @@ export function ConnectedAccounts() {
           <PipedreamIntegrationsSection />
         </Show>
       </Suspense>
-      <Show when={canUseCursor()}>
-        <SettingsSection
-          title={t('settings.connections.codingSessions.title')}
-          description={t('settings.connections.codingSessions.description')}
-        >
-          <Suspense>
-            <CursorCard />
-          </Suspense>
-        </SettingsSection>
-      </Show>
     </SettingsPage>
   );
 }

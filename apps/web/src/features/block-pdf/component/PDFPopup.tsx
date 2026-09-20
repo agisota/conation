@@ -1,13 +1,9 @@
-import { t } from '@app/lib/i18n';
 import type { IHighlight } from '@block-pdf/model/Highlight';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useIsAuthenticated } from '@core/auth';
-import { useBlockId } from '@core/block';
 import { ChatMessageMarkdown } from '@core/component/AI/component/message/ChatMessageMarkdown';
 import { GeneralizedPopup } from '@core/component/GeneralizedPopup/Popup';
-import { blockElementSignal } from '@core/signal/blockElement';
 import { createMarkdownFile } from '@core/util/create';
-import { useBlockDocumentName } from '@core/util/currentBlockDocumentName';
 import CheckIcon from '@phosphor-icons/core/bold/check-bold.svg?component-solid';
 import ClipboardIcon from '@phosphor-icons/core/bold/clipboard-bold.svg?component-solid';
 import NotesIcon from '@phosphor-icons/core/bold/file-md-bold.svg?component-solid';
@@ -30,10 +26,7 @@ import {
   Show,
   Switch,
 } from 'solid-js';
-import {
-  PDFPopupCompletionSignal,
-  PDFPopupSelectedTextSignal,
-} from './PageOverlay';
+import { usePdfDocument } from '../context/pdf-document-context';
 
 type PDFPopupProps = {
   highlightProps: {
@@ -89,8 +82,10 @@ function LoadingContent(props: { lines: number }) {
 export function PDFPopup(props: PDFPopupProps) {
   const _isAuthenticated = useIsAuthenticated();
 
-  const blockId = useBlockId();
-  const [completion, _setCompletion] = PDFPopupCompletionSignal;
+  const pdf = usePdfDocument();
+  const blockId = pdf.documentId();
+  const [completion] = pdf.state.signals.popupCompletion;
+  const [selectedText, setSelectedText] = pdf.state.signals.popupSelectedText;
   const isGenerating = () => completion()?.status !== 'completed';
 
   const [copied, setCopied] = createSignal(false);
@@ -104,12 +99,12 @@ export function PDFPopup(props: PDFPopupProps) {
   createEffect(() => {
     const currentSelection = window.getSelection()?.toString();
     if (currentSelection && currentSelection.length > 0) {
-      PDFPopupSelectedTextSignal.set(currentSelection);
+      setSelectedText(currentSelection);
     }
   });
 
   const _selectedText = createMemo(() => {
-    const currentSelection = PDFPopupSelectedTextSignal();
+    const currentSelection = selectedText();
     if (currentSelection && currentSelection.length > 0) {
       return currentSelection;
     }
@@ -154,7 +149,6 @@ export function PDFPopup(props: PDFPopupProps) {
     }
   };
 
-  const name = useBlockDocumentName();
   const handleEditInMarkdown = createCallback(async () => {
     setIsLoading(true);
     const content = completion()?.content;
@@ -165,7 +159,7 @@ export function PDFPopup(props: PDFPopupProps) {
     const title = await generateTitle(content);
     const documentId = await createMarkdownFile({
       content,
-      title: title ?? t('pdf.ai.explanationTitle', { documentName: name() }),
+      title: title ?? `${pdf.documentName()} - AI Explanation`,
     });
 
     if (!documentId) {
@@ -186,7 +180,7 @@ export function PDFPopup(props: PDFPopupProps) {
       e.stopPropagation();
     };
 
-    const blockElement = blockElementSignal();
+    const blockElement = pdf.rootElement();
     if (blockElement) {
       blockElement.addEventListener('selectionchange', handler, {
         capture: true,
@@ -226,7 +220,7 @@ export function PDFPopup(props: PDFPopupProps) {
                   onClick={() =>
                     insertProps().insertText(completion()!.content)
                   }
-                  label={t('pdf.actions.insertAiResponse')}
+                  title="Insert AI response"
                 >
                   <PasteIcon />
                 </Button>
@@ -239,7 +233,6 @@ export function PDFPopup(props: PDFPopupProps) {
                   <Button
                     variant="ghost"
                     size="icon-md"
-                    label={t('pdf.markup.highlight')}
                     onClick={() => {
                       props.highlightProps.highlight();
                     }}
@@ -253,7 +246,6 @@ export function PDFPopup(props: PDFPopupProps) {
                   <Button
                     variant="ghost"
                     size="icon-md"
-                    label={t('pdf.markup.removeHighlight')}
                     onClick={() => {
                       props.highlightProps.removeHighlight();
                     }}
@@ -273,7 +265,6 @@ export function PDFPopup(props: PDFPopupProps) {
             >
               <Button
                 variant="ghost"
-                label={t('pdf.markup.comment')}
                 size="icon-md"
                 onClick={(e: MouseEvent | KeyboardEvent) =>
                   props.commentProps.placeComment(e as MouseEvent)
@@ -297,9 +288,7 @@ export function PDFPopup(props: PDFPopupProps) {
                 ) : (
                   <LinkIcon />
                 )}
-                {locationCopied()
-                  ? t('pdf.actions.copied')
-                  : t('block.actions.share')}
+                {locationCopied() ? 'Copied' : 'Share'}
               </Button>
             )}
           </Show>
@@ -345,7 +334,7 @@ export function PDFPopup(props: PDFPopupProps) {
                       >
                         <NotesIcon class="size-3 text-note" />
                       </Show>
-                      <p>{t('pdf.actions.editInNotes')}</p>
+                      <p>Edit in Notes</p>
                     </button>
                   </div>
                   <div class="w-fit">
@@ -364,11 +353,7 @@ export function PDFPopup(props: PDFPopupProps) {
                           <ClipboardIcon class="size-3" />
                         </Show>
                       </Show>
-                      <p>
-                        {copied()
-                          ? t('pdf.actions.copied')
-                          : t('pdf.actions.copy')}
-                      </p>
+                      <p>{copied() ? 'Copied!' : 'Copy'}</p>
                     </button>
                   </div>
                 </div>
@@ -382,12 +367,13 @@ export function PDFPopup(props: PDFPopupProps) {
 
   return (
     <GeneralizedPopup
-      PopupComponents={PDFPopupToolbar}
       anchor={{
         ref: props.anchorRef,
         blockId: `${blockId}`,
         blockType: 'pdf',
       }}
-    />
+    >
+      <PDFPopupToolbar />
+    </GeneralizedPopup>
   );
 }

@@ -44,8 +44,8 @@ INSERT INTO public.macro_user (id, username, email, stripe_customer_id) VALUES
 ON CONFLICT DO NOTHING;
 
 INSERT INTO public."User" ("id", "email", "stripeCustomerId", "organizationId", "macro_user_id")
-VALUES ('conation|user-1@test.com', 'user1@test.com', 'stripe_id_1', 1, '00000000-0000-0000-0000-000000000001'),
-       ('conation|user-2@test.com', 'user2@test.com', 'stripe_id_2', 1, '00000000-0000-0000-0000-000000000002')
+VALUES ('macro|user-1@test.com', 'user1@test.com', 'stripe_id_1', 1, '00000000-0000-0000-0000-000000000001'),
+       ('macro|user-2@test.com', 'user2@test.com', 'stripe_id_2', 1, '00000000-0000-0000-0000-000000000002')
 ON CONFLICT DO NOTHING;
 
 ---------------------------------
@@ -54,14 +54,14 @@ ON CONFLICT DO NOTHING;
 
 INSERT INTO public."Project" ("id", "name", "userId", "parentId", "createdAt", "updatedAt")
 VALUES
-  ('aa000001-ffff-ffff-ffff-ffffffffffff', 'Project Root', 'conation|user-1@test.com', NULL,
+  ('aa000001-ffff-ffff-ffff-ffffffffffff', 'Project Root', 'macro|user-1@test.com', NULL,
    '2024-01-10 10:00:00', '2024-02-10 10:00:00'),
-  ('aa000002-ffff-ffff-ffff-ffffffffffff', 'Project Mid', 'conation|user-1@test.com', 'aa000001-ffff-ffff-ffff-ffffffffffff',
+  ('aa000002-ffff-ffff-ffff-ffffffffffff', 'Project Mid', 'macro|user-1@test.com', 'aa000001-ffff-ffff-ffff-ffffffffffff',
    '2024-01-11 10:00:00', '2024-02-11 10:00:00'),
-  ('aa000003-ffff-ffff-ffff-ffffffffffff', 'Project Deep', 'conation|user-1@test.com', 'aa000002-ffff-ffff-ffff-ffffffffffff',
+  ('aa000003-ffff-ffff-ffff-ffffffffffff', 'Project Deep', 'macro|user-1@test.com', 'aa000002-ffff-ffff-ffff-ffffffffffff',
    '2024-01-12 10:00:00', '2024-02-12 10:00:00'),
   -- Isolated project: user-1 has NO access, user-2 has owner
-  ('aa000004-ffff-ffff-ffff-ffffffffffff', 'Project Isolated', 'conation|user-2@test.com', NULL,
+  ('aa000004-ffff-ffff-ffff-ffffffffffff', 'Project Isolated', 'macro|user-2@test.com', NULL,
    '2024-01-13 10:00:00', '2024-02-13 10:00:00');
 
 ---------------------------------
@@ -83,43 +83,43 @@ VALUES (101, 'bb000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
 INSERT INTO public."Document" ("id", "name", "owner", "projectId", "documentFamilyId", "fileType", "createdAt", "updatedAt", "deletedAt")
 VALUES
   -- doc-root-pdf: in root project, pdf, user-1
-  ('bb000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Root Pdf', 'conation|user-1@test.com',
+  ('bb000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Root Pdf', 'macro|user-1@test.com',
    'aa000001-ffff-ffff-ffff-ffffffffffff', 101, 'pdf',
    '2024-01-01 10:00:00', '2024-02-01 10:00:00', NULL),
   -- doc-mid-docx: in mid project, docx, user-1
-  ('bb000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Mid Docx', 'conation|user-1@test.com',
+  ('bb000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Mid Docx', 'macro|user-1@test.com',
    'aa000002-ffff-ffff-ffff-ffffffffffff', 102, 'docx',
    '2024-01-02 10:00:00', '2024-02-02 10:00:00', NULL),
   -- doc-deep-pdf: in deep project, pdf, user-1
-  ('bb000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Deep Pdf', 'conation|user-1@test.com',
+  ('bb000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Deep Pdf', 'macro|user-1@test.com',
    'aa000003-ffff-ffff-ffff-ffffffffffff', 103, 'pdf',
    '2024-01-03 10:00:00', '2024-03-10 10:00:00', NULL),
   -- doc-standalone-txt: no project, txt, user-1
-  ('bb000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Standalone Txt', 'conation|user-1@test.com',
+  ('bb000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Standalone Txt', 'macro|user-1@test.com',
    NULL, 104, 'txt',
    '2024-01-04 10:00:00', '2024-02-04 10:00:00', NULL),
   -- doc-deleted: in root, pdf, user-1, DELETED
-  ('bb000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Deleted', 'conation|user-1@test.com',
+  ('bb000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Deleted', 'macro|user-1@test.com',
    'aa000001-ffff-ffff-ffff-ffffffffffff', 105, 'pdf',
    '2024-01-15 10:00:00', '2024-02-15 10:00:00', '2024-03-01 10:00:00'),
   -- doc-task-completed: in root, txt, user-1, task, completed, assigned to user-1
-  ('bb000006-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Task Completed', 'conation|user-1@test.com',
+  ('bb000006-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Task Completed', 'macro|user-1@test.com',
    'aa000001-ffff-ffff-ffff-ffffffffffff', 106, 'txt',
    '2024-01-05 10:00:00', '2024-02-05 10:00:00', NULL),
   -- doc-task-incomplete: in root, txt, user-1, task, in-progress, assigned to other
-  ('bb000007-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Task Incomplete', 'conation|user-1@test.com',
+  ('bb000007-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Task Incomplete', 'macro|user-1@test.com',
    'aa000001-ffff-ffff-ffff-ffffffffffff', 107, 'txt',
    '2024-01-06 10:00:00', '2024-02-06 10:00:00', NULL),
   -- doc-task-no-status: in root, txt, user-1, task, no status, assigned to user-1
-  ('bb000008-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Task No Status', 'conation|user-1@test.com',
+  ('bb000008-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Task No Status', 'macro|user-1@test.com',
    'aa000001-ffff-ffff-ffff-ffffffffffff', 108, 'txt',
    '2024-01-07 10:00:00', '2024-02-07 10:00:00', NULL),
   -- doc-isolated: in isolated project, pdf, user-2
-  ('bb000009-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Isolated', 'conation|user-2@test.com',
+  ('bb000009-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Isolated', 'macro|user-2@test.com',
    'aa000004-ffff-ffff-ffff-ffffffffffff', 109, 'pdf',
    '2024-01-14 10:00:00', '2024-02-14 10:00:00', NULL),
   -- doc-shared-md: in root project, md, owned by user-2 (accessible to user-1 via project)
-  ('bb000010-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Shared Md', 'conation|user-2@test.com',
+  ('bb000010-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc Shared Md', 'macro|user-2@test.com',
    'aa000001-ffff-ffff-ffff-ffffffffffff', 110, 'md',
    '2024-01-08 10:00:00', '2024-02-08 10:00:00', NULL);
 
@@ -142,23 +142,23 @@ VALUES ('bb000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'sha-root-pdf'),
 INSERT INTO public."Chat" ("id", "name", "userId", "projectId", "createdAt", "updatedAt", "deletedAt")
 VALUES
   -- chat-root: in root project, user-1
-  ('cc000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chat Root', 'conation|user-1@test.com',
+  ('cc000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chat Root', 'macro|user-1@test.com',
    'aa000001-ffff-ffff-ffff-ffffffffffff',
    '2024-01-08 10:00:00', '2024-02-09 10:00:00', NULL),
   -- chat-standalone: no project, user-1
-  ('cc000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chat Standalone', 'conation|user-1@test.com',
+  ('cc000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chat Standalone', 'macro|user-1@test.com',
    NULL,
    '2024-01-09 10:00:00', '2024-03-11 10:00:00', NULL),
   -- chat-deleted: in root, user-1, DELETED
-  ('cc000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chat Deleted', 'conation|user-1@test.com',
+  ('cc000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chat Deleted', 'macro|user-1@test.com',
    'aa000001-ffff-ffff-ffff-ffffffffffff',
    '2024-01-16 10:00:00', '2024-02-16 10:00:00', '2024-03-02 10:00:00'),
   -- chat-isolated: in isolated project, user-2
-  ('cc000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chat Isolated', 'conation|user-2@test.com',
+  ('cc000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chat Isolated', 'macro|user-2@test.com',
    'aa000004-ffff-ffff-ffff-ffffffffffff',
    '2024-01-17 10:00:00', '2024-02-17 10:00:00', NULL),
   -- chat-shared: in root project, owned by user-2 (accessible to user-1 via project)
-  ('cc000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chat Shared', 'conation|user-2@test.com',
+  ('cc000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chat Shared', 'macro|user-2@test.com',
    'aa000001-ffff-ffff-ffff-ffffffffffff',
    '2024-01-18 10:00:00', '2024-02-18 10:00:00', NULL);
 
@@ -185,15 +185,15 @@ VALUES
   -- Completed task: assigned to user-1
   (gen_random_uuid(), 'bb000006-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'TASK',
    '00000001-0000-0000-0000-000000000001',
-   '{"type": "EntityReference", "value": [{"entity_id": "conation|user-1@test.com", "entity_type": "USER"}]}'::jsonb),
+   '{"type": "EntityReference", "value": [{"entity_id": "macro|user-1@test.com", "entity_type": "USER"}]}'::jsonb),
   -- Incomplete task: assigned to user-2
   (gen_random_uuid(), 'bb000007-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'TASK',
    '00000001-0000-0000-0000-000000000001',
-   '{"type": "EntityReference", "value": [{"entity_id": "conation|user-2@test.com", "entity_type": "USER"}]}'::jsonb),
+   '{"type": "EntityReference", "value": [{"entity_id": "macro|user-2@test.com", "entity_type": "USER"}]}'::jsonb),
   -- No-status task: assigned to user-1 (used by include_cbm_atm_nc path)
   (gen_random_uuid(), 'bb000008-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'TASK',
    '00000001-0000-0000-0000-000000000001',
-   '{"type": "EntityReference", "value": [{"entity_id": "conation|user-1@test.com", "entity_type": "USER"}]}'::jsonb);
+   '{"type": "EntityReference", "value": [{"entity_id": "macro|user-1@test.com", "entity_type": "USER"}]}'::jsonb);
 -- No status property for doc-task-no-status (to test incomplete status fallback)
 
 ---------------------------------
@@ -203,29 +203,29 @@ VALUES
 INSERT INTO public.entity_access ("entity_id", "entity_type", "source_id", "source_type", "access_level", "granted_from_project_id")
 VALUES
   -- user-1: owner on project-root
-  ('aa000001-ffff-ffff-ffff-ffffffffffff', 'project', 'conation|user-1@test.com', 'user', 'owner', NULL),
+  ('aa000001-ffff-ffff-ffff-ffffffffffff', 'project', 'macro|user-1@test.com', 'user', 'owner', NULL),
   -- user-1: inherited access to project-mid and project-deep
-  ('aa000002-ffff-ffff-ffff-ffffffffffff', 'project', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
-  ('aa000003-ffff-ffff-ffff-ffffffffffff', 'project', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('aa000002-ffff-ffff-ffff-ffffffffffff', 'project', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('aa000003-ffff-ffff-ffff-ffffffffffff', 'project', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
   -- user-1: inherited access to all docs/chats in root project hierarchy
-  ('bb000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
-  ('bb000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
-  ('bb000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
-  ('bb000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
-  ('bb000006-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
-  ('bb000007-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
-  ('bb000008-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
-  ('bb000010-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
-  ('cc000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
-  ('cc000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
-  ('cc000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'conation|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('bb000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('bb000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('bb000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('bb000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('bb000006-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('bb000007-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('bb000008-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('bb000010-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('cc000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('cc000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
+  ('cc000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'macro|user-1@test.com', 'user', 'owner', 'aa000001-ffff-ffff-ffff-ffffffffffff'),
   -- user-1: direct access to standalone items
-  ('bb000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 'user', 'owner', NULL),
-  ('cc000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'conation|user-1@test.com', 'user', 'owner', NULL),
+  ('bb000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-1@test.com', 'user', 'owner', NULL),
+  ('cc000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'macro|user-1@test.com', 'user', 'owner', NULL),
   -- user-2: owner on isolated project and its items
-  ('aa000004-ffff-ffff-ffff-ffffffffffff', 'project', 'conation|user-2@test.com', 'user', 'owner', NULL),
-  ('bb000009-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-2@test.com', 'user', 'owner', 'aa000004-ffff-ffff-ffff-ffffffffffff'),
-  ('cc000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'conation|user-2@test.com', 'user', 'owner', 'aa000004-ffff-ffff-ffff-ffffffffffff');
+  ('aa000004-ffff-ffff-ffff-ffffffffffff', 'project', 'macro|user-2@test.com', 'user', 'owner', NULL),
+  ('bb000009-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-2@test.com', 'user', 'owner', 'aa000004-ffff-ffff-ffff-ffffffffffff'),
+  ('cc000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'macro|user-2@test.com', 'user', 'owner', 'aa000004-ffff-ffff-ffff-ffffffffffff');
 
 ---------------------------------
 -- USER HISTORY
@@ -242,28 +242,28 @@ VALUES
 INSERT INTO public."UserHistory" ("userId", "itemId", "itemType", "createdAt", "updatedAt")
 VALUES
   -- doc-root-pdf: viewed_at = 2024-03-05
-  ('conation|user-1@test.com', 'bb000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document',
+  ('macro|user-1@test.com', 'bb000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document',
    '2024-01-01 00:00:00', '2024-03-05 10:00:00'),
   -- doc-mid-docx: viewed_at = 2024-03-08
-  ('conation|user-1@test.com', 'bb000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document',
+  ('macro|user-1@test.com', 'bb000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document',
    '2024-01-01 00:00:00', '2024-03-08 10:00:00'),
   -- doc-standalone-txt: viewed_at = 2024-03-06
-  ('conation|user-1@test.com', 'bb000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document',
+  ('macro|user-1@test.com', 'bb000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document',
    '2024-01-01 00:00:00', '2024-03-06 10:00:00'),
   -- doc-task-completed: viewed_at = 2024-03-04
-  ('conation|user-1@test.com', 'bb000006-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document',
+  ('macro|user-1@test.com', 'bb000006-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document',
    '2024-01-01 00:00:00', '2024-03-04 10:00:00'),
   -- doc-task-no-status: viewed_at = 2024-03-07
-  ('conation|user-1@test.com', 'bb000008-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document',
+  ('macro|user-1@test.com', 'bb000008-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document',
    '2024-01-01 00:00:00', '2024-03-07 10:00:00'),
   -- chat-root: viewed_at = 2024-03-03
-  ('conation|user-1@test.com', 'cc000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat',
+  ('macro|user-1@test.com', 'cc000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat',
    '2024-01-01 00:00:00', '2024-03-03 10:00:00'),
   -- project-root: viewed_at = 2024-03-02
-  ('conation|user-1@test.com', 'aa000001-ffff-ffff-ffff-ffffffffffff', 'project',
+  ('macro|user-1@test.com', 'aa000001-ffff-ffff-ffff-ffffffffffff', 'project',
    '2024-01-01 00:00:00', '2024-03-02 10:00:00'),
   -- project-deep: viewed_at = 2024-03-01
-  ('conation|user-1@test.com', 'aa000003-ffff-ffff-ffff-ffffffffffff', 'project',
+  ('macro|user-1@test.com', 'aa000003-ffff-ffff-ffff-ffffffffffff', 'project',
    '2024-01-01 00:00:00', '2024-03-01 10:00:00');
 
 ---------------------------------
@@ -282,25 +282,25 @@ INSERT INTO public."notification" (
 )
 VALUES
   -- Document notifications
-  ('dd000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test', 'bb000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'test', '{}'::jsonb, 'conation|user-2@test.com'),
-  ('dd000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test', 'bb000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'test', '{}'::jsonb, 'conation|user-2@test.com'),
+  ('dd000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test', 'bb000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'test', '{}'::jsonb, 'macro|user-2@test.com'),
+  ('dd000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test', 'bb000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'test', '{}'::jsonb, 'macro|user-2@test.com'),
   -- Chat notifications
-  ('dd000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test', 'cc000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'test', '{}'::jsonb, 'conation|user-2@test.com'),
-  ('dd000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test', 'cc000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'test', '{}'::jsonb, 'conation|user-1@test.com'),
+  ('dd000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test', 'cc000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'test', '{}'::jsonb, 'macro|user-2@test.com'),
+  ('dd000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test', 'cc000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'test', '{}'::jsonb, 'macro|user-1@test.com'),
   -- Project notifications
-  ('dd000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test', 'aa000001-ffff-ffff-ffff-ffffffffffff', 'project', 'test', '{}'::jsonb, 'conation|user-2@test.com'),
-  ('dd000006-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test', 'aa000003-ffff-ffff-ffff-ffffffffffff', 'project', 'test', '{}'::jsonb, 'conation|user-2@test.com');
+  ('dd000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test', 'aa000001-ffff-ffff-ffff-ffffffffffff', 'project', 'test', '{}'::jsonb, 'macro|user-2@test.com'),
+  ('dd000006-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test', 'aa000003-ffff-ffff-ffff-ffffffffffff', 'project', 'test', '{}'::jsonb, 'macro|user-2@test.com');
 
-INSERT INTO public."user_notification" ("user_id", "notification_id", "created_at", "seen_at", "done")
+INSERT INTO public."user_notification" ("user_id", "notification_id", "created_at", "seen_at", "state")
 VALUES
   -- not done + unread
-  ('conation|user-1@test.com', 'dd000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2024-03-09 10:00:00', NULL, false),
-  ('conation|user-1@test.com', 'dd000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2024-03-09 10:01:00', NULL, false),
-  ('conation|user-1@test.com', 'dd000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2024-03-09 10:02:00', NULL, false),
+  ('macro|user-1@test.com', 'dd000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2024-03-09 10:00:00', NULL, 'unseen'),
+  ('macro|user-1@test.com', 'dd000003-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2024-03-09 10:01:00', NULL, 'unseen'),
+  ('macro|user-1@test.com', 'dd000005-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2024-03-09 10:02:00', NULL, 'unseen'),
   -- done + seen
-  ('conation|user-1@test.com', 'dd000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2024-03-09 10:03:00', '2024-03-09 11:00:00', true),
-  ('conation|user-1@test.com', 'dd000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2024-03-09 10:04:00', '2024-03-09 11:01:00', true),
-  ('conation|user-1@test.com', 'dd000006-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2024-03-09 10:05:00', '2024-03-09 11:02:00', true);
+  ('macro|user-1@test.com', 'dd000002-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2024-03-09 10:03:00', '2024-03-09 11:00:00', 'done'),
+  ('macro|user-1@test.com', 'dd000004-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2024-03-09 10:04:00', '2024-03-09 11:01:00', 'done'),
+  ('macro|user-1@test.com', 'dd000006-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2024-03-09 10:05:00', '2024-03-09 11:02:00', 'done');
 
 ---------------------------------
 -- FRECENCY RECORDS
@@ -309,7 +309,7 @@ VALUES
 
 INSERT INTO public."frecency_aggregates" ("entity_id", "entity_type", "user_id", "event_count", "frecency_score", "first_event", "recent_events")
 VALUES
-  ('bb000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 5, 10.0, '2024-01-01 10:00:00', '[]'::jsonb),
-  ('cc000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'conation|user-1@test.com', 3, 8.0, '2024-01-08 10:00:00', '[]'::jsonb);
+  ('bb000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-1@test.com', 5, 10.0, '2024-01-01 10:00:00', '[]'::jsonb),
+  ('cc000001-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'chat', 'macro|user-1@test.com', 3, 8.0, '2024-01-08 10:00:00', '[]'::jsonb);
 
 SET session_replication_role = 'origin';

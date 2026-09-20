@@ -8,8 +8,8 @@ import { Dynamic } from 'solid-js/web';
 import { arrangeResponsiveBlockTools } from './responsiveBlockToolbarTools';
 import { HeaderIsland } from './split-layout/components/HeaderIsland';
 import {
+  BlockSplitFileMenu,
   type FileOperation,
-  SplitFileMenu,
 } from './split-layout/components/SplitFileMenu';
 import {
   SplitHeaderLeft,
@@ -138,7 +138,7 @@ export function ResponsiveBlockToolbar(props: BlockToolbarProps) {
             </div>
           </SplitHeaderRight>
           <SplitTitleFileMenu>
-            <SplitFileMenu
+            <BlockSplitFileMenu
               id={props.id}
               itemType={props.itemType}
               name={props.name}
@@ -168,7 +168,7 @@ export function ResponsiveBlockToolbar(props: BlockToolbarProps) {
       }
     >
       <SplitTitleFileMenu>
-        <SplitFileMenu
+        <BlockSplitFileMenu
           id={props.id}
           itemType={props.itemType}
           name={props.name}

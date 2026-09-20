@@ -1,4 +1,4 @@
-import { Macro } from '@conation/sdk';
+import { Macro } from '@macro-inc/sdk';
 import { env } from './env';
 
 const STATE_FILE = new URL('../.webhook.json', import.meta.url);
@@ -11,12 +11,11 @@ type WebhookState = { id: string; secret: string };
  * signing secret. Reuses (and repairs) the registration in the state file;
  * registers fresh when there is none or it was deleted server-side. */
 export async function ensureWebhook(deliveryUrl: string): Promise<string> {
-  const base = new Macro({});
-  const conation = base.requestedAs(base.users.byId(env.CONATION_USER_ID));
+  const macro = new Macro({}).requestedAs(env.MACRO_USER_ID);
 
   const saved = await readState();
   if (saved) {
-    const hook = conation.webhooks.byId(saved.id);
+    const hook = macro.webhooks.byId(saved.id);
     try {
       if ((await hook.endpointUrl()) !== deliveryUrl)
         await hook.setUrl(deliveryUrl);
@@ -25,7 +24,7 @@ export async function ensureWebhook(deliveryUrl: string): Promise<string> {
       return saved.secret;
     } catch (error) {
       // Only a genuine 404 means the webhook was actually deleted
-      // server-side. Any other failure (bad token, wrong CONATION_ENV, network
+      // server-side. Any other failure (bad token, wrong MACRO_ENV, network
       // blip) must not fall through to registering a duplicate — the old
       // registration would keep delivering with a secret we've since
       // forgotten, and every such delivery would 500 on signature
@@ -37,9 +36,8 @@ export async function ensureWebhook(deliveryUrl: string): Promise<string> {
     }
   }
 
-  const hook = await conation.webhooks.create({
+  const hook = await macro.webhooks.create({
     url: deliveryUrl,
-    namespace: WEBHOOK_NAME,
     name: WEBHOOK_NAME,
     filters: [{ events: [...EVENTS] }],
   });

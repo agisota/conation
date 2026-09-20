@@ -31,31 +31,34 @@ import {
   TableCellHeaderStates,
   type TableNode,
 } from '@lexical/table';
-import { $createContactMentionNode } from '@conation/lexical-core/nodes/ContactMentionNode';
+import { $createAgentSessionMentionNode } from '@macro-inc/lexical-core/nodes/AgentSessionMentionNode';
+import { $createContactMentionNode } from '@macro-inc/lexical-core/nodes/ContactMentionNode';
 import {
   $createDateMentionNode,
   $isDateMentionNode,
-} from '@conation/lexical-core/nodes/DateMentionNode';
-import { $createDocumentCardNode } from '@conation/lexical-core/nodes/DocumentCardNode';
-import { $createDocumentMentionNode } from '@conation/lexical-core/nodes/DocumentMentionNode';
-import { $createEquationNode } from '@conation/lexical-core/nodes/EquationNode';
-import { $createGroupMentionNode } from '@conation/lexical-core/nodes/GroupMentionNode';
-import { $createHorizontalRuleNode } from '@conation/lexical-core/nodes/HorizontalRuleNode';
-import { $createHtmlRenderNode } from '@conation/lexical-core/nodes/HtmlRenderNode';
+} from '@macro-inc/lexical-core/nodes/DateMentionNode';
+import { $createDocumentCardNode } from '@macro-inc/lexical-core/nodes/DocumentCardNode';
+import { $createDocumentMentionNode } from '@macro-inc/lexical-core/nodes/DocumentMentionNode';
+import { $createEquationNode } from '@macro-inc/lexical-core/nodes/EquationNode';
+import { $createGroupMentionNode } from '@macro-inc/lexical-core/nodes/GroupMentionNode';
+import { $createHorizontalRuleNode } from '@macro-inc/lexical-core/nodes/HorizontalRuleNode';
+import { $createHtmlRenderNode } from '@macro-inc/lexical-core/nodes/HtmlRenderNode';
 import {
   $createImageNode,
   ImageNode,
-} from '@conation/lexical-core/nodes/ImageNode';
-import { $createUserMentionNode } from '@conation/lexical-core/nodes/UserMentionNode';
+} from '@macro-inc/lexical-core/nodes/ImageNode';
+import { $createPullRequestMentionNode } from '@macro-inc/lexical-core/nodes/PullRequestMentionNode';
+import { $createTagMentionNode } from '@macro-inc/lexical-core/nodes/TagMentionNode';
+import { $createUserMentionNode } from '@macro-inc/lexical-core/nodes/UserMentionNode';
 import {
   $createVideoNode,
   VideoNode,
-} from '@conation/lexical-core/nodes/VideoNode';
+} from '@macro-inc/lexical-core/nodes/VideoNode';
 import {
   $getId,
   $setId,
   $updateAllNodeIds,
-} from '@conation/lexical-core/plugins/nodeIdPlugin';
+} from '@macro-inc/lexical-core/plugins/nodeIdPlugin';
 import {
   $createLineBreakNode,
   $createParagraphNode,
@@ -72,7 +75,6 @@ import * as blocks from '../ai-toolkit/blocks';
 import * as inline from '../ai-toolkit/inline';
 import * as lists from '../ai-toolkit/lists';
 import * as locate from '../ai-toolkit/locate';
-import { assertSubstringMatched } from './substring-miss';
 import * as modify from '../ai-toolkit/modify';
 import type { LexicalSession } from '../ai-toolkit/session';
 import * as tables from '../ai-toolkit/tables';
@@ -88,6 +90,7 @@ import type {
 } from '../editor';
 import { EditError } from '../editor';
 import type { DocReader, DocWriter, Match } from './interfaces';
+import { assertSubstringMatched } from './substring-miss';
 
 const FORMAT_BIT: Record<
   Format,
@@ -994,25 +997,51 @@ export function buildNode(spec: NodeSpec): LexicalNode {
         displayFormat: session.displayFormat ?? session.date,
       })
     )
-    .with({ inline: 'mention' }, (session) => {
-      const m = session.mention;
-      if (m.kind === 'user')
-        return $createUserMentionNode({ userId: m.userId, email: m.email });
-      if (m.kind === 'contact')
-        return $createContactMentionNode({
-          contactId: m.contactId,
-          name: m.name,
-          emailOrDomain: m.emailOrDomain,
-          isCompany: m.isCompany,
-        });
-      if (m.kind === 'group')
-        return $createGroupMentionNode({ groupAlias: m.groupAlias });
-      return $createDocumentMentionNode({
-        documentId: m.documentId,
-        documentName: m.documentName,
-        blockName: m.blockName,
-      });
-    })
+    .with({ inline: 'mention' }, (session) =>
+      match(session.mention)
+        .with({ kind: 'user' }, (m) =>
+          $createUserMentionNode({ userId: m.userId, email: m.email })
+        )
+        .with({ kind: 'contact' }, (m) =>
+          $createContactMentionNode({
+            contactId: m.contactId,
+            name: m.name,
+            emailOrDomain: m.emailOrDomain,
+            isCompany: m.isCompany,
+          })
+        )
+        .with({ kind: 'group' }, (m) =>
+          $createGroupMentionNode({ groupAlias: m.groupAlias })
+        )
+        .with({ kind: 'document' }, (m) =>
+          $createDocumentMentionNode({
+            documentId: m.documentId,
+            documentName: m.documentName,
+            blockName: m.blockName,
+            blockParams: m.blockParams,
+          })
+        )
+        .with({ kind: 'agent_session' }, (m) =>
+          $createAgentSessionMentionNode({
+            id: m.id,
+            label: m.label,
+            expanded: m.expanded,
+          })
+        )
+        .with({ kind: 'pr' }, (m) =>
+          $createPullRequestMentionNode({ id: m.id, label: m.label })
+        )
+        .with({ kind: 'tag' }, (m) =>
+          $createTagMentionNode({
+            optionId: m.optionId,
+            propertyDefinitionId: m.propertyDefinitionId,
+            scope: m.scope,
+            name: m.name,
+            color: m.color,
+          })
+        )
+        .exhaustive()
+    )
     .exhaustive();
 }
 

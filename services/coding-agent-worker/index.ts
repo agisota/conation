@@ -1,11 +1,7 @@
-import { msg } from '@conation/sdk';
+import { msg } from '@macro-inc/sdk';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
-import { conation } from './src/conation';
-import { env } from './src/env';
-import { modelCapabilities, registerModelProxyRoute } from './src/model_proxy';
-import { assertSafeRepoUrl } from './src/provision';
-import { registerWebhookRoute } from './src/routes';
+import { macro } from './src/macro';
 import { startSession } from './src/session';
 
 // "start_agent_session <repo-url> [prompt...]" in any channel the bot can see.
@@ -35,40 +31,29 @@ function repoName(repoUrl: string): string | undefined {
 const app = new Hono();
 
 app.use(logger());
-registerModelProxyRoute(app, {
-  apiKey: env.ROX_API_KEY,
-  capabilities: modelCapabilities,
-});
 
-conation.events.on('channel.message_posted', async ({ metadata, message }) => {
+macro.events.on('channel.message_posted', async ({ metadata, message }) => {
   const content = await message.content();
   console.log('[ingress] channel.message_posted', { metadata, content });
   const match = content && normalizeMessageContent(content).match(TRIGGER);
   if (!match) return;
   const [, repoUrl, prompt] = match;
-  assertSafeRepoUrl(repoUrl);
 
-  const { session, egress } =
-    await conation.agentSessions.createSandboxedExternal({
-      repoUrl,
-      workspace: '/workspace',
-      instructions: repoName(repoUrl),
-    });
+  const agent = await macro.agents.create({ name: repoName(repoUrl) });
   startSession({
-    agentId: session.id,
-    egress,
+    agentId: agent.id,
+    repoUrl,
     prompt: prompt ?? 'Look around the repo and summarize it.',
-    onBoot: () =>
-      message.reply(msg`Сессия ${session.id} запущена и готова к работе.`),
+    onBoot: () => message.reply(msg`${agent} is booted and working`),
   });
-  await message.reply(msg`AI-сессия запущена: ${session.id}`);
+  await message.reply(msg`AI flow been started! Check it out: ${agent}`);
 });
-const receiver = conation.events.webhook();
-registerWebhookRoute(app, receiver);
+const receiver = macro.events.webhook();
+app.post('/macro-events', (c) => receiver(c.req.raw));
 
 // With the local stack, webhooks arrive through the sdk-webhook-relay's SSH
 // reverse tunnel, which delivers to this host port; 8787 otherwise.
 export default {
   fetch: app.fetch,
-  port: conation._client.localPortmap?.sdkWebhookHostReceiverPort ?? 8787,
+  port: macro._client.localPortmap?.sdkWebhookHostReceiverPort ?? 8787,
 };

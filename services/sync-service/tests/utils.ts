@@ -27,9 +27,8 @@ async function migrateDatabase(mf: Miniflare) {
   }
 }
 
-export async function setupMiniflare(
-  additionalBindings: Record<string, string | boolean> = {}
-) {
+export async function setupMiniflare(options: { persistPath?: string; migrate?: boolean } = {}) {
+  const persist = (name: string) => options.persistPath ? `${options.persistPath}/${name}` : false;
   const mf = new Miniflare({
     d1Databases: {
       USER_PEER_MAPPING: 'user-peer-mapping-database-id',
@@ -52,20 +51,22 @@ export async function setupMiniflare(
     },
     cachePersist: false,
     workflowsPersist: false,
-    durableObjectsPersist: false,
+    durableObjectsPersist: persist('objects'),
+    d1Persist: persist('d1'),
+    kvPersist: persist('kv'),
+    r2Persist: persist('r2'),
     bindings: {
       DOCUMENT_PERMISSIONS_SECRET: "local",
       INTERNAL_API_SECRET_KEY: "INTERNAL_API_SECRET",
       INTERNAL_API_SECRET,
       SPS_API_SECRET_KEY: "local",
-      SPS_URL:"http://localhost:8090",
+      SPS_URL: "http://localhost:8092",
       local:true,
-      ...additionalBindings,
     },
     compatibilityDate: '2025-03-05'
   });
 
-  await migrateDatabase(mf);
+  if (options.migrate !== false) await migrateDatabase(mf);
 
   return mf;
 }
@@ -179,7 +180,7 @@ export async function createTestUser(mf: Miniflare, documentId = 'test-doc', opt
       loroDoc.getText('content').push(text);
       loroDoc.commit();
       const update = loroDoc.export({ mode: 'update' });
-      connection.send(FromPeer.fromPeerUpdate({ update}).encode());
+      connection.send(FromPeer.fromPeerUpdate({ updates: [update], id: crypto.randomUUID() }).encode());
     },
     getState() {
       return loroDoc.getText('content').toString();

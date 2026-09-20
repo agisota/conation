@@ -25,7 +25,7 @@ use serde::{Deserialize, Serialize};
 use crate::domain::{
     models::{
         CalendarAttendeeInput, CalendarEvent, EventReminderOverride, EventReminders, EventTime,
-        EventTransparency,
+        OutOfOfficeAutoDeclineMode, OutOfOfficeProperties,
     },
     ports::{CalendarMutationError, CalendarMutationService, CalendarOccurrenceService},
 };
@@ -105,10 +105,12 @@ where
     shared_calendar_toolset().add_user_tool::<CreateCalendarEvent, CalendarToolContext<M, O>>()
 }
 
-/// Create the MCP calendar toolset.
+/// Create the calendar toolset for hosts without a composer — the MCP server
+/// and the channel-mention bot.
 ///
-/// MCP clients receive the real create tool and apply their own confirmation
-/// policy from its annotations rather than the chat-specific deferred flow.
+/// These hosts receive the real create tool and apply their own confirmation
+/// policy from its annotations rather than the chat-specific deferred flow,
+/// which only the chat frontend can finish.
 pub fn mcp_toolset<M, O>() -> AsyncToolCollection<CalendarToolContext<M, O>>
 where
     M: CalendarMutationService,
@@ -166,26 +168,6 @@ impl From<EventTimeInput> for EventTime {
     }
 }
 
-/// Whether an event blocks availability (busy/free). Same values the HTTP
-/// create/update bodies use: opaque = busy, transparent = free.
-#[derive(Debug, Deserialize, JsonSchema, Clone, Copy, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum TransparencyInput {
-    /// Blocks availability (busy).
-    Opaque,
-    /// Does not block availability (free).
-    Transparent,
-}
-
-impl From<TransparencyInput> for EventTransparency {
-    fn from(input: TransparencyInput) -> Self {
-        match input {
-            TransparencyInput::Opaque => Self::Opaque,
-            TransparencyInput::Transparent => Self::Transparent,
-        }
-    }
-}
-
 /// An attendee supplied to a calendar tool.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -215,7 +197,7 @@ impl From<AttendeeInput> for CalendarAttendeeInput {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct EventReminderOverrideInput {
-    /// Provider reminder method. `popup` creates a Conation notification.
+    /// Provider reminder method. `popup` creates a Macro notification.
     pub method: String,
     /// Minutes before the event start.
     pub minutes: u32,
@@ -250,6 +232,63 @@ impl From<EventRemindersInput> for EventReminders {
     }
 }
 
+/// The kind of event a create tool call makes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum CalendarEventTypeInput {
+    /// A regular calendar event.
+    #[default]
+    Default,
+    /// A Google out-of-office status event: primary calendar only, timed, no
+    /// attendees, and Google shows the user as away and can auto-decline
+    /// conflicting invitations.
+    OutOfOffice,
+}
+
+/// How an out-of-office event handles conflicting invitations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum AutoDeclineModeInput {
+    /// Leave conflicting invitations alone.
+    DeclineNone,
+    /// Decline every conflicting invitation, existing and new.
+    DeclineAll,
+    /// Decline only invitations that arrive after the event is created.
+    DeclineNewOnly,
+}
+
+impl From<AutoDeclineModeInput> for OutOfOfficeAutoDeclineMode {
+    fn from(input: AutoDeclineModeInput) -> Self {
+        match input {
+            AutoDeclineModeInput::DeclineNone => Self::DeclineNone,
+            AutoDeclineModeInput::DeclineAll => Self::DeclineAllConflictingInvitations,
+            AutoDeclineModeInput::DeclineNewOnly => Self::DeclineOnlyNewConflictingInvitations,
+        }
+    }
+}
+
+/// Out-of-office decline behavior supplied to the calendar tools.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct OutOfOfficeInput {
+    /// How conflicting invitations are handled. Defaults to declining nothing,
+    /// so the event only blocks time and shows the away status.
+    #[serde(default)]
+    pub auto_decline_mode: Option<AutoDeclineModeInput>,
+    /// Message returned to organizers whose invitations are auto-declined.
+    #[serde(default)]
+    pub decline_message: Option<String>,
+}
+
+impl From<OutOfOfficeInput> for OutOfOfficeProperties {
+    fn from(input: OutOfOfficeInput) -> Self {
+        Self {
+            auto_decline_mode: input.auto_decline_mode.map(Into::into).unwrap_or_default(),
+            decline_message: input.decline_message,
+        }
+    }
+}
+
 /// An attendee of a calendar event, as returned by calendar tools.
 #[derive(Debug, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -268,7 +307,7 @@ pub struct ToolEventAttendee {
 #[derive(Debug, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ToolCalendarEvent {
-    /// Conation calendar event id, used by UpdateCalendarEvent and
+    /// Macro calendar event id, used by UpdateCalendarEvent and
     /// DeleteCalendarEvent.
     pub event_id: uuid::Uuid,
     /// Display title.
@@ -304,8 +343,6 @@ pub struct ToolCalendarEvent {
     pub is_read_only: bool,
     /// Calendar the event belongs to, when known.
     pub calendar_id: Option<uuid::Uuid>,
-    /// Availability: "opaque" blocks time (busy), "transparent" is free.
-    pub transparency: String,
 }
 
 const DESCRIPTION_PREVIEW_CHARS: usize = 280;
@@ -377,7 +414,6 @@ impl ToolCalendarEvent {
             conference_url: event.conference_url.clone(),
             is_read_only: event.is_read_only,
             calendar_id: event.calendar_id,
-            transparency: event.transparency.as_str().to_string(),
         }
     }
 }
@@ -420,7 +456,7 @@ fn mutation_tool_error(action: &str, error: CalendarMutationError) -> ToolCallEr
             "The calendar service is temporarily unavailable. Try again shortly.".to_string()
         }
         CalendarMutationError::PersistFailed(_) => {
-            "The change reached Google Calendar, but Conation's copy lagged behind. It will appear \
+            "The change reached Google Calendar, but Macro's copy lagged behind. It will appear \
              after the next sync."
                 .to_string()
         }

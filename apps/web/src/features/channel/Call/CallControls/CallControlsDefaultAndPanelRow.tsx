@@ -1,9 +1,8 @@
-import { t } from '@app/lib/i18n';
-import PhoneDisconnect from '@icon/wide-call-disconnect.svg';
 import { DropdownMenu } from '@kobalte/core/dropdown-menu';
 import Gear from '@phosphor/gear.svg';
 import Microphone from '@phosphor/microphone.svg';
 import MicrophoneSlash from '@phosphor/microphone-slash.svg';
+import PhoneDisconnect from '@phosphor/phone-disconnect.svg';
 import Screencast from '@phosphor/screencast.svg';
 import VideoCamera from '@phosphor/video-camera.svg';
 import VideoCameraSlash from '@phosphor/video-camera-slash.svg';
@@ -84,25 +83,21 @@ function BackgroundEffectSelector() {
   return (
     <>
       <Dropdown.Group>
-        <Dropdown.GroupLabel>
-          {t('channel.call.controls.background')}
-        </Dropdown.GroupLabel>
+        <Dropdown.GroupLabel>Background</Dropdown.GroupLabel>
         <Dropdown.Item
           closeOnSelect={false}
           onSelect={() => handleChange('none')}
         >
-          <span class="flex-1 truncate">{t('channel.call.controls.none')}</span>
+          <span class="flex-1 truncate">None</span>
           <SingleSelectCheck active={currentEffectValue() === 'none'} />
         </Dropdown.Item>
       </Dropdown.Group>
       <Dropdown.Group>
-        <Dropdown.GroupLabel>
-          {t('channel.call.controls.blur')}
-        </Dropdown.GroupLabel>
+        <Dropdown.GroupLabel>Blur</Dropdown.GroupLabel>
         <For each={['light', 'medium', 'heavy'] as const}>
           {(intensity) => {
             const value = `blur-${intensity}`;
-            const label = t(`channel.call.controls.blur.${intensity}`);
+            const label = intensity[0]!.toUpperCase() + intensity.slice(1);
             return (
               <Dropdown.Item
                 closeOnSelect={false}
@@ -117,9 +112,7 @@ function BackgroundEffectSelector() {
       </Dropdown.Group>
       <Show when={BACKGROUND_IMAGES.length}>
         <Dropdown.Group>
-          <Dropdown.GroupLabel>
-            {t('channel.call.controls.image')}
-          </Dropdown.GroupLabel>
+          <Dropdown.GroupLabel>Image</Dropdown.GroupLabel>
           <For each={BACKGROUND_IMAGES}>
             {(bg) => {
               const value = `image-${bg.id}`;
@@ -159,18 +152,13 @@ export function CallControlsDefaultAndPanelRow(
   return (
     <div class="inline-flex items-center overflow-hidden rounded-lg border border-ink-muted/[0.08] bg-ink-muted/[0.025] divide-x divide-ink-muted/[0.08]">
       <Cell>
-        <Tooltip
-          label={t('channel.call.controls.toggleMicrophone')}
-          placement="top"
-        >
+        <Tooltip label="Toggle microphone" placement="top">
           <Button
             size="icon-sm"
             onClick={() => void callCtx.toggleAudio()}
             disabled={isConnecting()}
             aria-label={
-              callCtx.isAudioMuted()
-                ? t('channel.call.controls.unmuteMicrophone')
-                : t('channel.call.controls.muteMicrophone')
+              callCtx.isAudioMuted() ? 'Unmute microphone' : 'Mute microphone'
             }
             aria-pressed={!callCtx.isAudioMuted()}
           >
@@ -182,15 +170,13 @@ export function CallControlsDefaultAndPanelRow(
       </Cell>
 
       <Cell>
-        <Tooltip label={t('channel.call.controls.toggleVideo')} placement="top">
+        <Tooltip label="Toggle video" placement="top">
           <Button
             size="icon-sm"
             onClick={() => void callCtx.toggleVideo()}
             disabled={isConnecting()}
             aria-label={
-              callCtx.isVideoMuted()
-                ? t('channel.call.controls.turnCameraOn')
-                : t('channel.call.controls.turnCameraOff')
+              callCtx.isVideoMuted() ? 'Turn on camera' : 'Turn off camera'
             }
             aria-pressed={!callCtx.isVideoMuted()}
           >
@@ -205,15 +191,13 @@ export function CallControlsDefaultAndPanelRow(
       </Cell>
 
       <Cell>
-        <Tooltip label={t('channel.call.controls.screenShare')} placement="top">
+        <Tooltip label="Screen share" placement="top">
           <Button
             size="icon-sm"
             onClick={() => void callCtx.toggleScreenShare()}
             disabled={isConnecting()}
             aria-label={
-              callCtx.isScreenSharing()
-                ? t('channel.call.controls.stopScreenShare')
-                : t('channel.call.controls.shareScreen')
+              callCtx.isScreenSharing() ? 'Stop sharing screen' : 'Share screen'
             }
             aria-pressed={callCtx.isScreenSharing()}
           >
@@ -224,12 +208,12 @@ export function CallControlsDefaultAndPanelRow(
 
       <Cell>
         <Dropdown placement="top" gutter={6}>
-          <Tooltip label={t('channel.call.controls.settings')} placement="top">
+          <Tooltip label="Settings" placement="top">
             <DropdownMenu.Trigger
               as={Button}
               size="icon-sm"
               disabled={isConnecting()}
-              aria-label={t('channel.call.controls.settings')}
+              aria-label="Call settings"
             >
               <Gear />
             </DropdownMenu.Trigger>
@@ -237,7 +221,7 @@ export function CallControlsDefaultAndPanelRow(
           <Dropdown.Content class="min-w-56">
             <Dropdown.Group>
               <CallDeviceList
-                label={t('channel.call.controls.microphone')}
+                label="Microphone"
                 devices={callCtx.audioInputDevices()}
                 activeDeviceId={callCtx.activeAudioInputDeviceId()}
                 onSelect={(id) => callCtx.switchAudioInput(id)}
@@ -246,7 +230,7 @@ export function CallControlsDefaultAndPanelRow(
             <Show when={callCtx.audioOutputDevices().length > 0}>
               <Dropdown.Group>
                 <CallDeviceList
-                  label={t('channel.call.controls.speaker')}
+                  label="Speaker"
                   devices={callCtx.audioOutputDevices()}
                   activeDeviceId={callCtx.activeAudioOutputDeviceId()}
                   onSelect={(id) => callCtx.switchAudioOutput(id)}
@@ -255,23 +239,19 @@ export function CallControlsDefaultAndPanelRow(
             </Show>
             <Dropdown.Group>
               <CallDeviceList
-                label={t('channel.call.controls.camera')}
+                label="Camera"
                 devices={callCtx.videoInputDevices()}
                 activeDeviceId={callCtx.activeVideoInputDeviceId()}
                 onSelect={(id) => callCtx.switchVideoInput(id)}
               />
             </Dropdown.Group>
             <Dropdown.Group>
-              <Dropdown.GroupLabel>
-                {t('channel.call.controls.audioProcessing')}
-              </Dropdown.GroupLabel>
+              <Dropdown.GroupLabel>Audio processing</Dropdown.GroupLabel>
               <Dropdown.Item
                 closeOnSelect={false}
                 onSelect={() => void callCtx.toggleNoiseSuppression()}
               >
-                <span class="flex-1 truncate">
-                  {t('channel.call.controls.noiseSuppression')}
-                </span>
+                <span class="flex-1 truncate">Noise suppression</span>
                 <SingleSelectCheck
                   active={callCtx.noiseSuppressionMode() !== 'off'}
                 />
@@ -285,13 +265,13 @@ export function CallControlsDefaultAndPanelRow(
       </Cell>
 
       <Cell>
-        <Tooltip label={t('channel.call.leave')} placement="top">
+        <Tooltip label="Leave call" placement="top">
           <Button
             size="icon-sm"
             class="text-failure not-disabled:hover:text-failure not-disabled:hover:bg-failure/10"
             onClick={() => void props.onLeave()}
             disabled={isConnecting()}
-            aria-label={t('channel.call.leave')}
+            aria-label="Leave call"
           >
             <PhoneDisconnect />
           </Button>

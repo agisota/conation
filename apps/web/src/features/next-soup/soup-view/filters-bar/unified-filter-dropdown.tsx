@@ -21,7 +21,6 @@ import {
   type ReadFilter,
   useSoupView,
 } from '@app/features/next-soup/soup-view/soup-view-context';
-import { t } from '@app/lib/i18n';
 import { useDealStages } from '@companies/crm/deal-stages';
 import { CrmStageIcon } from '@companies/crm/StageIcon';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
@@ -31,8 +30,6 @@ import { useUserId } from '@core/context/user';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import { idToDisplayName } from '@core/user/util';
-import CaretRightIcon from '@phosphor/caret-right.svg';
-import CheckIcon from '@phosphor/check.svg';
 import CircleDashedIcon from '@phosphor/circle-dashed.svg';
 import FilterIcon from '@phosphor/funnel-simple.svg';
 import { PropertyValueIcon } from '@property/component/propertyValue/PropertyValueIcon';
@@ -44,13 +41,11 @@ import { cn, Dropdown, Tooltip } from '@ui';
 import {
   type Accessor,
   batch,
-  createEffect,
   createMemo,
   createSignal,
   For,
   type JSX,
   Match,
-  onCleanup,
   Show,
   Switch,
 } from 'solid-js';
@@ -59,97 +54,61 @@ import {
   filterInboxGithubPrOption,
 } from './filter-categories';
 import {
-  SearchableMultiSelectInline,
-  type SearchableOption,
-} from './searchable-multi-select';
+  FilterOptionItem,
+  FilterSubmenu,
+  SearchableFilterSubmenu,
+} from './filter-menu';
+import type { SearchableOption } from './searchable-multi-select';
+
 import { useTagFilter } from './tag-filter';
 
 export type { FilterCategory, FilterOption } from './filter-categories';
-
-export const TypeIndicator = (props: { active: boolean }) => (
-  <span
-    class={cn(
-      'size-3.5 flex items-center justify-center shrink-0 rounded-sm border text-surface',
-      props.active
-        ? 'bg-accent border-accent'
-        : 'border-transparent group-hover:not-hover:border-edge-muted group-data-highlighted:not-hover:border-edge-muted hover:border-accent'
-    )}
-  >
-    <Show when={props.active}>
-      <CheckIcon class="size-2.5" />
-    </Show>
-  </span>
-);
-
-// Sub-trigger rows differ from default Dropdown.Item only by
-// distributing label + caret to the row ends.
-// const FILTER_MENU_SUBTRIGGER_CLASS = 'justify-between gap-2';
 
 // Filter categories by view
 const INBOX_FILTER_CATEGORIES: FilterCategory[] = [
   {
     id: 'type',
-    get label() {
-      return t('soup.filters.categories.type');
-    },
-    get labelPlural() {
-      return t('soup.filters.categories.types');
-    },
+    label: 'Type',
+    labelPlural: 'Types',
     options: [
       {
         id: 'document',
-        get label() {
-          return t('soup.entityTypes.documentsShort');
-        },
+        label: 'Docs',
         icon: () => <EntityIcon targetType="md" size="xs" />,
       },
       {
         id: 'agent',
-        get label() {
-          return t('soup.entityTypes.agents');
-        },
+        label: 'Agents',
         icon: () => <EntityIcon targetType="chat" size="xs" />,
       },
       {
         id: 'people',
-        get label() {
-          return t('soup.entityTypes.people');
-        },
+        label: 'People',
         icon: () => <EntityIcon targetType="direct_message" size="xs" />,
       },
       {
         id: 'teams',
-        get label() {
-          return t('soup.entityTypes.teams');
-        },
+        label: 'Teams',
         icon: () => <EntityIcon targetType="channel" size="xs" />,
       },
       {
         id: 'task',
-        get label() {
-          return t('soup.entityTypes.tasks');
-        },
+        label: 'Tasks',
         icon: () => <EntityIcon targetType="task" size="xs" />,
       },
       {
         id: 'email',
-        get label() {
-          return t('soup.entityTypes.mail');
-        },
+        label: 'Mail',
         icon: () => <EntityIcon targetType="email" size="xs" />,
       },
       {
         id: 'file',
-        get label() {
-          return t('soup.entityTypes.files');
-        },
+        label: 'Files',
         icon: () => <EntityIcon targetType="files" size="xs" />,
       },
       {
         id: 'github-pr',
-        get label() {
-          return t('soup.entityTypes.githubPrs');
-        },
+        label: 'GitHub PRs',
         icon: () => <EntityIcon targetType="githubPullRequest" size="xs" />,
       },
     ],
@@ -168,68 +127,34 @@ const isInboxTypeFilterId = (id: string) => {
 const MAIL_FILTER_CATEGORIES: FilterCategory[] = [
   {
     id: 'status',
-    get label() {
-      return t('soup.fields.status');
-    },
-    get labelPlural() {
-      return t('soup.fields.statuses');
-    },
+    label: 'Status',
+    labelPlural: 'Statuses',
     options: [
-      {
-        id: 'unread',
-        get label() {
-          return t('soup.states.unread');
-        },
-      },
-      {
-        id: 'read',
-        get label() {
-          return t('soup.states.read');
-        },
-      },
-      {
-        id: 'not-done',
-        get label() {
-          return t('soup.states.notDone');
-        },
-      },
-      {
-        id: 'done',
-        get label() {
-          return t('soup.states.done');
-        },
-      },
+      { id: 'unread', label: 'Unread' },
+      { id: 'read', label: 'Read' },
+      { id: 'not-done', label: 'Not Done' },
+      { id: 'done', label: 'Done' },
     ],
     multiple: true,
   },
   {
     id: 'attachment',
-    get label() {
-      return t('soup.entityTypes.attachments');
-    },
-    get labelPlural() {
-      return t('soup.entityTypes.attachments');
-    },
+    label: 'Attachments',
+    labelPlural: 'Attachments',
     options: [
       {
         id: 'attachment-pdf',
-        get label() {
-          return t('soup.fileTypes.pdfs');
-        },
+        label: 'PDFs',
         icon: () => <EntityIcon targetType="pdf" size="xs" />,
       },
       {
         id: 'attachment-image',
-        get label() {
-          return t('soup.fileTypes.images');
-        },
+        label: 'Images',
         icon: () => <EntityIcon targetType="image" size="xs" />,
       },
       {
         id: 'attachment-document',
-        get label() {
-          return t('soup.entityTypes.documents');
-        },
+        label: 'Documents',
         icon: () => <EntityIcon targetType="files" size="xs" />,
       },
     ],
@@ -237,20 +162,9 @@ const MAIL_FILTER_CATEGORIES: FilterCategory[] = [
   },
   {
     id: 'calendar',
-    get label() {
-      return t('soup.entityTypes.calendar');
-    },
-    get labelPlural() {
-      return t('soup.entityTypes.calendar');
-    },
-    options: [
-      {
-        id: 'has-calendar-invite',
-        get label() {
-          return t('soup.filters.calendar.hasInvite');
-        },
-      },
-    ],
+    label: 'Calendar',
+    labelPlural: 'Calendar',
+    options: [{ id: 'has-calendar-invite', label: 'Has Calendar Invite' }],
     multiple: false,
   },
 ];
@@ -258,18 +172,12 @@ const MAIL_FILTER_CATEGORIES: FilterCategory[] = [
 const TASKS_FILTER_CATEGORIES: FilterCategory[] = [
   {
     id: 'status',
-    get label() {
-      return t('soup.fields.status');
-    },
-    get labelPlural() {
-      return t('soup.fields.statuses');
-    },
+    label: 'Status',
+    labelPlural: 'Statuses',
     options: [
       {
         id: 'task-not-started',
-        get label() {
-          return t('soup.taskStatus.notStarted');
-        },
+        label: 'Not Started',
         icon: () => (
           <PropertyValueIcon
             optionId={PROPERTY_OPTION_IDS.STATUS.NOT_STARTED}
@@ -279,9 +187,7 @@ const TASKS_FILTER_CATEGORIES: FilterCategory[] = [
       },
       {
         id: 'task-in-progress',
-        get label() {
-          return t('soup.taskStatus.inProgress');
-        },
+        label: 'In Progress',
         icon: () => (
           <PropertyValueIcon
             optionId={PROPERTY_OPTION_IDS.STATUS.IN_PROGRESS}
@@ -291,9 +197,7 @@ const TASKS_FILTER_CATEGORIES: FilterCategory[] = [
       },
       {
         id: 'task-in-review',
-        get label() {
-          return t('soup.taskStatus.inReview');
-        },
+        label: 'In Review',
         icon: () => (
           <PropertyValueIcon
             optionId={PROPERTY_OPTION_IDS.STATUS.IN_REVIEW}
@@ -303,9 +207,7 @@ const TASKS_FILTER_CATEGORIES: FilterCategory[] = [
       },
       {
         id: 'task-completed',
-        get label() {
-          return t('soup.taskStatus.completed');
-        },
+        label: 'Completed',
         icon: () => (
           <PropertyValueIcon
             optionId={PROPERTY_OPTION_IDS.STATUS.COMPLETED}
@@ -315,9 +217,7 @@ const TASKS_FILTER_CATEGORIES: FilterCategory[] = [
       },
       {
         id: 'task-canceled',
-        get label() {
-          return t('soup.taskStatus.canceled');
-        },
+        label: 'Canceled',
         icon: () => (
           <PropertyValueIcon
             optionId={PROPERTY_OPTION_IDS.STATUS.CANCELED}
@@ -330,18 +230,12 @@ const TASKS_FILTER_CATEGORIES: FilterCategory[] = [
   },
   {
     id: 'priority',
-    get label() {
-      return t('soup.fields.priority');
-    },
-    get labelPlural() {
-      return t('soup.fields.priorities');
-    },
+    label: 'Priority',
+    labelPlural: 'Priorities',
     options: [
       {
         id: 'task-urgent',
-        get label() {
-          return t('soup.priority.urgent');
-        },
+        label: 'Urgent',
         icon: () => (
           <PropertyValueIcon
             optionId={PROPERTY_OPTION_IDS.PRIORITY.URGENT}
@@ -351,9 +245,7 @@ const TASKS_FILTER_CATEGORIES: FilterCategory[] = [
       },
       {
         id: 'task-high-priority',
-        get label() {
-          return t('soup.priority.high');
-        },
+        label: 'High Priority',
         icon: () => (
           <PropertyValueIcon
             optionId={PROPERTY_OPTION_IDS.PRIORITY.HIGH}
@@ -363,9 +255,7 @@ const TASKS_FILTER_CATEGORIES: FilterCategory[] = [
       },
       {
         id: 'task-medium-priority',
-        get label() {
-          return t('soup.priority.medium');
-        },
+        label: 'Medium Priority',
         icon: () => (
           <PropertyValueIcon
             optionId={PROPERTY_OPTION_IDS.PRIORITY.MEDIUM}
@@ -375,9 +265,7 @@ const TASKS_FILTER_CATEGORIES: FilterCategory[] = [
       },
       {
         id: 'task-low-priority',
-        get label() {
-          return t('soup.priority.low');
-        },
+        label: 'Low Priority',
         icon: () => (
           <PropertyValueIcon
             optionId={PROPERTY_OPTION_IDS.PRIORITY.LOW}
@@ -385,12 +273,7 @@ const TASKS_FILTER_CATEGORIES: FilterCategory[] = [
           />
         ),
       },
-      {
-        id: 'task-no-priority',
-        get label() {
-          return t('soup.priority.none');
-        },
-      },
+      { id: 'task-no-priority', label: 'No Priority' },
     ],
     multiple: true,
   },
@@ -404,81 +287,62 @@ const COMPANIES_FILTER_CATEGORIES: FilterCategory[] = [];
 const DOCUMENTS_FILTER_CATEGORIES: FilterCategory[] = [
   {
     id: 'type',
-    get label() {
-      return t('soup.filters.categories.type');
-    },
-    get labelPlural() {
-      return t('soup.filters.categories.types');
-    },
+    label: 'Type',
+    labelPlural: 'Types',
     options: [
       {
         id: 'doc-markdown',
-        get label() {
-          return t('soup.fileTypes.markdown');
-        },
+        label: 'Markdown',
         icon: () => <EntityIcon targetType="md" size="xs" />,
       },
       {
         id: 'doc-canvas',
-        get label() {
-          return t('soup.fileTypes.canvas');
-        },
+        label: 'Canvas',
         icon: () => <EntityIcon targetType="canvas" size="xs" />,
       },
       {
+        id: 'doc-spreadsheet',
+        label: 'Spreadsheet',
+        icon: () => <EntityIcon targetType="spreadsheet" size="xs" />,
+      },
+      {
         id: 'file-code',
-        get label() {
-          return t('soup.fileTypes.code');
-        },
+        label: 'Code',
         icon: () => <EntityIcon targetType="code" size="xs" />,
       },
       {
         id: 'file-image',
-        get label() {
-          return t('soup.fileTypes.images');
-        },
+        label: 'Images',
         icon: () => <EntityIcon targetType="image" size="xs" />,
       },
       {
         id: 'file-pdf',
-        get label() {
-          return t('soup.fileTypes.pdfs');
-        },
+        label: 'PDFs',
         icon: () => <EntityIcon targetType="pdf" size="xs" />,
       },
       {
         id: 'file-docx',
-        get label() {
-          return t('soup.fileTypes.docx');
-        },
+        label: 'DOCX',
         icon: () => <EntityIcon targetType="write" size="xs" />,
       },
       {
         id: 'file-video',
-        get label() {
-          return t('soup.fileTypes.videos');
-        },
+        label: 'Videos',
         icon: () => <EntityIcon targetType="video" size="xs" />,
       },
       {
         id: 'doc-snippet',
-        get label() {
-          return t('soup.fileTypes.snippets');
-        },
+        label: 'Snippets',
         icon: () => <EntityIcon targetType="snippet" size="xs" />,
       },
       {
         id: 'doc-skill',
-        get label() {
-          return t('soup.fileTypes.skills');
-        },
+        label: 'Skills',
         icon: () => <EntityIcon targetType="skill" size="xs" />,
       },
       {
         id: 'file-other',
-        get label() {
-          return t('soup.fileTypes.other');
-        },
+        label: 'Other',
         icon: () => <EntityIcon targetType="files" size="xs" />,
       },
     ],
@@ -491,9 +355,7 @@ export function buildContactLabel(
   currentUserId: string | undefined
 ): string {
   if (contact.id === currentUserId) {
-    return contact.name
-      ? t('soup.people.currentUserNamed', { name: contact.name })
-      : t('soup.people.me');
+    return contact.name ? `${contact.name} (me)` : 'Me';
   }
   return contact.name || contact.id;
 }
@@ -517,97 +379,9 @@ export const VIEW_FILTER_CATEGORIES: Record<ListView, FilterCategory[]> = {
   search: [],
 };
 
-/** Searchable submenu for filters with many options like assignees */
-const SearchableFilterSubmenu = (props: {
-  label: string;
-  options: Accessor<SearchableOption[]>;
-  activeIds: Accessor<string[]>;
-  onChange: (ids: string[]) => void;
-  placeholder?: string;
-  open?: Accessor<boolean>;
-  onOpenChange?: (v: boolean) => void;
-  /** Keep `options` in their given order instead of pinning selected first. */
-  preserveOrder?: boolean;
-}) => {
-  const [internalOpen, setInternalOpen] = createSignal(false);
-  const isOpen = () => props.open?.() ?? internalOpen();
-  const setIsOpen = (v: boolean) => {
-    if (props.onOpenChange) props.onOpenChange(v);
-    else setInternalOpen(v);
-  };
-  const [inputRef, setInputRef] = createSignal<HTMLInputElement>();
-
-  // Focus the search input while the sub is open.
-  //
-  // Two issues conspire:
-  //   1. Initial focus has to wait for Kobalte's DismissableLayer to register
-  //      itself as a nested layer of the parent menu (done in its onMount).
-  //      The sub is portaled, so focusing the input before that registration
-  //      looks like "focus outside" to the parent and closes the whole menu
-  //      tree. One rAF is enough to get past those onMount callbacks.
-  //   2. After that, Kobalte's `onPointerMove` on the SubTrigger keeps
-  //      calling `focusWithoutScrolling(e.currentTarget)` on every mouse
-  //      move, stealing focus back to the trigger. Reclaim on blur — user
-  //      dismissal routes (Escape / click-outside) close the sub first,
-  //      which unregisters this listener before focus moves elsewhere.
-  createEffect(() => {
-    const el = inputRef();
-    if (!isOpen() || !el) return;
-
-    const raf = requestAnimationFrame(() => {
-      if (isOpen()) el.focus();
-    });
-
-    const onBlur = () => {
-      queueMicrotask(() => {
-        if (isOpen() && document.activeElement !== el) el.focus();
-      });
-    };
-    el.addEventListener('blur', onBlur);
-
-    onCleanup(() => {
-      cancelAnimationFrame(raf);
-      el.removeEventListener('blur', onBlur);
-    });
-  });
-
-  return (
-    <Dropdown.Sub open={isOpen()} onOpenChange={setIsOpen}>
-      <Dropdown.SubTrigger
-        onPointerEnter={(e: PointerEvent & { currentTarget: HTMLElement }) => {
-          // Kobalte's "grace polygon" keeps an open sub alive when the
-          // pointer crosses toward its content. For sibling In/From triggers,
-          // that means moving between them leaves the prior sub stuck open
-          // and the prior trigger stuck with data-highlighted. Force focus
-          // + open so Kobalte's parent selection manager updates to this
-          // trigger and the shared signal closes the sibling.
-          if (e.pointerType !== 'mouse') return;
-          e.currentTarget.focus({ preventScroll: true });
-          if (!isOpen()) setIsOpen(true);
-        }}
-      >
-        <span class="text-ink">{props.label}</span>
-        <CaretRightIcon class="size-3 text-ink-muted" />
-      </Dropdown.SubTrigger>
-
-      <Dropdown.SubContent class="w-65 max-w-[90vw]">
-        <Dropdown.Group class="p-0 gap-0">
-          <SearchableMultiSelectInline
-            onRequestClose={() => setIsOpen(false)}
-            placeholder={props.placeholder}
-            activeIds={props.activeIds}
-            onChange={props.onChange}
-            options={props.options}
-            inputRef={setInputRef}
-            preserveOrder={props.preserveOrder}
-          />
-        </Dropdown.Group>
-      </Dropdown.SubContent>
-    </Dropdown.Sub>
-  );
-};
-
 interface UnifiedFilterDropdownProps {
+  /** View-specific refinements alongside the shared filters. */
+  children?: JSX.Element;
   /** Optional controlled open state */
   open?: Accessor<boolean>;
   onOpenChange?: (open: boolean) => void;
@@ -620,24 +394,9 @@ interface UnifiedFilterDropdownProps {
 }
 
 const READ_FILTER_OPTIONS: { id: ReadFilter; label: string }[] = [
-  {
-    id: 'unread',
-    get label() {
-      return t('soup.states.unread');
-    },
-  },
-  {
-    id: 'read',
-    get label() {
-      return t('soup.states.read');
-    },
-  },
-  {
-    id: 'all',
-    get label() {
-      return t('soup.tabs.all');
-    },
-  },
+  { id: 'unread', label: 'Unread' },
+  { id: 'read', label: 'Read' },
+  { id: 'all', label: 'All' },
 ];
 
 /** Single-select read/unread/all submenu for the inbox. */
@@ -646,38 +405,14 @@ const ReadStatusSubmenu = (props: {
   onChange: (value: ReadFilter) => void;
 }) => {
   return (
-    <Dropdown.Sub>
-      <Dropdown.SubTrigger>
-        <span class="text-ink">{t('soup.filters.status')}</span>
-        <CaretRightIcon class="size-3 text-ink-muted" />
-      </Dropdown.SubTrigger>
-
-      <Dropdown.SubContent>
-        <Dropdown.Group>
-          <For each={READ_FILTER_OPTIONS}>
-            {(option) => {
-              const active = () => props.value === option.id;
-              return (
-                <Dropdown.Item
-                  onSelect={() => props.onChange(option.id)}
-                  closeOnSelect
-                >
-                  <TypeIndicator active={active()} />
-                  <span
-                    class={cn(
-                      'flex-1 truncate',
-                      active() ? 'text-ink' : 'text-ink-muted'
-                    )}
-                  >
-                    {option.label}
-                  </span>
-                </Dropdown.Item>
-              );
-            }}
-          </For>
-        </Dropdown.Group>
-      </Dropdown.SubContent>
-    </Dropdown.Sub>
+    <FilterSubmenu
+      label="Status"
+      active={props.value !== 'all'}
+      options={READ_FILTER_OPTIONS}
+      isSelected={(id) => props.value === id}
+      onSelect={props.onChange}
+      closeOnSelect
+    />
   );
 };
 
@@ -804,7 +539,7 @@ export const UnifiedFilterDropdown = (
     const currentUserId = userId();
     const noAssigneeOption: SearchableOption = {
       id: NO_ASSIGNEE,
-      label: t('soup.filters.assignees.unassigned'),
+      label: 'Unassigned',
       icon: () => <CircleDashedIcon class="size-3.5 text-ink-muted" />,
     };
     let meOption: SearchableOption | undefined;
@@ -875,7 +610,7 @@ export const UnifiedFilterDropdown = (
     const currentUserId = userId();
     const noOwnerOption: SearchableOption = {
       id: NO_ASSIGNEE,
-      label: t('soup.filters.owners.none'),
+      label: 'No owner',
       icon: () => <CircleDashedIcon class="size-3.5 text-ink-muted" />,
     };
     let meOption: SearchableOption | undefined;
@@ -920,14 +655,14 @@ export const UnifiedFilterDropdown = (
   const stageOptions = createMemo((): SearchableOption[] => [
     ...dealStages.filterStages().map((stage, index) => ({
       id: stage.id,
-      label: dealStages.stageLabel(stage.id) ?? stage.label,
+      label: stage.label,
       icon: () => (
         <CrmStageIcon optionId={stage.id} index={index} class="size-3.5" />
       ),
     })),
     {
       id: NO_STAGE,
-      label: t('soup.filters.stages.none'),
+      label: 'No stage',
       icon: () => <CircleDashedIcon class="size-3.5 text-ink-muted" />,
     },
   ]);
@@ -1084,20 +819,15 @@ export const UnifiedFilterDropdown = (
           <Switch>
             <Match when={props.customTrigger}>{props.customTrigger}</Match>
             <Match when={true}>
-              <Tooltip
-                label={t('soup.filters.trigger')}
-                hotkey={TOKENS.soup.filter}
-              >
+              <Tooltip label="Filter" hotkey={TOKENS.soup.filter}>
                 <Dropdown.Trigger
                   depth={2}
                   class="bg-surface"
-                  aria-label={
-                    props.hideLabel ? t('soup.filters.trigger') : undefined
-                  }
+                  aria-label={props.hideLabel ? 'Filter' : undefined}
                 >
                   <FilterIcon />
                   <Show when={!props.hideLabel}>
-                    <span>{t('soup.filters.trigger')}</span>
+                    <span>Filter</span>
                   </Show>
                 </Dropdown.Trigger>
               </Tooltip>
@@ -1105,7 +835,7 @@ export const UnifiedFilterDropdown = (
           </Switch>
         </Show>
 
-        <Dropdown.Content class={cn('shadow-menu min-w-32')}>
+        <Dropdown.Content class={cn('min-w-32')}>
           <Dropdown.Group>
             <Show when={isInboxView()}>
               <ReadStatusSubmenu
@@ -1125,97 +855,64 @@ export const UnifiedFilterDropdown = (
                 <>
                   <Show when={isDocumentsView() && showTagsFilter()}>
                     <SearchableFilterSubmenu
-                      label={t('soup.fields.tags')}
+                      label="Tags"
                       options={tagFilter.options}
                       activeIds={tagFilter.activeIds}
                       onChange={tagFilter.onChange}
-                      placeholder={t('soup.filters.tags.placeholder')}
+                      placeholder="Filter by tag..."
                     />
                   </Show>
 
                   <For each={categories()}>
                     {(category) => (
-                      <Dropdown.Sub>
-                        <Dropdown.SubTrigger>
-                          <span class="text-ink">{category.label}</span>
-                          <CaretRightIcon class="size-3 text-ink-muted" />
-                        </Dropdown.SubTrigger>
-
-                        <Dropdown.SubContent>
-                          <Dropdown.Group>
-                            <For each={category.options}>
-                              {(option) => {
-                                const active = () => isOptionActive(option.id);
-                                return (
-                                  <Dropdown.Item
-                                    onSelect={() => toggleFilter(option.id)}
-                                    closeOnSelect={!category.multiple}
-                                  >
-                                    <TypeIndicator active={active()} />
-
-                                    <Show when={option.icon}>
-                                      {(icon) => (
-                                        <span class="size-4 flex items-center justify-center shrink-0">
-                                          {icon()()}
-                                        </span>
-                                      )}
-                                    </Show>
-
-                                    <span
-                                      class={cn(
-                                        'flex-1 truncate',
-                                        active() ? 'text-ink' : 'text-ink-muted'
-                                      )}
-                                    >
-                                      {option.label}
-                                    </span>
-                                  </Dropdown.Item>
-                                );
-                              }}
-                            </For>
-                          </Dropdown.Group>
-                        </Dropdown.SubContent>
-                      </Dropdown.Sub>
+                      <FilterSubmenu
+                        label={category.label}
+                        options={category.options}
+                        isSelected={isOptionActive}
+                        onSelect={toggleFilter}
+                        closeOnSelect={!category.multiple}
+                      />
                     )}
                   </For>
 
                   {/* Assignee filter for tasks view */}
                   <Show when={isTasksView()}>
                     <SearchableFilterSubmenu
-                      label={t('soup.fields.assignee')}
+                      label="Assignee"
                       options={assigneeOptions}
                       activeIds={assigneeFilter}
                       onChange={handleAssigneeChange}
-                      placeholder={t('soup.filters.assignees.placeholder')}
+                      placeholder="Search assignees..."
                     />
                   </Show>
 
                   <Show when={showCreatedByFilter()}>
                     <SearchableFilterSubmenu
-                      label={t('soup.fields.createdBy')}
+                      label="Created by"
                       options={createdByOptions}
                       activeIds={createdByIds}
                       onChange={handleCreatedByChange}
-                      placeholder={t('soup.filters.creators.placeholder')}
+                      placeholder="Search creators..."
                     />
                   </Show>
 
                   {/* Stage + Owner filters for the Customers view */}
                   <Show when={isCompaniesView()}>
                     <SearchableFilterSubmenu
-                      label={t('soup.fields.stage')}
+                      label="Stage"
+                      active={stageFilter().length > 0}
                       options={stageOptions}
                       activeIds={effectiveStageFilter}
                       onChange={handleStageChange}
-                      placeholder={t('soup.filters.stages.placeholder')}
+                      placeholder="Filter stages..."
                       preserveOrder
                     />
                     <SearchableFilterSubmenu
-                      label={t('common.owner')}
+                      label="Owner"
                       options={ownerOptions}
                       activeIds={ownerFilter}
                       onChange={handleOwnerChange}
-                      placeholder={t('soup.filters.owners.placeholder')}
+                      placeholder="Search owners..."
                     />
                   </Show>
                 </>
@@ -1226,29 +923,13 @@ export const UnifiedFilterDropdown = (
                 {(option) => {
                   const active = () => isOptionActive(option.id);
                   return (
-                    <Dropdown.Item
+                    <FilterOptionItem
+                      label={option.label}
+                      icon={option.icon}
+                      active={active()}
                       onSelect={() => toggleFilter(option.id)}
                       closeOnSelect={!categories()[0]!.multiple}
-                    >
-                      <TypeIndicator active={active()} />
-
-                      <Show when={option.icon}>
-                        {(icon) => (
-                          <span class="size-4 flex items-center justify-center shrink-0">
-                            {icon()()}
-                          </span>
-                        )}
-                      </Show>
-
-                      <span
-                        class={cn(
-                          'flex-1 truncate',
-                          active() ? 'text-ink' : 'text-ink-muted'
-                        )}
-                      >
-                        {option.label}
-                      </span>
-                    </Dropdown.Item>
+                    />
                   );
                 }}
               </For>
@@ -1256,13 +937,14 @@ export const UnifiedFilterDropdown = (
 
             <Show when={!isDocumentsView() && showTagsFilter()}>
               <SearchableFilterSubmenu
-                label={t('soup.fields.tags')}
+                label="Tags"
                 options={tagFilter.options}
                 activeIds={tagFilter.activeIds}
                 onChange={tagFilter.onChange}
-                placeholder={t('soup.filters.tags.placeholder')}
+                placeholder="Filter by tag..."
               />
             </Show>
+            {props.children}
           </Dropdown.Group>
         </Dropdown.Content>
       </Dropdown>

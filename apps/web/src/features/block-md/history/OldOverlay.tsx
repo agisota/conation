@@ -1,13 +1,13 @@
 import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
-import { useBlockId } from '@core/block';
 import { toast } from '@core/component/Toast/Toast';
-import { useBlockDocumentName } from '@core/util/currentBlockDocumentName';
 import GitFork from '@phosphor-icons/core/regular/git-fork.svg?component-solid';
 import XIcon from '@phosphor-icons/core/regular/x.svg?component-solid';
 import { storageServiceClient } from '@service-storage/client';
 import { Button, Hotkey } from '@ui';
 import { createSignal, Show } from 'solid-js';
+import { useMarkdownName } from '../component/MarkdownNameProvider';
+import { useMarkdownDocument } from '../context/markdown-document-context';
 import { useHistory } from './HistoryContext';
 
 const nameForkedDocument = (name: string) =>
@@ -15,8 +15,8 @@ const nameForkedDocument = (name: string) =>
 
 export function OldOverlay() {
   const history = useHistory();
-  const blockId = useBlockId();
-  const documentName = useBlockDocumentName();
+  const { documentId } = useMarkdownDocument();
+  const { displayName } = useMarkdownName();
   const { insertSplit } = useSplitLayout();
   const [forking, setForking] = createSignal(false);
 
@@ -31,8 +31,8 @@ export function OldOverlay() {
     if (!history.isLive() && !vid) return;
     setForking(true);
     const res = await storageServiceClient.copyDocument({
-      documentId: blockId,
-      documentName: nameForkedDocument(documentName() ?? ''),
+      documentId: documentId(),
+      documentName: nameForkedDocument(displayName() ?? ''),
       syncServiceVersion: vid,
     });
     setForking(false);

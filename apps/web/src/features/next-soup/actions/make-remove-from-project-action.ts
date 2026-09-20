@@ -2,8 +2,8 @@ import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import type { EntityData } from '@entity';
 import { createBulkRemoveFromProjectDssEntityMutation } from '@entity';
-import type { SoupState } from '../create-soup-state';
 import { restoreSoupFocus } from '../utils';
+import type { EntityActionListState } from './entity-action-context';
 
 /** Clear the entities' folder (set their project to none). */
 export const makeRemoveFromProjectAction = () => {
@@ -27,7 +27,10 @@ export const makeRemoveFromProjectAction = () => {
     return true;
   };
 
-  const executeWithSoup = async (entities: EntityData[], soup: SoupState) => {
+  const executeWithSoup = async (
+    entities: EntityData[],
+    soup: EntityActionListState
+  ) => {
     // Entities leave the viewed folder's list; move focus to a neighbor
     const currentIndex = soup.focus.index();
     const nextRow =

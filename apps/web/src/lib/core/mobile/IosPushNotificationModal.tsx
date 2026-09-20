@@ -1,4 +1,3 @@
-import { t } from '@app/lib/i18n';
 import { isPlatform } from '@core/util/platform';
 import { useNotificationSettings } from '@notifications/notification-settings';
 import { useIsAuthenticated } from '@queries/auth';
@@ -32,15 +31,19 @@ export function IosPushNotificationModal() {
           <div class="*:max-h-[75vh]">
             <div class="flex flex-col gap-4 px-4 py-6">
               <Dialog.Title class="text-lg font-semibold text-ink">
-                {t('mobile.push.title')}
+                Enable Push Notifications
               </Dialog.Title>
               <Dialog.Description class="text-sm text-ink-extra-muted">
-                {t('mobile.push.description')}
+                Get notified about new messages, mentions, comments, and emails.
               </Dialog.Description>
               <div class="flex gap-2 w-full justify-end pt-2">
-                <Dialog.CloseButton class="text-sm text-ink-muted hover:text-ink px-3 py-1.5">
-                  {t('mobile.push.later')}
-                </Dialog.CloseButton>
+                <button
+                  type="button"
+                  class="text-sm text-ink-muted hover:text-ink px-3 py-1.5"
+                  onClick={() => settings.dismissPrompt()}
+                >
+                  Later
+                </button>
                 <Button
                   variant="accent"
                   size="sm"
@@ -53,7 +56,7 @@ export function IosPushNotificationModal() {
                     }
                   }}
                 >
-                  {t('mobile.push.enable')}
+                  Enable
                 </Button>
               </div>
             </div>

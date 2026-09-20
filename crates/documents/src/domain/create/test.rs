@@ -1,6 +1,7 @@
 use std::sync::Mutex;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use activity::Attribution;
+use macro_user_id::user_id::MacroUserIdStr;
 
 use super::{DocumentCreator, MarkdownSubtype, NewDocumentMetadata, NewMarkdownTextDocument};
 use crate::domain::content::DocumentContent;
@@ -19,18 +20,23 @@ const DOCUMENT_ID: &str = "created-task";
 const EMAIL_SEED: &str = r#"<m-document-mention>{"documentId":"thread-7","blockName":"email","documentName":"Re: invoice"}</m-document-mention>"#;
 
 fn owner() -> MacroUserIdStr<'static> {
-    MacroUserIdStr::try_from("conation|owner@example.com".to_string()).unwrap()
+    MacroUserIdStr::try_from("macro|owner@example.com".to_string()).unwrap()
 }
 
-struct FakeCreationService;
+#[derive(Default)]
+struct FakeCreationService {
+    calls: Mutex<Vec<CreateDocumentRepoArgs>>,
+}
 
 impl DocumentCreationService for FakeCreationService {
     async fn create_document(
         &self,
         user_id: MacroUserIdStr<'static>,
-        _args: CreateDocumentRepoArgs,
+        args: CreateDocumentRepoArgs,
         _job_id: Option<String>,
     ) -> Result<CreateDocumentResponseData, DocumentError> {
+        let file_type = args.file_type.map(|kind| kind.to_string());
+        self.calls.lock().unwrap().push(args);
         Ok(CreateDocumentResponseData {
             document_response: DocumentResponse {
                 document_metadata: DocumentResponseMetadataWithContent::new(
@@ -39,7 +45,7 @@ impl DocumentCreationService for FakeCreationService {
                         document_version_id: 1,
                         owner: user_id,
                         document_name: "task".to_string(),
-                        file_type: Some("md".to_string()),
+                        file_type: file_type.clone(),
                         sha: None,
                         branched_from_id: None,
                         branched_from_version_id: None,
@@ -55,7 +61,7 @@ impl DocumentCreationService for FakeCreationService {
                 presigned_url: None,
             },
             content_type: "text/markdown".to_string(),
-            file_type: Some("md".to_string()),
+            file_type: file_type.clone(),
         })
     }
 
@@ -64,6 +70,7 @@ impl DocumentCreationService for FakeCreationService {
         _user_id: MacroUserIdStr<'static>,
         _document_id: &str,
         _request: &CreateTaskRequest,
+        _attribution: &Attribution,
     ) -> Result<(), DocumentError> {
         Ok(())
     }
@@ -82,19 +89,6 @@ impl DocumentCreationService for FakeCreationService {
 
     async fn cleanup_created_document(&self, _document_id: &str) {
         panic!("unexpected cleanup_created_document call")
-    }
-
-    async fn overwrite_plain_text(
-        &self,
-        _document_id: &str,
-        _file_type: model::document::FileType,
-        _text: String,
-    ) -> Result<(), DocumentError> {
-        panic!("unexpected overwrite_plain_text call")
-    }
-
-    async fn read_plain_text(&self, _document_id: &str) -> Result<Option<String>, DocumentError> {
-        panic!("unexpected read_plain_text call")
     }
 }
 
@@ -175,7 +169,7 @@ fn task_document(markdown: &str) -> NewMarkdownTextDocument {
 async fn markdown_creation_tracks_the_seeded_mentions_once() {
     let tracker = RecordingMentionTracker::default();
     let creator = DocumentCreator::new(
-        FakeCreationService,
+        FakeCreationService::default(),
         FakeMarkdownInitializer,
         FakeBytesUploader,
         &tracker,
@@ -190,7 +184,7 @@ async fn markdown_creation_tracks_the_seeded_mentions_once() {
         tracker.calls(),
         vec![(
             DOCUMENT_ID.to_string(),
-            "conation|owner@example.com".to_string(),
+            "macro|owner@example.com".to_string(),
             EMAIL_SEED.to_string(),
         )]
     );
@@ -200,7 +194,7 @@ async fn markdown_creation_tracks_the_seeded_mentions_once() {
 async fn mention_tracking_failure_does_not_fail_creation() {
     let tracker = RecordingMentionTracker::failing();
     let creator = DocumentCreator::new(
-        FakeCreationService,
+        FakeCreationService::default(),
         FakeMarkdownInitializer,
         FakeBytesUploader,
         &tracker,
@@ -213,4 +207,45 @@ async fn mention_tracking_failure_does_not_fail_creation() {
 
     assert_eq!(created.initial_snapshot(), Some([1, 2, 3].as_slice()));
     assert_eq!(tracker.calls().len(), 1);
+}
+
+#[tokio::test]
+async fn native_spreadsheet_creation_uses_shared_service_without_upload_or_markdown() {
+    let tracker = RecordingMentionTracker::default();
+    let creator = DocumentCreator::new(
+        FakeCreationService::default(),
+        FakeMarkdownInitializer,
+        FakeBytesUploader,
+        &tracker,
+    );
+    let project = uuid::Uuid::new_v4();
+    let result = creator
+        .create_spreadsheet(
+            MacroUserIdStr::try_from_email("owner@macro.com").unwrap(),
+            NewDocumentMetadata::builder("Budget")
+                .project_id(project)
+                .attribution(Attribution::delegated(
+                    activity::Actor::new_from_bot(bot_id::MACRO_AI_BOT_ID),
+                    MacroUserIdStr::try_from_email("owner@macro.com").unwrap(),
+                ))
+                .build(),
+        )
+        .await
+        .unwrap()
+        .into_response();
+    assert_eq!(result.file_type.as_deref(), Some("spreadsheet"));
+    let calls = creator.document_service.calls.lock().unwrap();
+    assert_eq!(calls.len(), 1);
+    let args = &calls[0];
+    assert_eq!(args.file_type, Some(model::document::FileType::Spreadsheet));
+    assert_eq!(args.sha, crate::domain::models::EMPTY_SHA256);
+    assert_eq!(args.document_name, "Budget");
+    assert_eq!(args.project_id, Some(project));
+    assert_eq!(
+        args.user_id,
+        MacroUserIdStr::try_from_email("owner@macro.com").unwrap()
+    );
+    assert!(args.attribution.is_some());
+    assert!(args.sub_type.is_none());
+    assert!(tracker.calls().is_empty());
 }

@@ -26,13 +26,13 @@ fn emits_required_keys() {
         "REDIS_URI",
         "OPENSEARCH_URL",
         "LOCAL_AWS_URL",
+        "LOCAL_AWS_PUBLIC_URL",
         "AWS_ACCESS_KEY_ID",
         "STATIC_STORAGE_BUCKET",
         "CONNECTION_GATEWAY_TABLE",
         "NOTIFICATION_INGRESS_QUEUE",
         "SMTP_HOST",
         "INTERNAL_API_SECRET_KEY",
-        "SIGNUP_ANTIBOT_HMAC_KEY",
         "FUSIONAUTH_API_KEY_SECRET_KEY",
         "FUSIONAUTH_PUBLIC_URL",
         "FUSIONAUTH_OAUTH_REDIRECT_URI",
@@ -41,7 +41,7 @@ fn emits_required_keys() {
         // Boot-blocking stubs — service config loaders require these even in a
         // no-doppler stack (see `BootStubEnv`).
         "REDIS_HOST",
-        "CONATION_DB_URL",
+        "MACRO_DB_URL",
         "INTERNAL_API_KEY",
         "AUTHENTICATION_SERVICE_SECRET_KEY",
         "OPENSEARCH_USERNAME",
@@ -58,13 +58,10 @@ fn emits_required_keys() {
         "STRIPE_SECRET_KEY",
         "STRIPE_PRICE_ID",
         "STRIPE_WEBHOOK_SECRET_KEY",
-        "CONATION_API_TOKEN_ISSUER",
-        "CONATION_API_TOKEN_PUBLIC_KEY",
-        "CONATION_API_TOKEN_PRIVATE_SECRET_KEY",
-        "CONATION_API_TOKEN_EXPIRY_SECONDS",
-        "PIPEDREAM_CLIENT_ID",
-        "PIPEDREAM_CLIENT_SECRET",
-        "PIPEDREAM_PROJECT_ID",
+        "MACRO_API_TOKEN_ISSUER",
+        "MACRO_API_TOKEN_PUBLIC_KEY",
+        "MACRO_API_TOKEN_PRIVATE_SECRET_KEY",
+        "MACRO_API_TOKEN_EXPIRY_SECONDS",
         "GMAIL_GCP_QUEUE",
         "APOLLO_API_KEY",
         "EMAIL_SERVICE_CLOUDFRONT_DISTRIBUTION_URL",
@@ -97,7 +94,6 @@ fn emits_required_keys() {
         "LOCAL_CONTAINER_NETWORK",
         "DAYTONA_API_KEY",
         "HARNESS_BOT_ID",
-        "ALLOWED_ORIGINS",
     ] {
         assert!(
             env.contains_key(key),
@@ -132,8 +128,7 @@ fn boot_stubs_are_local_only() {
         Some("redis://redis:6379")
     );
     assert_eq!(
-        env.get("CONATION_DB_URL").map(String::as_str),
-        // `macrodb` remains the database/schema compatibility identifier.
+        env.get("MACRO_DB_URL").map(String::as_str),
         Some("postgres://user:password@postgres:5432/macrodb")
     );
     // INTERNAL_API_KEY must agree with the internal-auth key other services
@@ -150,7 +145,7 @@ fn boot_stubs_are_local_only() {
     );
     assert_eq!(
         env.get("OPENSEARCH_USERNAME").map(String::as_str),
-        Some("conationuser")
+        Some("macrouser")
     );
 }
 
@@ -172,12 +167,12 @@ fn internal_auth_values_are_authoritative_local_env() {
 
 /// Local must never point at real dev/prod infrastructure: endpoints are docker
 /// aliases / localhost, and creds are the LocalStack dummies. (Note `ISSUER` is
-/// the local `local.conation.dev` JWT issuer — a value, not an endpoint — so we
-/// match the *deployed* markers specifically, not a bare `.conation.dev`.)
+/// the local `local.macro.com` JWT issuer — a value, not an endpoint — so we
+/// match the *deployed* markers specifically, not a bare `.macro.com`.)
 #[test]
 fn values_are_local_only() {
     for (key, value) in local_env() {
-        for marker in ["amazonaws.com", "-dev.conation.dev", ".workers.dev"] {
+        for marker in ["amazonaws.com", "-dev.macro.com", ".workers.dev"] {
             assert!(
                 !value.contains(marker),
                 "{key} points at deployed infra ({marker}): {value}"
@@ -190,7 +185,7 @@ fn values_are_local_only() {
 fn emits_webhook_fifo_queue_override_url() {
     let env = local_env();
     assert_eq!(
-        env.get(conation_queues::WebhookEventQueue::OVERRIDE_ENV_VAR_NAME)
+        env.get(macro_queues::WebhookEventQueue::OVERRIDE_ENV_VAR_NAME)
             .map(String::as_str),
         Some("http://localstack:4566/000000000000/webhook-event-queue.fifo")
     );
@@ -212,12 +207,37 @@ fn emits_in_network_service_url_overrides() {
             "http://document-storage-service:8080",
         ),
         (
+            "OVERRIDE_STATIC_FILE_SERVICE_URL",
+            "http://static-file-service:8080",
+        ),
+        (
             "OVERRIDE_LEXICAL_SERVICE_URL",
             "http://lexical-service:8096",
+        ),
+        (
+            "OVERRIDE_STATIC_FILE_SERVICE_URL",
+            "http://static-file-service:8080",
         ),
     ] {
         assert_eq!(env.get(key).map(String::as_str), Some(expected));
     }
+}
+
+/// Permalinks the static file service mints must be loadable by a browser on
+/// the host: the instance proxy's `/static-file/*` block, not the
+/// single-instance CDN port.
+#[test]
+fn static_file_permalinks_go_through_the_instance_proxy() {
+    let env = local_env();
+    let permalink_base = env
+        .get("STATIC_FILE_SERVICE_URL")
+        .expect("static file permalink base");
+    assert!(
+        permalink_base.starts_with("http://localhost:"),
+        "{permalink_base}"
+    );
+    assert!(permalink_base.ends_with("/static-file"), "{permalink_base}");
+    assert!(!permalink_base.contains(":8100"), "{permalink_base}");
 }
 
 /// The auth service presents `SERVICE_INTERNAL_AUTH_KEY` to document storage,
@@ -303,6 +323,10 @@ fn the_agent_harness_uses_local_containers_and_wipes_daytona() {
     // No `CURSOR_API_KEY`: `@cursor` sessions run on the key each user
     // registers in settings, so there is no deployment-wide one to stub.
     assert!(!env.contains_key("CURSOR_API_KEY"));
+    assert_eq!(
+        env.get("CODEX_OAUTH_KMS_KEY_ID").map(String::as_str),
+        Some(resources::CODEX_OAUTH_KMS_ALIAS)
+    );
 }
 
 /// Sandboxes and the harness are both containers, so they reach each other on a
@@ -324,7 +348,7 @@ fn local_sandboxes_join_the_instances_compose_network() {
         default_env
             .get("LOCAL_CONTAINER_NETWORK")
             .map(String::as_str),
-        Some("conation_services")
+        Some("macro_services")
     );
     assert_eq!(
         named_env.get("LOCAL_CONTAINER_NETWORK").map(String::as_str),
@@ -332,21 +356,21 @@ fn local_sandboxes_join_the_instances_compose_network() {
     );
     assert_eq!(
         default_env.get("LOCAL_CONTAINER_IMAGE").map(String::as_str),
-        Some("conation-agent-harness:latest")
+        Some("macro-agent-harness:latest")
     );
 }
 
 #[test]
-fn mcp_public_url_uses_the_proxy_origin() {
+fn mcp_public_url_uses_the_proxy_cognition_route() {
     let default = Instance::derive(None, None).unwrap();
     let named = Instance::derive(Some("2508"), None).unwrap();
     let default_env = LocalEnv::for_instance(Mode::Local, &default, true, None).to_env();
     let named_env = LocalEnv::for_instance(Mode::Local, &named, true, None).to_env();
-    let named_public_url = format!("http://localhost:{}", named.port(Port::Proxy));
+    let named_public_url = format!("http://localhost:{}/cognition", named.port(Port::Proxy));
 
     assert_eq!(
         default_env.get("MCP_PUBLIC_URL").map(String::as_str),
-        Some("http://localhost:8090")
+        Some("http://localhost:8090/cognition")
     );
     assert_eq!(
         named_env.get("MCP_PUBLIC_URL").map(String::as_str),
@@ -359,41 +383,50 @@ fn mcp_public_url_uses_the_proxy_origin() {
 /// matching `credential.<url>.helper`, so the compose service name would leave
 /// the scoped helper silently unfired.
 #[test]
-fn the_egress_base_url_is_the_hyphenated_in_network_alias() {
+fn the_egress_url_override_is_the_hyphenated_in_network_alias() {
     let named = Instance::derive(Some("2508"), None).unwrap();
     let named_env = LocalEnv::for_instance(Mode::Local, &named, true, None).to_env();
 
     assert_eq!(
-        named_env.get("EGRESS_BASE_URL").map(String::as_str),
+        named_env
+            .get("OVERRIDE_AGENT_HARNESS_EGRESS_URL")
+            .map(String::as_str),
         Some("http://agent-harness-service:8102")
     );
-    assert_eq!(
-        named_env.get("CONATION_MCP_URL").map(String::as_str),
-        Some("http://mcp-service:8080/mcp")
-    );
-    assert!(!named_env.contains_key("MACRO_MCP_URL"));
+    assert!(!named_env.contains_key("EGRESS_BASE_URL"));
 }
 
 #[test]
-fn allowed_origins_include_lan_frontend() {
+fn the_mcp_service_override_is_an_in_network_base_url() {
     let env = local_env();
-    let origins = env
-        .get("ALLOWED_ORIGINS")
-        .expect("ALLOWED_ORIGINS")
-        .split(',')
-        .collect::<Vec<_>>();
-    for origin in [
-        "http://localhost:3000",
-        "http://100.89.19.82:3000",
-        "http://173.212.222.197:3000",
-        "tauri://localhost",
-        "http://tauri.localhost",
-        "https://tauri.localhost",
-        "https://localhost",
-    ] {
-        assert!(
-            origins.contains(&origin),
-            "ALLOWED_ORIGINS missing {origin}: {origins:?}"
-        );
-    }
+    assert_eq!(
+        env.get("OVERRIDE_MCP_SERVICE_URL").map(String::as_str),
+        Some("http://mcp-service:8080")
+    );
+    assert!(!env.contains_key("MACRO_MCP_URL"));
+}
+
+#[test]
+fn the_public_tunnel_overrides_the_egress_service_url() {
+    let instance = Instance::derive(Some("2508"), None).unwrap();
+    let url = "https://egress-test.trycloudflare.com";
+    let env = LocalEnv::for_instance(Mode::Local, &instance, true, Some(url)).to_env();
+
+    assert_eq!(
+        env.get("OVERRIDE_AGENT_HARNESS_EGRESS_URL")
+            .map(String::as_str),
+        Some(url)
+    );
+    assert!(!env.contains_key("EGRESS_BASE_URL"));
+}
+
+#[test]
+fn named_instance_separates_browser_and_container_aws_endpoints() {
+    let instance = Instance::derive(Some("image"), None).expect("named instance derives");
+    let env = LocalEnv::for_instance(Mode::Local, &instance, false, None).to_env();
+    assert_eq!(env["LOCAL_AWS_URL"], "http://localstack:4566");
+    assert_eq!(
+        env["LOCAL_AWS_PUBLIC_URL"],
+        format!("http://localhost:{}", instance.port(Port::LocalStack))
+    );
 }

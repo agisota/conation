@@ -1,17 +1,26 @@
-use super::*;
+use super::build_user_invite_message;
 
 #[test]
-fn renders_conation_brand_with_explicit_operator_values() {
-    let message = build_user_invite_message(
-        "Example Team",
-        "https://workspace.example/app/?login=true",
-        "help@workspace.example",
-    );
+fn escapes_organization_html() {
+    let org_name = "R&D <img src=x onerror=alert(1)> &lt;Partners&gt;";
+    let result = build_user_invite_message(org_name, "prod");
 
-    assert!(message.contains("присоединиться к Example Team в Conation"));
-    assert!(message.contains("https://workspace.example/app/?login=true"));
-    assert!(message.contains("mailto:help@workspace.example"));
-    assert!(!message.contains("on Macro"));
-    assert!(!message.contains("macro.com"));
-    assert!(!message.contains("amazonaws.com"));
+    assert!(result.contains(
+        "<strong>R&amp;D &lt;img src=x onerror=alert(1)&gt; &amp;lt;Partners&amp;gt;</strong>"
+    ));
+    assert!(!result.contains(org_name));
+}
+
+#[test]
+fn preserves_organization_text_and_environment_links() {
+    for (environment, prefix) in [("prod", ""), ("staging", "staging."), ("dev", "dev.")] {
+        let result = build_user_invite_message("Acme's \"Team\" – 東京", environment);
+
+        assert!(result.contains("<strong>Acme's \"Team\" – 東京</strong>"));
+        assert!(result.contains(&format!(
+            "href=\"https://{prefix}macro.com/app/?login=true\""
+        )));
+        assert!(!result.contains("{ORG_NAME}"));
+        assert!(!result.contains("{PREFIX}"));
+    }
 }

@@ -1,6 +1,5 @@
 import { createSoupState } from '@app/features/next-soup/create-soup-state';
-import { t } from '@app/lib/i18n';
-import { AnimatedEmailIcon } from '@icon/wide-email';
+import EmailIcon from '@phosphor/envelope.svg';
 import { createEffect, createSignal } from 'solid-js';
 import { MockAppChrome } from '../components/MockAppChrome';
 import { ClickCallout, HotkeyCallout } from '../components-lib';
@@ -23,24 +22,26 @@ function SidebarNavContent(props: LessonContentProps) {
   return (
     <div class="flex flex-col gap-8 onboarding-stagger">
       <div class="mt-2 text-ink-muted text-base">
-        <p>{t('onboarding.lessons.sidebar.description')}</p>
-        <p>{t('onboarding.lessons.sidebar.tryEmail')}</p>
+        <p>Use the sidebar to quickly jump between views.</p>
+        <p>
+          Try navigating to <strong>Emails</strong>.
+        </p>
       </div>
       <div class="flex flex-col gap-2">
         <HotkeyCallout
           keys={['G', 'E']}
-          separator={t('onboarding.callout.then')}
+          separator="then"
           label=""
           completed={done()}
         />
         <div class="flex items-center gap-3 text-sm text-ink/40">
           <div class="h-px w-8 bg-edge-muted" />
-          {t('onboarding.callout.or')}
+          or
           <div class="h-px flex-1 bg-edge-muted" />
         </div>
         <ClickCallout
-          icon={AnimatedEmailIcon}
-          label={t('onboarding.callout.inSidebar')}
+          icon={EmailIcon}
+          label="in the sidebar"
           completed={done()}
         />
       </div>
@@ -68,7 +69,7 @@ function SidebarNavDemo(props: LessonContentProps) {
 
 export const sidebarNavLesson: LessonDefinition = {
   id: 'sidebar-nav',
-  title: 'onboarding.lessons.sidebar.title',
+  title: 'Sidebar Navigation',
   content: SidebarNavContent,
   demo: SidebarNavDemo,
   order: 5,

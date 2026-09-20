@@ -634,7 +634,11 @@ export const emailClient = {
   },
   async deleteCalendarEvent(
     eventId: string,
-    options?: { scope?: CalendarDeletionScope; recurrenceId?: string }
+    options?: {
+      scope?: CalendarDeletionScope;
+      recurrenceId?: string;
+      calendarId?: string;
+    }
   ) {
     const params = new URLSearchParams();
     if (options?.scope && options.scope !== 'all') {
@@ -642,6 +646,9 @@ export const emailClient = {
     }
     if (options?.recurrenceId) {
       params.set('recurrenceId', options.recurrenceId);
+    }
+    if (options?.calendarId) {
+      params.set('calendarId', options.calendarId);
     }
     const query = params.toString();
     return fetchWithToken<EmptyResponse, CalendarMutationErrorCode>(

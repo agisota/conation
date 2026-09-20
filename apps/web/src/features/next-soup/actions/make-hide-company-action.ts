@@ -1,8 +1,8 @@
 import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import type { EntityData } from '@entity';
-import type { SoupState } from '../create-soup-state';
 import { restoreSoupFocus } from '../utils';
+import type { EntityActionListState } from './entity-action-context';
 
 type MakeHideCompanyOptions = {
   // Available to all team members; the backend enforces
@@ -16,7 +16,10 @@ export const makeHideCompanyAction = (options: MakeHideCompanyOptions) => {
   const canExecute = (entity: EntityData): boolean =>
     entity.type === 'crm_company';
 
-  const executeWithSoup = async (entities: EntityData[], soup: SoupState) => {
+  const executeWithSoup = async (
+    entities: EntityData[],
+    soup: EntityActionListState
+  ) => {
     const entity = entities[0];
     if (entity?.type !== 'crm_company') return;
 

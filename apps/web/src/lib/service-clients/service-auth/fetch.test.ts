@@ -2,13 +2,13 @@
  * @vitest-environment jsdom
  */
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { err, ok } from 'neverthrow';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const conationApiToken = vi.fn();
+const macroApiToken = vi.fn();
 
 vi.mock('./client', () => ({
-  authServiceClient: { conationApiToken },
+  authServiceClient: { macroApiToken },
   getExpiresAt: (token: string) => {
     try {
       const payload: unknown = JSON.parse(atob(token.split('.')[1]));
@@ -38,50 +38,49 @@ function jwt(exp: unknown) {
   return `header.${payload}.signature`;
 }
 
-describe('getConationApiToken', () => {
+describe('getMacroApiToken', () => {
   beforeEach(() => {
     vi.resetModules();
-    conationApiToken.mockReset();
-    localStorage.clear();
+    macroApiToken.mockReset();
   });
 
   test('reuses an unexpired cached token', async () => {
     const token = jwt(Math.floor(Date.now() / 1000) + 3600);
-    conationApiToken.mockResolvedValue(ok({ conation_api_token: token }));
-    const { getConationApiToken } = await import('./fetch');
+    macroApiToken.mockResolvedValue(ok({ macro_api_token: token }));
+    const { getMacroApiToken } = await import('./fetch');
 
-    await expect(getConationApiToken()).resolves.toBe(token);
-    await expect(getConationApiToken()).resolves.toBe(token);
+    await expect(getMacroApiToken()).resolves.toBe(token);
+    await expect(getMacroApiToken()).resolves.toBe(token);
 
-    expect(conationApiToken).toHaveBeenCalledTimes(1);
+    expect(macroApiToken).toHaveBeenCalledTimes(1);
   });
 
   test('refreshes an expired cached token', async () => {
     const expired = jwt(Math.floor(Date.now() / 1000) - 60);
     const fresh = jwt(Math.floor(Date.now() / 1000) + 3600);
-    conationApiToken
-      .mockResolvedValueOnce(ok({ conation_api_token: expired }))
-      .mockResolvedValueOnce(ok({ conation_api_token: fresh }));
-    const { getConationApiToken } = await import('./fetch');
+    macroApiToken
+      .mockResolvedValueOnce(ok({ macro_api_token: expired }))
+      .mockResolvedValueOnce(ok({ macro_api_token: fresh }));
+    const { getMacroApiToken } = await import('./fetch');
 
-    await expect(getConationApiToken()).resolves.toBe(expired);
-    await expect(getConationApiToken()).resolves.toBe(fresh);
+    await expect(getMacroApiToken()).resolves.toBe(expired);
+    await expect(getMacroApiToken()).resolves.toBe(fresh);
 
-    expect(conationApiToken).toHaveBeenCalledTimes(2);
+    expect(macroApiToken).toHaveBeenCalledTimes(2);
   });
 
   test('refreshes a cached token with a non-scalar exp', async () => {
     const malformed = jwt([Math.floor(Date.now() / 1000) + 3600]);
     const fresh = jwt(Math.floor(Date.now() / 1000) + 3600);
-    conationApiToken
-      .mockResolvedValueOnce(ok({ conation_api_token: malformed }))
-      .mockResolvedValueOnce(ok({ conation_api_token: fresh }));
-    const { getConationApiToken } = await import('./fetch');
+    macroApiToken
+      .mockResolvedValueOnce(ok({ macro_api_token: malformed }))
+      .mockResolvedValueOnce(ok({ macro_api_token: fresh }));
+    const { getMacroApiToken } = await import('./fetch');
 
-    await expect(getConationApiToken()).resolves.toBe(malformed);
-    await expect(getConationApiToken()).resolves.toBe(fresh);
+    await expect(getMacroApiToken()).resolves.toBe(malformed);
+    await expect(getMacroApiToken()).resolves.toBe(fresh);
 
-    expect(conationApiToken).toHaveBeenCalledTimes(2);
+    expect(macroApiToken).toHaveBeenCalledTimes(2);
   });
 
   test('deduplicates concurrent requests when the cache is empty', async () => {
@@ -90,16 +89,16 @@ describe('getConationApiToken', () => {
     const gate = new Promise<void>((resolve) => {
       release = resolve;
     });
-    conationApiToken.mockImplementation(async () => {
+    macroApiToken.mockImplementation(async () => {
       await gate;
-      return ok({ conation_api_token: token });
+      return ok({ macro_api_token: token });
     });
-    const { getConationApiToken } = await import('./fetch');
+    const { getMacroApiToken } = await import('./fetch');
 
-    const first = getConationApiToken();
-    const second = getConationApiToken();
+    const first = getMacroApiToken();
+    const second = getMacroApiToken();
 
-    expect(conationApiToken).toHaveBeenCalledTimes(1);
+    expect(macroApiToken).toHaveBeenCalledTimes(1);
     release();
     await expect(Promise.all([first, second])).resolves.toEqual([token, token]);
   });
@@ -107,101 +106,41 @@ describe('getConationApiToken', () => {
   test('deduplicates concurrent refreshes of an expired cached token', async () => {
     const expired = jwt(Math.floor(Date.now() / 1000) - 60);
     const fresh = jwt(Math.floor(Date.now() / 1000) + 3600);
-    conationApiToken.mockResolvedValueOnce(ok({ conation_api_token: expired }));
-    const { getConationApiToken } = await import('./fetch');
+    macroApiToken.mockResolvedValueOnce(ok({ macro_api_token: expired }));
+    const { getMacroApiToken } = await import('./fetch');
 
-    await expect(getConationApiToken()).resolves.toBe(expired);
+    await expect(getMacroApiToken()).resolves.toBe(expired);
 
     let release!: () => void;
     const gate = new Promise<void>((resolve) => {
       release = resolve;
     });
-    conationApiToken.mockImplementationOnce(async () => {
+    macroApiToken.mockImplementationOnce(async () => {
       await gate;
-      return ok({ conation_api_token: fresh });
+      return ok({ macro_api_token: fresh });
     });
 
-    const first = getConationApiToken();
-    const second = getConationApiToken();
+    const first = getMacroApiToken();
+    const second = getMacroApiToken();
 
     await Promise.resolve();
-    expect(conationApiToken).toHaveBeenCalledTimes(2);
+    expect(macroApiToken).toHaveBeenCalledTimes(2);
     release();
     await expect(Promise.all([first, second])).resolves.toEqual([fresh, fresh]);
   });
 
   test('does not permanently cache a rejected token request', async () => {
     const fresh = jwt(Math.floor(Date.now() / 1000) + 3600);
-    conationApiToken
+    macroApiToken
       .mockResolvedValueOnce(
         err([{ code: 'UNAUTHORIZED' as const, message: 'Unauthorized access' }])
       )
-      .mockResolvedValueOnce(ok({ conation_api_token: fresh }));
-    const { getConationApiToken } = await import('./fetch');
+      .mockResolvedValueOnce(ok({ macro_api_token: fresh }));
+    const { getMacroApiToken } = await import('./fetch');
 
-    await expect(getConationApiToken()).rejects.toBeDefined();
-    await expect(getConationApiToken()).resolves.toBe(fresh);
+    await expect(getMacroApiToken()).rejects.toBeDefined();
+    await expect(getMacroApiToken()).resolves.toBe(fresh);
 
-    expect(conationApiToken).toHaveBeenCalledTimes(2);
-  });
-
-  test('falls back to a persisted passwordless JWT when mint 401s', async () => {
-    const persisted = jwt(Math.floor(Date.now() / 1000) + 3600);
-    localStorage.setItem(
-      'conationAccessToken',
-      JSON.stringify({
-        accessToken: persisted,
-        refreshToken: 'refresh',
-        expiresAt: Date.now() + 3600_000,
-      })
-    );
-    conationApiToken.mockResolvedValueOnce(
-      err([{ code: 'UNAUTHORIZED' as const, message: 'Unauthorized access' }])
-    );
-    const { getConationApiToken } = await import('./fetch');
-
-    await expect(getConationApiToken()).resolves.toBe(persisted);
-    expect(conationApiToken).toHaveBeenCalledTimes(1);
-    localStorage.removeItem('conationAccessToken');
-  });
-
-  test('falls back to a persisted passwordless JWT when mint 500s', async () => {
-    const persisted = jwt(Math.floor(Date.now() / 1000) + 3600);
-    localStorage.setItem(
-      'conationAccessToken',
-      JSON.stringify({
-        accessToken: persisted,
-        refreshToken: 'refresh',
-        expiresAt: Date.now() + 3600_000,
-      })
-    );
-    conationApiToken.mockResolvedValueOnce(
-      err([
-        {
-          code: 'SERVER_ERROR' as const,
-          message: 'unable to encode Conation API token',
-        },
-      ])
-    );
-    const { getConationApiToken } = await import('./fetch');
-
-    await expect(getConationApiToken()).resolves.toBe(persisted);
-    expect(conationApiToken).toHaveBeenCalledTimes(1);
-    localStorage.removeItem('conationAccessToken');
-  });
-
-  test('unsetConationApiTokenPromise drops an in-flight cache', async () => {
-    const first = jwt(Math.floor(Date.now() / 1000) + 3600);
-    const second = jwt(Math.floor(Date.now() / 1000) + 7200);
-    conationApiToken
-      .mockResolvedValueOnce(ok({ conation_api_token: first }))
-      .mockResolvedValueOnce(ok({ conation_api_token: second }));
-    const { getConationApiToken, unsetConationApiTokenPromise } =
-      await import('./fetch');
-
-    await expect(getConationApiToken()).resolves.toBe(first);
-    unsetConationApiTokenPromise();
-    await expect(getConationApiToken()).resolves.toBe(second);
-    expect(conationApiToken).toHaveBeenCalledTimes(2);
+    expect(macroApiToken).toHaveBeenCalledTimes(2);
   });
 });

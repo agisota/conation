@@ -2,7 +2,7 @@ use axum::{
     Json,
     extract::{self, State},
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOnly};
+use macro_authorization::{MacroAuthorizationExtractor, UserOnly};
 use utoipa::ToSchema;
 
 use super::{CursorApiKeyError, CursorApiKeyStatus};
@@ -32,6 +32,7 @@ pub struct PutCursorDefaultModelRequest {
     responses(
         (status = 200, body = CursorApiKeyStatus),
         (status = 401, body = String),
+        (status = 403, body = model::response::ErrorResponse),
         (status = 409, body = model::response::ErrorResponse),
     )
 )]
@@ -42,6 +43,7 @@ pub async fn handler(
     extract::Json(req): extract::Json<PutCursorDefaultModelRequest>,
 ) -> Result<Json<CursorApiKeyStatus>, CursorApiKeyError> {
     let user_id = &user_context.authorization.macro_user_id;
+
     let updated = cursor_api_key::store::set_default_model_id(
         &ctx.db,
         user_id.as_ref(),

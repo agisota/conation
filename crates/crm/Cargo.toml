@@ -8,18 +8,17 @@ version = "0.1.0"
 ai_tools = [
   "dep:ai_toolset",
   "dep:async-trait",
-  "dep:conation_user_id",
+  "dep:macro_user_id",
   "dep:models_properties",
   "dep:properties",
   "dep:schemars",
-  "dep:system_properties",
   "entity_access/ports",
   "ports",
 ]
 axum = [
   "dep:axum",
-  "dep:conation_authorization",
-  "dep:conation_uuid",
+  "dep:macro_authorization",
+  "dep:macro_uuid",
   "dep:model-error-response",
   "dep:utoipa",
   "entity_access/axum",
@@ -29,7 +28,15 @@ axum = [
 ]
 default = ["ai_tools", "inbound", "outbound", "ports"]
 inbound = ["axum", "ports"]
-outbound = ["dep:reqwest", "dep:sqlx", "dep:unfurl", "ports"]
+outbound = [
+  "dep:macro_user_id",
+  "dep:models_properties",
+  "dep:properties",
+  "dep:reqwest",
+  "dep:sqlx",
+  "dep:unfurl",
+  "ports",
+]
 ports = []
 # Read-only CRM search (name/domain). Pulls only sqlx + ports — no
 # reqwest/unfurl/axum — so search consumers stay lightweight.
@@ -49,18 +56,18 @@ entity_access = { path = "../entity_access", default-features = false }
 # AI toolset dependencies
 ai_toolset = { path = "../ai_toolset", optional = true }
 async-trait = { workspace = true, optional = true }
-conation_user_id = { path = "../conation_user_id", optional = true }
+macro_user_id = { path = "../macro_user_id", optional = true }
 models_properties = { path = "../models_properties", optional = true }
 properties = { path = "../properties", default-features = false, features = [
   "ports",
 ], optional = true }
 schemars = { workspace = true, optional = true }
-system_properties = { path = "../system_properties", optional = true }
+system_properties = { path = "../system_properties" }
 
 # Axum / inbound dependencies
 axum = { workspace = true, optional = true }
-conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = ["axum"] }
-conation_uuid = { path = "../conation_uuid", optional = true }
+macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = ["axum"] }
+macro_uuid = { path = "../macro_uuid", optional = true }
 model-error-response = { path = "../model-error-response", optional = true }
 utoipa = { workspace = true, optional = true }
 
@@ -71,8 +78,12 @@ unfurl = { path = "../unfurl", features = ["ports"], optional = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-conation_db_migrator = { path = "../conation_db_migrator" }
-conation_user_id = { path = "../conation_user_id" }
+macro_db_migrator = { path = "../macro_db_migrator" }
+macro_user_id = { path = "../macro_user_id" }
+properties = { path = "../properties", default-features = false, features = [
+  "outbound",
+  "ports",
+] }
 rootcause = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }
 tower = { workspace = true }

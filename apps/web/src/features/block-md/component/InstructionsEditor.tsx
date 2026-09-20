@@ -1,17 +1,4 @@
-import { t } from '@app/lib/i18n';
-import { markdownBlockErrorSignal } from '@block-md/signal/error';
-import { revisionsSignal, rewriteSignal } from '@block-md/signal/rewriteSignal';
 import { SplitBottomPanel } from '@components/app/split-layout/components/SplitBottomPanel';
-import type { LoroManager } from '@conation/collaboration/collab/manager';
-import {
-  AwaitNode,
-  CommentNode,
-  createPeerIdValidator,
-  InlineSearchNode,
-  type PeerIdValidator,
-  peerIdPlugin,
-} from '@conation/lexical-core';
-import { useBlockId } from '@core/block';
 import { DecoratorRenderer } from '@core/component/LexicalMarkdown/component/core/DecoratorRenderer';
 import { FocusClickTarget } from '@core/component/LexicalMarkdown/component/core/FocusClickTarget';
 import { LexicalStateDebugger } from '@core/component/LexicalMarkdown/component/debug/LexicalStateDebugger';
@@ -49,17 +36,16 @@ import {
   setEditorStateFromMarkdown,
 } from '@core/component/LexicalMarkdown/utils';
 import { ENABLE_MARKDOWN_LIVE_COLLABORATION } from '@core/constant/featureFlags';
-import { createMethodRegistration } from '@core/orchestrator';
-import { blockElementSignal } from '@core/signal/blockElement';
-import {
-  blockFileSignal,
-  blockHandleSignal,
-  blockSourceSignal,
-} from '@core/signal/load';
-import { useCanEdit } from '@core/signal/permissions';
-import { isSourceDSS, isSourceSyncService } from '@core/util/source';
 import { bufToString } from '@core/util/string';
-import WarningIcon from '@phosphor/warning.svg';
+import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
+import {
+  AwaitNode,
+  CommentNode,
+  createPeerIdValidator,
+  InlineSearchNode,
+  type PeerIdValidator,
+  peerIdPlugin,
+} from '@macro-inc/lexical-core';
 import { onElementConnect } from '@solid-primitives/lifecycle';
 import { debounce } from '@solid-primitives/scheduled';
 import type { EditorState } from 'lexical';
@@ -71,9 +57,9 @@ import {
   onCleanup,
   Show,
 } from 'solid-js';
-import { blockDataSignal, mdStore } from '../signal/markdownBlockData';
-import type { MarkdownRewriteOutput } from '../signal/rewriteSignal';
-import { useBlockSave, useSaveMarkdownDocument } from '../signal/save';
+import { useMarkdownDocument } from '../context/markdown-document-context';
+import { createSaveMarkdownDocumentMutation } from '../queries/markdown-document-operations';
+import { EditorSystemMessage } from './EditorSystemMessage';
 import { MarkdownCollabProvider } from './MarkdownCollabProvider';
 
 const EDITOR_PADDING_BOTTOM = 120;
@@ -83,41 +69,45 @@ export function InstructionsEditor(props: {
   showLexicalStateDebugger?: boolean;
   onLexicalStateDebuggerClose?: () => void;
 }) {
-  const blockData = blockDataSignal.get;
-  const blockId = useBlockId();
+  const {
+    documentId,
+    documentSource,
+    element: blockElement,
+    permissions,
+    state: documentState,
+  } = useMarkdownDocument();
+  const canEdit = permissions.canEdit;
+  const blockId = documentId();
 
-  const saveMarkdownDocument = useSaveMarkdownDocument();
-  const setMdStore = mdStore.set;
-  const canEdit = useCanEdit();
-  const [blockElement] = blockElementSignal;
-  const docSource = blockSourceSignal.get;
+  const saveDocumentMutation = createSaveMarkdownDocumentMutation();
+  const {
+    setMd: setMdStore,
+    error: editorError,
+    setError: setEditorError,
+  } = documentState.editor;
+  const saveBlocked = () => documentState.comments.activeCommentThread === -1;
 
-  const blockHandle = blockHandleSignal.get;
-  createMethodRegistration(blockHandle, {
-    goToLocationFromParams: (_params: Record<string, any>) => {},
-  });
-
-  const IS_SYNC = () => {
-    return docSource() && isSourceSyncService(docSource()!);
-  };
+  const IS_SYNC = () => documentSource().type === 'sync';
 
   const debouncedSaveState = debounce(() => {
     const state_ = state();
-    if (!state_ || !canEdit()) return;
+    if (!state_ || !canEdit() || saveBlocked()) return;
     const savableState = getSaveState(editor.getEditorState());
-    saveMarkdownDocument(JSON.stringify(savableState));
+    saveDocumentMutation.mutate({
+      documentId: blockId,
+      text: JSON.stringify(savableState),
+    });
   }, 500);
 
   // flush save state after unblocking
-  const blockSave = useBlockSave();
   createEffect((prev) => {
-    const blockSave_ = blockSave();
+    const saveBlocked_ = saveBlocked();
     // no save on load
-    if (!blockSave_ && prev !== undefined) {
+    if (!saveBlocked_ && prev !== undefined) {
       debouncedSaveState();
     }
 
-    return blockSave_;
+    return saveBlocked_;
   }, undefined);
 
   let editorContainerRef!: HTMLDivElement;
@@ -125,7 +115,6 @@ export function InstructionsEditor(props: {
   const [clickTargetHeight, setClickTargetHeight] = createSignal(0);
 
   const [editorReady, setEditorReady] = createSignal<boolean>(false);
-  const [editorError, setEditorError] = markdownBlockErrorSignal;
 
   createEffect(() => {
     // We still want the editor to be locked down (for certain things like click events on check
@@ -286,17 +275,14 @@ export function InstructionsEditor(props: {
 
   const [fileArrayBuffer, setFileArrayBuffer] = createSignal<ArrayBuffer>();
   createEffect(() => {
-    const file = blockFileSignal();
-    if (!file) return;
+    const source = documentSource();
+    if (source.type !== 'dss') return;
 
-    file.arrayBuffer().then(setFileArrayBuffer);
+    source.file.arrayBuffer().then(setFileArrayBuffer);
   });
 
   createEffect(() => {
-    const source = docSource();
-    if (!source) return;
-    if (!isSourceDSS(source)) return;
-    if (!blockData()) return;
+    if (documentSource().type !== 'dss') return;
     if (editorReady()) return;
 
     const buf = fileArrayBuffer();
@@ -354,34 +340,16 @@ export function InstructionsEditor(props: {
     setEditorReady(true);
   });
 
-  const setRewriteSignal = rewriteSignal.set;
-  const setRevisionSignal = revisionsSignal.set;
-
-  createMethodRegistration(blockHandle, {
-    setPatches: (args: { patches: MarkdownRewriteOutput['diffs'] }) => {
-      setRewriteSignal(false);
-      setRevisionSignal(args.patches);
-    },
-  });
-
-  createMethodRegistration(blockHandle, {
-    setIsRewriting: () => {
-      setRewriteSignal(true);
-    },
-  });
-
   return (
     <LexicalWrapperContext.Provider value={lexicalWrapper}>
-      {/* SCUFFED: are these the right transparency values? */}
       <Show when={editorError()}>
         {(error) => (
-          <div class="pointer-events-none text-alert-ink p-2 bg-alert-bg w-full border-alert/30 border mb-2 flex items-center gap-2">
-            <WarningIcon class="size-6 shrink-0" />
+          <EditorSystemMessage variant="warning" class="mb-2">
             {getErrorDescription(error())}
-          </div>
+          </EditorSystemMessage>
         )}
       </Show>
-      <div class="relative" ref={editorContainerRef}>
+      <div class="relative text-base" ref={editorContainerRef}>
         <div
           ref={(el) => {
             onElementConnect(el, () => {
@@ -418,8 +386,8 @@ export function InstructionsEditor(props: {
         <Show when={isBlankMarkdown()}>
           <div class="pointer-events-none text-ink-placeholder absolute top-0">
             {canEdit()
-              ? t('markdown.instructions.editablePlaceholder')
-              : t('markdown.instructions.blankReadOnly')}
+              ? `Enter custom instructions for AI here...`
+              : `This document is blank...`}
           </div>
         </Show>
 
@@ -450,7 +418,7 @@ export function InstructionsEditor(props: {
             {(state) => (
               <SplitBottomPanel
                 id="lexical-state-debugger"
-                title={t('markdown.debug.lexicalState')}
+                title="Lexical state debugger"
                 onClose={props.onLexicalStateDebuggerClose}
               >
                 <LexicalStateDebugger

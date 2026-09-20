@@ -1,13 +1,12 @@
 import { useSoup } from '@app/features/next-soup/soup-context';
 import { registerSearchSplit } from '@app/features/next-soup/soup-view/search-controllers';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
-import { t } from '@app/lib/i18n';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
-import { markdownToPlainText } from '@conation/lexical-core/utils/parsers';
 import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
 import { registerHotkey } from '@core/hotkey/hotkeys';
-import SearchIcon from '@icon/macro-magnifying-glass.svg';
+import { markdownToPlainText } from '@macro-inc/lexical-core/utils/parsers';
+import SearchIcon from '@phosphor/magnifying-glass.svg';
 import XIcon from '@phosphor/x.svg?component-solid';
 import { cn, Hotkey } from '@ui';
 import {
@@ -120,7 +119,7 @@ export const SoupSearchbar = (props: SoupSearchbarProps) => {
     hotkey: ['cmd+f'],
     scopeId: panel.splitHotkeyScope,
     registrationType: 'add',
-    description: t('common.search'),
+    description: 'Search',
     runWithInputFocused: true,
     keyDownHandler: () => {
       editor.controls.focus();
@@ -182,7 +181,7 @@ export const SoupSearchbar = (props: SoupSearchbarProps) => {
         >
           <MarkdownShell
             config={editor}
-            placeholder={props.placeholder ?? t('common.search')}
+            placeholder={props.placeholder ?? 'Search'}
             autofocus={props.autoFocus}
             initialValue={initialEditorValue}
             class="min-h-0! overflow-visible!"

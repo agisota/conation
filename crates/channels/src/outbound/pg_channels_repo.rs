@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests;
 
-use crate::domain::link_preview::remove_link_preview_from_content;
 #[cfg(feature = "attachment")]
 use crate::domain::ports::ChannelAttachmentRepo;
 #[cfg(feature = "list")]
@@ -17,7 +16,7 @@ use crate::domain::{
         GetChannelsParams, GetThreadReplyRowsParams, LatestMessage, MessageAttachment,
         MessagePageDirection, MutatedAttachment, MutatedMessage, NameLookup, NewChannelAttachment,
         ParticipantRole, PatchChannelRequest, RecentChannelMessage, ReferencedShareItemType,
-        ResolvedChannelMessage, SimpleMention, ThreadData, ThreadInfo, ThreadReply, ThreadReplyRow,
+        ResolvedChannelMessage, ThreadData, ThreadInfo, ThreadReply, ThreadReplyRow,
         TopLevelMessageRow, UserName, fallback_user_name,
     },
     ports::{ChannelRepo, TopLevelMessagesQueryResult},
@@ -25,7 +24,6 @@ use crate::domain::{
 use anyhow::Context;
 use channel_sender::ChannelSender;
 use chrono::{DateTime, Utc};
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 #[cfg(feature = "list")]
 use filter_ast::Expr;
 #[cfg(feature = "list")]
@@ -33,6 +31,8 @@ use item_filters::ast::{
     LiteralTree,
     channel::{ChannelLiteral, ChannelThreadLiteral},
 };
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use messages::domain::models::SimpleMention;
 use models_pagination::{CreatedAt, Query};
 #[cfg(feature = "list")]
 use recursion::CollapsibleExt;
@@ -246,6 +246,7 @@ struct ChannelInfoRow {
 /// Intermediate row for batch channel preview lookups.
 #[derive(Debug, sqlx::FromRow)]
 struct ChannelPreviewQueryRow {
+    profile_picture_id: Option<Uuid>,
     id: Uuid,
     name: Option<String>,
     channel_type: ChannelType,
@@ -351,7 +352,7 @@ where
         INSERT INTO comms_activity (id, user_id, channel_id, created_at, updated_at)
         VALUES ($1, $2, $3, NOW(), NOW())
         "#,
-        conation_uuid::generate_uuid_v7(),
+        macro_uuid::generate_uuid_v7(),
         user_id,
         channel_id,
     )
@@ -600,7 +601,7 @@ async fn resolve_channel_display_name(
 }
 
 /// Display name for a participant principal: users resolve through the name
-/// lookup, bots through the bot-name lookup (Conation AI is code-defined).
+/// lookup, bots through the bot-name lookup (Macro AI is code-defined).
 /// Unrecognized principals yield `None`.
 fn principal_display_name(
     principal: &str,
@@ -611,8 +612,8 @@ fn principal_display_name(
         return Some(id_to_display_name(&user_id, name_lookup));
     }
     let bot_id = bot_id::BotIdStr::parse_from_str(principal).ok()?.bot_id();
-    if bot_id == bot_id::CONATION_AI_BOT_ID {
-        return Some(bot_id::CONATION_AI_NAME.to_string());
+    if bot_id == bot_id::MACRO_AI_BOT_ID {
+        return Some(bot_id::MACRO_AI_NAME.to_string());
     }
     Some(
         bot_name_lookup
@@ -745,9 +746,10 @@ fn id_to_display_name(user_id: &MacroUserIdStr<'static>, name_lookup: &NameLooku
 #[cfg(feature = "list")]
 static CHANNEL_LIST_PREFIX: &str = r#"
     WITH user_channels AS (
-        SELECT c.*
+        SELECT c.*, a.viewed_at
         FROM comms_channels c
         INNER JOIN comms_channel_participants cp ON cp.channel_id = c.id
+        LEFT JOIN comms_activity a ON a.channel_id = c.id AND a.user_id = $1
         WHERE cp.user_id = $1 AND cp.left_at IS NULL
 "#;
 
@@ -757,8 +759,9 @@ static CHANNEL_LIST_PREFIX: &str = r#"
 #[cfg(feature = "list")]
 static CHANNEL_LIST_PREFIX_WITH_TEAM_CHANNELS: &str = r#"
     WITH user_channels AS (
-        SELECT c.*
+        SELECT c.*, a.viewed_at
         FROM comms_channels c
+        LEFT JOIN comms_activity a ON a.channel_id = c.id AND a.user_id = $1
         WHERE (
             EXISTS (
                 SELECT 1
@@ -788,8 +791,18 @@ static CHANNEL_LIST_SELECT: &str = r#"
         WHERE
             ($4::timestamptz IS NULL)
             OR
-            ((CASE $2 WHEN 'created_at' THEN uc.created_at ELSE uc.updated_at END), uc.id::text) < ($4, $5)
-        ORDER BY (CASE $2 WHEN 'created_at' THEN uc.created_at ELSE uc.updated_at END) DESC, uc.id::text DESC
+            ((CASE $2
+                WHEN 'created_at' THEN uc.created_at
+                WHEN 'viewed_at' THEN COALESCE(uc.viewed_at, '1970-01-01 00:00:00+00')
+                WHEN 'viewed_updated' THEN COALESCE(uc.viewed_at, uc.updated_at)
+                ELSE uc.updated_at
+            END), uc.id::text) < ($4, $5)
+        ORDER BY (CASE $2
+            WHEN 'created_at' THEN uc.created_at
+            WHEN 'viewed_at' THEN COALESCE(uc.viewed_at, '1970-01-01 00:00:00+00')
+            WHEN 'viewed_updated' THEN COALESCE(uc.viewed_at, uc.updated_at)
+            ELSE uc.updated_at
+        END) DESC, uc.id::text DESC
         LIMIT $3
     ),
     channel_participants_json AS (
@@ -829,7 +842,12 @@ static CHANNEL_LIST_SELECT: &str = r#"
         ) as "is_participant"
     FROM paged_channels pc
     LEFT JOIN channel_participants_json cpj ON cpj.channel_id = pc.id
-    ORDER BY (CASE $2 WHEN 'created_at' THEN pc.created_at ELSE pc.updated_at END) DESC, pc.id::text DESC
+    ORDER BY (CASE $2
+        WHEN 'created_at' THEN pc.created_at
+        WHEN 'viewed_at' THEN COALESCE(pc.viewed_at, '1970-01-01 00:00:00+00')
+        WHEN 'viewed_updated' THEN COALESCE(pc.viewed_at, pc.updated_at)
+        ELSE pc.updated_at
+    END) DESC, pc.id::text DESC
 "#;
 
 #[cfg(feature = "list")]
@@ -904,25 +922,14 @@ fn build_channel_list_filter(ast: Option<&Expr<ChannelLiteral>>) -> String {
                 ))"#
             )
         }
-        filter_ast::ExprFrame::Literal(ChannelLiteral::NotificationDone(done)) => {
+        filter_ast::ExprFrame::Literal(ChannelLiteral::NotificationState(state)) => {
             build_channel_notification_exists_clause(
                 "c.id",
                 "channel",
-                if done {
-                    "un.done = true"
-                } else {
-                    "un.done = false"
-                },
-            )
-        }
-        filter_ast::ExprFrame::Literal(ChannelLiteral::NotificationSeen(seen)) => {
-            build_channel_notification_exists_clause(
-                "c.id",
-                "channel",
-                if seen {
-                    "un.seen_at IS NOT NULL"
-                } else {
-                    "un.seen_at IS NULL"
+                match state {
+                    item_filters::NotificationState::Unseen => "un.state = 'unseen'",
+                    item_filters::NotificationState::Seen => "un.state = 'seen'",
+                    item_filters::NotificationState::Done => "un.state = 'done'",
                 },
             )
         }
@@ -1018,25 +1025,14 @@ fn push_channel_thread_filter_expr(
         Expr::Literal(ChannelThreadLiteral::Participant(participant)) => {
             push_channel_thread_participant_filter_expr(builder, participant);
         }
-        Expr::Literal(ChannelThreadLiteral::NotificationDone(done)) => {
+        Expr::Literal(ChannelThreadLiteral::NotificationState(state)) => {
             push_channel_thread_notification_filter_expr(
                 builder,
                 user_id,
-                if *done {
-                    "un.done = true"
-                } else {
-                    "un.done = false"
-                },
-            );
-        }
-        Expr::Literal(ChannelThreadLiteral::NotificationSeen(seen)) => {
-            push_channel_thread_notification_filter_expr(
-                builder,
-                user_id,
-                if *seen {
-                    "un.seen_at IS NOT NULL"
-                } else {
-                    "un.seen_at IS NULL"
+                match state {
+                    item_filters::NotificationState::Unseen => "un.state = 'unseen'",
+                    item_filters::NotificationState::Seen => "un.state = 'seen'",
+                    item_filters::NotificationState::Done => "un.state = 'done'",
                 },
             );
         }
@@ -1697,6 +1693,22 @@ impl ChannelAttachmentRepo for PgChannelsRepo {
 }
 
 impl ChannelRepo for PgChannelsRepo {
+    async fn set_channel_picture(
+        &self,
+        channel_id: Uuid,
+        picture_id: Option<Uuid>,
+    ) -> Result<(), Self::Err> {
+        sqlx::query!(
+            "UPDATE comms_channels SET profile_picture_id = $2, updated_at = NOW() WHERE id = $1",
+            channel_id,
+            picture_id,
+        )
+        .execute(&self.pool)
+        .await
+        .context("unable to update channel picture")?;
+        Ok(())
+    }
+
     type Err = anyhow::Error;
 
     #[tracing::instrument(err, skip(self))]
@@ -1722,6 +1734,7 @@ impl ChannelRepo for PgChannelsRepo {
             Some(&filters.message_ids)
         };
         let created_after = filters.created_after;
+        let created_after_exclusive = filters.created_after_exclusive;
         let created_before = filters.created_before;
         let activity_after = filters.activity_after;
         let activity_before = filters.activity_before;
@@ -1734,8 +1747,7 @@ impl ChannelRepo for PgChannelsRepo {
             }
             (false, _) => "",
         };
-        let notification_done = filters.notification_filters.done;
-        let notification_seen = filters.notification_filters.seen;
+        let notification_states = &filters.notification_filters.states;
 
         let (rows, has_more_newer) = match direction {
             MessagePageDirection::Older => {
@@ -1744,7 +1756,7 @@ impl ChannelRepo for PgChannelsRepo {
                     r#"
                     SELECT
                         m.id,
-                        m.channel_id,
+                        m.channel_id AS "channel_id!",
                         m.sender_id,
                         m.triggered_by_user_id,
                         m.content,
@@ -1763,6 +1775,7 @@ impl ChannelRepo for PgChannelsRepo {
                       AND ($5::uuid[] IS NULL OR m.id = ANY($5))
                       AND ($6::timestamptz IS NULL OR m.created_at >= $6)
                       AND ($7::timestamptz IS NULL OR m.created_at < $7)
+                      AND ($13::timestamptz IS NULL OR m.created_at > $13)
                       AND (
                           ($8::timestamptz IS NULL AND $9::timestamptz IS NULL)
                           OR (
@@ -1777,15 +1790,14 @@ impl ChannelRepo for PgChannelsRepo {
                                 AND ($9::timestamptz IS NULL OR r.created_at < $9)
                           )
                       )
-                      AND ($10::bool = FALSE OR (
-                          ($11::bool IS NULL OR EXISTS (
+                      AND ($10::bool = FALSE OR EXISTS (
                               SELECT 1
                               FROM notification n
                               JOIN user_notification un ON un.notification_id = n.id
                               JOIN comms_messages msg ON msg.id = (n.metadata->>'messageId')::uuid
-                              WHERE un.user_id = $13::text
+                              WHERE un.user_id = $12::text
                                 AND un.deleted_at IS NULL
-                                AND un.done = $11
+                                AND un.state = ANY($11::notification_state[])
                                 AND n.event_item_type = 'channel'
                                 AND n.event_item_id = $1::uuid::text
                                 AND n.metadata->>'messageId' IS NOT NULL
@@ -1793,22 +1805,6 @@ impl ChannelRepo for PgChannelsRepo {
                                 AND msg.deleted_at IS NULL
                                 AND COALESCE(msg.thread_id, msg.id) = m.id
                           ))
-                          AND ($12::bool IS NULL OR EXISTS (
-                              SELECT 1
-                              FROM notification n
-                              JOIN user_notification un ON un.notification_id = n.id
-                              JOIN comms_messages msg ON msg.id = (n.metadata->>'messageId')::uuid
-                              WHERE un.user_id = $13::text
-                                AND un.deleted_at IS NULL
-                                AND (un.seen_at IS NOT NULL) = $12
-                                AND n.event_item_type = 'channel'
-                                AND n.event_item_id = $1::uuid::text
-                                AND n.metadata->>'messageId' IS NOT NULL
-                                AND msg.channel_id = $1
-                                AND msg.deleted_at IS NULL
-                                AND COALESCE(msg.thread_id, msg.id) = m.id
-                          ))
-                      ))
                     ORDER BY m.created_at DESC, m.id DESC
                     LIMIT $4
                     "#,
@@ -1822,9 +1818,9 @@ impl ChannelRepo for PgChannelsRepo {
                     activity_after,
                     activity_before,
                     notification_filter_active,
-                    notification_done,
-                    notification_seen,
+                    notification_states as _,
                     notification_user_id,
+                    created_after_exclusive,
                 )
                 .fetch_all(&self.pool)
                 .await?;
@@ -1837,7 +1833,7 @@ impl ChannelRepo for PgChannelsRepo {
                     r#"
                     SELECT
                         m.id,
-                        m.channel_id,
+                        m.channel_id AS "channel_id!",
                         m.sender_id,
                         m.triggered_by_user_id,
                         m.content,
@@ -1856,6 +1852,7 @@ impl ChannelRepo for PgChannelsRepo {
                       AND ($5::uuid[] IS NULL OR m.id = ANY($5))
                       AND ($6::timestamptz IS NULL OR m.created_at >= $6)
                       AND ($7::timestamptz IS NULL OR m.created_at < $7)
+                      AND ($13::timestamptz IS NULL OR m.created_at > $13)
                       AND (
                           ($8::timestamptz IS NULL AND $9::timestamptz IS NULL)
                           OR (
@@ -1870,15 +1867,14 @@ impl ChannelRepo for PgChannelsRepo {
                                 AND ($9::timestamptz IS NULL OR r.created_at < $9)
                           )
                       )
-                      AND ($10::bool = FALSE OR (
-                          ($11::bool IS NULL OR EXISTS (
+                      AND ($10::bool = FALSE OR EXISTS (
                               SELECT 1
                               FROM notification n
                               JOIN user_notification un ON un.notification_id = n.id
                               JOIN comms_messages msg ON msg.id = (n.metadata->>'messageId')::uuid
-                              WHERE un.user_id = $13::text
+                              WHERE un.user_id = $12::text
                                 AND un.deleted_at IS NULL
-                                AND un.done = $11
+                                AND un.state = ANY($11::notification_state[])
                                 AND n.event_item_type = 'channel'
                                 AND n.event_item_id = $1::uuid::text
                                 AND n.metadata->>'messageId' IS NOT NULL
@@ -1886,22 +1882,6 @@ impl ChannelRepo for PgChannelsRepo {
                                 AND msg.deleted_at IS NULL
                                 AND COALESCE(msg.thread_id, msg.id) = m.id
                           ))
-                          AND ($12::bool IS NULL OR EXISTS (
-                              SELECT 1
-                              FROM notification n
-                              JOIN user_notification un ON un.notification_id = n.id
-                              JOIN comms_messages msg ON msg.id = (n.metadata->>'messageId')::uuid
-                              WHERE un.user_id = $13::text
-                                AND un.deleted_at IS NULL
-                                AND (un.seen_at IS NOT NULL) = $12
-                                AND n.event_item_type = 'channel'
-                                AND n.event_item_id = $1::uuid::text
-                                AND n.metadata->>'messageId' IS NOT NULL
-                                AND msg.channel_id = $1
-                                AND msg.deleted_at IS NULL
-                                AND COALESCE(msg.thread_id, msg.id) = m.id
-                          ))
-                      ))
                     ORDER BY m.created_at ASC, m.id ASC
                     LIMIT $4
                     "#,
@@ -1915,9 +1895,9 @@ impl ChannelRepo for PgChannelsRepo {
                     activity_after,
                     activity_before,
                     notification_filter_active,
-                    notification_done,
-                    notification_seen,
+                    notification_states as _,
                     notification_user_id,
+                    created_after_exclusive,
                 )
                 .fetch_all(&self.pool)
                 .await?;
@@ -2165,7 +2145,7 @@ impl ChannelRepo for PgChannelsRepo {
         let rows = sqlx::query_as!(
             ChannelAttachmentRow,
             r#"
-            SELECT a.id, a.channel_id, a.message_id, m.sender_id,
+            SELECT a.id, a.channel_id AS "channel_id!", a.message_id, m.sender_id,
                 a.entity_type, a.entity_id,
                 a.width AS "width?", a.height AS "height?", a.created_at
             FROM comms_attachments a
@@ -2258,7 +2238,7 @@ impl ChannelRepo for PgChannelsRepo {
             r#"
             SELECT
                 id,
-                channel_id,
+                channel_id AS "channel_id!",
                 thread_id,
                 sender_id,
                 triggered_by_user_id,
@@ -2285,7 +2265,7 @@ impl ChannelRepo for PgChannelsRepo {
             r#"
             SELECT
                 id,
-                channel_id,
+                channel_id AS "channel_id!",
                 thread_id,
                 sender_id,
                 triggered_by_user_id,
@@ -2314,7 +2294,7 @@ impl ChannelRepo for PgChannelsRepo {
             r#"
             SELECT
                 id,
-                channel_id,
+                channel_id AS "channel_id!",
                 thread_id,
                 sender_id,
                 triggered_by_user_id,
@@ -2361,7 +2341,7 @@ impl ChannelRepo for PgChannelsRepo {
                 AttachmentChannelReference,
                 r#"
                 SELECT
-                    a.channel_id                     AS "channel_id: uuid::Uuid",
+                    a.channel_id                     AS "channel_id!: uuid::Uuid",
                     c.name                           AS "channel_name?",            -- Option<String>
                     a.message_id                     AS "message_id: uuid::Uuid",
                     m.thread_id                      AS "thread_id?: uuid::Uuid",
@@ -2394,7 +2374,7 @@ impl ChannelRepo for PgChannelsRepo {
                 AttachmentChannelReference,
                 r#"
                 SELECT
-                    m.channel_id                     AS "channel_id: uuid::Uuid",
+                    m.channel_id                     AS "channel_id!: uuid::Uuid",
                     c.name                           AS "channel_name?",            -- Option<String>
                     m.id                             AS "message_id: uuid::Uuid",
                     m.thread_id                      AS "thread_id?: uuid::Uuid",
@@ -2505,7 +2485,7 @@ impl ChannelRepo for PgChannelsRepo {
             r#"
             SELECT
                 m.id,
-                m.channel_id,
+                m.channel_id AS "channel_id!",
                 m.sender_id,
                 m.triggered_by_user_id,
                 m.content,
@@ -2549,7 +2529,7 @@ impl ChannelRepo for PgChannelsRepo {
         let row = sqlx::query_as!(
             ResolvedMessageRow,
             r#"
-            SELECT id, channel_id, thread_id, created_at
+            SELECT id, channel_id AS "channel_id!", thread_id, created_at
             FROM comms_messages
             WHERE id = $1
               AND channel_id = $2
@@ -2591,7 +2571,7 @@ impl ChannelRepo for PgChannelsRepo {
             r#"
             SELECT
                 m.id,
-                m.channel_id,
+                m.channel_id AS "channel_id!",
                 m.sender_id,
                 m.triggered_by_user_id,
                 m.content,
@@ -2622,7 +2602,7 @@ impl ChannelRepo for PgChannelsRepo {
             r#"
             SELECT
                 m.id,
-                m.channel_id,
+                m.channel_id AS "channel_id!",
                 m.sender_id,
                 m.triggered_by_user_id,
                 m.content,
@@ -2691,7 +2671,7 @@ impl ChannelRepo for PgChannelsRepo {
     }
 
     async fn get_or_create_channel_join_code(&self, channel_id: Uuid) -> Result<Uuid, Self::Err> {
-        let candidate_join_code = conation_uuid::generate_uuid_v7();
+        let candidate_join_code = macro_uuid::generate_uuid_v7();
         let join_code = sqlx::query_scalar!(
             r#"
             UPDATE comms_channels
@@ -2757,6 +2737,7 @@ impl ChannelRepo for PgChannelsRepo {
             SELECT
                 c.id,
                 c.name,
+                c.profile_picture_id,
                 c.channel_type AS "channel_type: ChannelType",
                 c.org_id,
                 c.team_id,
@@ -2783,6 +2764,7 @@ impl ChannelRepo for PgChannelsRepo {
         Ok(rows
             .into_iter()
             .map(|row| ChannelPreviewRow {
+                profile_picture_id: row.profile_picture_id,
                 info: ChannelInfo {
                     id: row.id,
                     name: row.name,
@@ -2850,7 +2832,7 @@ impl ChannelRepo for PgChannelsRepo {
             auto_join_team,
             participants,
         } = req;
-        let channel_id = conation_uuid::generate_uuid_v7();
+        let channel_id = macro_uuid::generate_uuid_v7();
         let mut transaction = self.pool.begin().await?;
         sqlx::query!(
             r#"
@@ -3109,6 +3091,8 @@ impl ChannelRepo for PgChannelsRepo {
             anyhow::bail!("team id is required to patch team channel settings");
         }
 
+        let requires_admin = convert_to_team_channel.is_some() || auto_join_team.is_some();
+
         let mut transaction = self.pool.begin().await?;
         let row = sqlx::query_as!(
             ExistsRow,
@@ -3118,22 +3102,35 @@ impl ChannelRepo for PgChannelsRepo {
                 FROM comms_channel_participants
                 WHERE channel_id = $1
                   AND user_id = $2
-                  AND role IN (
-                      'admin'::comms_participant_role,
-                      'owner'::comms_participant_role
+                  AND left_at IS NULL
+                  AND (
+                      role IN (
+                          'admin'::comms_participant_role,
+                          'owner'::comms_participant_role
+                      )
+                      OR (
+                          NOT $3
+                          AND role = 'member'::comms_participant_role
+                      )
                   )
             ) AS "exists!"
             "#,
             channel_id,
             user_id,
+            requires_admin,
         )
         .fetch_one(&mut *transaction)
         .await
         .context("failed to check user authorization")?;
 
         if !row.exists {
+            if requires_admin {
+                anyhow::bail!(
+                    "User is not authorized to perform this action, to patch channel settings you must be an admin or owner"
+                );
+            }
             anyhow::bail!(
-                "User is not authorized to perform this action, to patch a channel you must be an admin or owner"
+                "User is not authorized to perform this action, to rename a channel you must be a member"
             );
         }
 
@@ -3274,7 +3271,7 @@ impl ChannelRepo for PgChannelsRepo {
         content: String,
         thread_id: Option<Uuid>,
     ) -> Result<MutatedMessage, Self::Err> {
-        let message_id = conation_uuid::generate_uuid_v7();
+        let message_id = macro_uuid::generate_uuid_v7();
         let row = sqlx::query_as!(
             MutatedMessageRow,
             r#"
@@ -3282,7 +3279,7 @@ impl ChannelRepo for PgChannelsRepo {
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING
                 id,
-                channel_id,
+                channel_id AS "channel_id!",
                 sender_id,
                 triggered_by_user_id,
                 content,
@@ -3372,9 +3369,9 @@ impl ChannelRepo for PgChannelsRepo {
                     height
                 )
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING id, message_id, channel_id, entity_type, entity_id, width, height, created_at
+                RETURNING id, message_id, channel_id AS "channel_id!", entity_type, entity_id, width, height, created_at
                 "#,
-                conation_uuid::generate_uuid_v7(),
+                macro_uuid::generate_uuid_v7(),
                 message_id,
                 channel_id,
                 entity_type,
@@ -3396,7 +3393,7 @@ impl ChannelRepo for PgChannelsRepo {
         Ok(sqlx::query_as!(
             MutatedAttachmentRow,
             r#"
-                SELECT id, message_id, channel_id, entity_type, entity_id, width, height, created_at
+                SELECT id, message_id, channel_id AS "channel_id!", entity_type, entity_id, width, height, created_at
                 FROM comms_attachments
                 WHERE message_id = $1
                 "#,
@@ -3451,7 +3448,7 @@ impl ChannelRepo for PgChannelsRepo {
         &self,
         options: CreateEntityMentionOptions,
     ) -> Result<EntityMention, Self::Err> {
-        let id = conation_uuid::generate_uuid_v7();
+        let id = macro_uuid::generate_uuid_v7();
         let mention = sqlx::query_as!(
             EntityMention,
             r#"
@@ -3527,7 +3524,7 @@ impl ChannelRepo for PgChannelsRepo {
             WHERE id = $1
             RETURNING
                 id,
-                channel_id,
+                channel_id AS "channel_id!",
                 sender_id,
                 triggered_by_user_id,
                 content,
@@ -3560,7 +3557,7 @@ impl ChannelRepo for PgChannelsRepo {
             WHERE id = $2 AND channel_id = $3
             RETURNING
                 id,
-                channel_id,
+                channel_id AS "channel_id!",
                 sender_id,
                 triggered_by_user_id,
                 content,
@@ -3579,80 +3576,6 @@ impl ChannelRepo for PgChannelsRepo {
         .context("unable to update message")?;
         mutated_message_from_row(row)
     }
-
-    async fn remove_link_preview(
-        &self,
-        channel_id: Uuid,
-        message_id: Uuid,
-        url: String,
-    ) -> Result<MutatedMessage, Self::Err> {
-        // Read-transform-write under a row lock so two removals on the same
-        // message cannot clobber each other's payload rewrite. Deliberately
-        // leaves edited_at alone: removing a preview is not a content edit
-        // and must not surface the "edited" badge.
-        let mut tx = self.pool.begin().await.context("unable to begin tx")?;
-        let current = sqlx::query_as!(
-            MutatedMessageRow,
-            r#"
-            SELECT
-                id,
-                channel_id,
-                sender_id,
-                triggered_by_user_id,
-                content,
-                created_at,
-                updated_at,
-                thread_id,
-                edited_at::timestamptz AS "edited_at?",
-                deleted_at::timestamptz AS "deleted_at?"
-            FROM comms_messages
-            WHERE id = $1 AND channel_id = $2
-            FOR UPDATE
-            "#,
-            message_id,
-            channel_id,
-        )
-        .fetch_one(&mut *tx)
-        .await
-        .context("unable to load message content")?;
-
-        let rewritten = remove_link_preview_from_content(&current.content, &url);
-        // The URL isn't in this message (or is already suppressed): skip the
-        // write so no updated_at bump or realtime event is emitted.
-        if rewritten == current.content {
-            tx.commit().await.context("unable to commit tx")?;
-            return mutated_message_from_row(current);
-        }
-
-        let row = sqlx::query_as!(
-            MutatedMessageRow,
-            r#"
-            UPDATE comms_messages
-            SET content = $1, updated_at = NOW()
-            WHERE id = $2 AND channel_id = $3
-            RETURNING
-                id,
-                channel_id,
-                sender_id,
-                triggered_by_user_id,
-                content,
-                created_at,
-                updated_at,
-                thread_id,
-                edited_at::timestamptz AS "edited_at?",
-                deleted_at::timestamptz AS "deleted_at?"
-            "#,
-            rewritten,
-            message_id,
-            channel_id,
-        )
-        .fetch_one(&mut *tx)
-        .await
-        .context("unable to update message content")?;
-        tx.commit().await.context("unable to commit tx")?;
-        mutated_message_from_row(row)
-    }
-
     async fn delete_message(
         &self,
         channel_id: Uuid,
@@ -3666,7 +3589,7 @@ impl ChannelRepo for PgChannelsRepo {
             WHERE id = $1 AND channel_id = $2
             RETURNING
                 id,
-                channel_id,
+                channel_id AS "channel_id!",
                 sender_id,
                 triggered_by_user_id,
                 content,
@@ -3746,7 +3669,7 @@ impl ChannelRepo for PgChannelsRepo {
             ON CONFLICT (user_id, channel_id) DO UPDATE
             SET interacted_at = NOW(), updated_at = NOW()
             "#,
-            conation_uuid::generate_uuid_v7(),
+            macro_uuid::generate_uuid_v7(),
             user_id.as_ref(),
             channel_id,
         )
@@ -3825,7 +3748,7 @@ impl ChannelRepo for PgChannelsRepo {
                     viewed_at as "viewed_at?: DateTime<Utc>",
                     interacted_at as "interacted_at?: DateTime<Utc>"
                 "#,
-                    conation_uuid::generate_uuid_v7(),
+                    macro_uuid::generate_uuid_v7(),
                     user_id,
                     channel_id,
                 )
@@ -3858,7 +3781,7 @@ impl ChannelRepo for PgChannelsRepo {
                     viewed_at as "viewed_at?: DateTime<Utc>",
                     interacted_at as "interacted_at?: DateTime<Utc>"
                 "#,
-                    conation_uuid::generate_uuid_v7(),
+                    macro_uuid::generate_uuid_v7(),
                     user_id,
                     channel_id,
                 )

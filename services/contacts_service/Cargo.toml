@@ -23,13 +23,15 @@ aws-sdk-secretsmanager = { workspace = true }
 aws-sdk-sqs = { workspace = true }
 axum = { workspace = true }
 contacts = { path = "../../crates/contacts", features = ["axum"] }
-conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization" }
-conation_aws_config = { path = "../../crates/conation_aws_config" }
-conation_cors = { path = "../../crates/conation_cors" }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
-conation_env = { path = "../../crates/conation_env" }
-conation_user_id = { path = "../../crates/conation_user_id" }
+macro_auth = { path = "../../crates/macro_auth" }
+macro_authorization = { path = "../../crates/macro_authorization", features = [
+  "postgres",
+] }
+macro_aws_config = { path = "../../crates/macro_aws_config" }
+macro_cors = { path = "../../crates/macro_cors" }
+macro_entrypoint = { path = "../../crates/macro_entrypoint" }
+macro_env = { path = "../../crates/macro_env" }
+macro_user_id = { path = "../../crates/macro_user_id" }
 model = { path = "../../crates/model" }
 rate_limit = { path = "../../crates/rate_limit", features = ["axum"] }
 redis = { workspace = true }
@@ -42,11 +44,11 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
-conation_service_urls = { path = "../../crates/conation_service_urls" }
+macro_service_urls = { path = "../../crates/macro_service_urls" }
 workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
-conation_env_var = { path = "../../crates/conation_env_var" }
-conation_queues = { path = "../../crates/conation_queues" }
-conation_config = { path = "../../crates/conation_config" }
+macro_env_var = { path = "../../crates/macro_env_var" }
+macro_queues = { path = "../../crates/macro_queues" }
+macro_config = { path = "../../crates/macro_config" }
 database_env_vars = { path = "../../crates/database_env_vars" }
 doppler-config = { workspace = true }
 

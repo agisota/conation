@@ -16,15 +16,18 @@ use ::notification::outbound::rate_limit::RedisRateLimitAdapter;
 use ::notification::outbound::websocket::{ConnectionGatewayClient, WebSocketGatewayAdapter};
 use ::rate_limit::RateLimitServiceImpl;
 use anyhow::Context;
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
-use conation_entrypoint::MacroEntrypoint;
-use conation_env::Environment;
-use conation_event_broker::{GlobalSpawner, KafkaEventPublisher, MacroEventBrokerService};
-use conation_service_urls::{ConnectionGatewayUrl, NotificationServiceUrl};
 use config::Config;
-use email_formatting::{DigestEmailUrls, EmailDigestNotification};
+use email_formatting::EmailDigestNotification;
 use hmac::{Hmac, Mac};
+use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use macro_authorization::{
+    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState,
+    PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
+};
+use macro_entrypoint::MacroEntrypoint;
+use macro_env::Environment;
+use macro_event_broker::{GlobalSpawner, KafkaEventPublisher, MacroEventBrokerService};
+use macro_service_urls::ConnectionGatewayUrl;
 use secretsmanager_client::SecretManager;
 use sha2::Sha256;
 use sqlx::postgres::PgPoolOptions;
@@ -42,21 +45,6 @@ pub async fn main() -> anyhow::Result<()> {
 
     // Parse our configuration from the environment.
     let config = Config::from_env().context("expected to be able to generate config")?;
-    let public_email_urls = invite_email::configured_public_email_urls().map_err(|error| {
-        anyhow::anyhow!("invalid public invitation email URL configuration: {error}")
-    })?;
-    let notification_service_url = NotificationServiceUrl::new()
-        .context("expected notification service public URL")?
-        .parse_url()
-        .context("notification service public URL must be an absolute URL")?;
-    let digest_email_urls = DigestEmailUrls::new(
-        public_email_urls.app_base_url().clone(),
-        public_email_urls.brand_asset_url(),
-        notification_service_url,
-    )
-    .map_err(|error| {
-        anyhow::anyhow!("invalid public notification digest URL configuration: {error}")
-    })?;
 
     tracing::trace!("initialized config");
 
@@ -79,7 +67,7 @@ pub async fn main() -> anyhow::Result<()> {
         "initialized db connection"
     );
 
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
+    let aws_config = macro_aws_config::get_macro_aws_config().await;
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
@@ -133,7 +121,7 @@ pub async fn main() -> anyhow::Result<()> {
         let event_queue =
             ::notification::outbound::push_notification_event_queue::SqsPushNotificationEventQueue::new(
                 aws_sdk_sqs::Client::new(&aws_config),
-                conation_queues::PushNotificationEventHandlerQueue::new().to_string(),
+                macro_queues::PushNotificationEventHandlerQueue::new().to_string(),
                 config.notification_queue_max_messages,
                 config.notification_queue_wait_time_seconds,
             );
@@ -156,7 +144,8 @@ pub async fn main() -> anyhow::Result<()> {
             api_key: config.internal_api_key.as_ref().to_string(),
             default_user_id: None,
         },
-        conation_authorization::NoBotAuthorizer,
+        macro_authorization::NoBotAuthorizer,
+        PgUserApiKeyAuthorizer::new(PgUserApiKeyAuthorizationRepo::new(db.clone())),
     )));
 
     let notification_repository =
@@ -164,7 +153,7 @@ pub async fn main() -> anyhow::Result<()> {
 
     let notification_queue = ::notification::outbound::queue::SqsQueue::new(
         aws_sdk_sqs::Client::new(&aws_config),
-        conation_queues::NotificationQueue::new().to_string(),
+        macro_queues::NotificationQueue::new().to_string(),
     );
     let sns_endpoint_manager =
         ::notification::outbound::sns_endpoint::SnsEndpointManagerAdapter::new(
@@ -242,17 +231,8 @@ pub async fn main() -> anyhow::Result<()> {
         voip_bundle_id: None,
     };
 
-    let email_service = ses_client::Ses::from_env(
-        aws_sdk_sesv2::Client::new(&aws_config),
-        &crate::env::smtp_environment_slug(config.environment),
-    )
-    .context("invalid outbound SMTP configuration")?;
-    tracing::info!(
-        from = %crate::env::SENDER_ADDRESS.as_str(),
-        email_service = ?email_service,
-        "configured outbound notification email"
-    );
-    let email_adapter = EmailAdapter::new(email_service, crate::env::SENDER_ADDRESS.clone());
+    let ses_client = aws_sdk_sesv2::Client::new(&aws_config);
+    let email_adapter = EmailAdapter::new(ses_client, crate::env::SENDER_ADDRESS.clone());
 
     let redis_multiplexed_conn = redis_client
         .get_multiplexed_async_connection()
@@ -298,24 +278,9 @@ pub async fn main() -> anyhow::Result<()> {
         worker_clone.run_notifications().await
     });
 
-    let digest_email_urls = digest_email_urls.clone();
-    let digest_db = db.clone();
+    let env = config.environment;
     let digest_batch_to_email = move |batch: DigestBatch| {
-        let locale = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(
-                conation_db_client::user::get::get_user_locale(&digest_db, batch.user_id.as_ref()),
-            )
-        })
-        .unwrap_or_else(|error| {
-            tracing::error!(error = ?error, "failed to load digest recipient locale");
-            String::from("ru")
-        });
-        EmailDigestNotification::new_from_digest_batch(
-            batch,
-            &digest_email_urls,
-            hmac_key.clone(),
-            &locale,
-        )
+        EmailDigestNotification::new_from_digest_batch(batch, env, hmac_key.clone())
     };
 
     tokio::spawn(async move {
@@ -362,7 +327,7 @@ pub async fn main() -> anyhow::Result<()> {
         ::notification::outbound::repository::DbNotificationRepository::new(db.clone());
     let ingress_delivery_queue = ::notification::outbound::queue::SqsQueue::new(
         aws_sdk_sqs::Client::new(&aws_config),
-        conation_queues::NotificationQueue::new().to_string(),
+        macro_queues::NotificationQueue::new().to_string(),
     );
     let ingress_service = ::notification::domain::service::NotificationIngressService::new(
         ingress_repository,
@@ -372,7 +337,7 @@ pub async fn main() -> anyhow::Result<()> {
 
     let ingress_queue = ::notification::outbound::queue::SqsQueue::new(
         aws_sdk_sqs::Client::new(&aws_config),
-        conation_queues::NotificationIngressQueue::new().to_string(),
+        macro_queues::NotificationIngressQueue::new().to_string(),
     );
     let ingress_worker =
         ::notification::inbound::ingress_worker::IngressWorker::new(ingress_service, ingress_queue);

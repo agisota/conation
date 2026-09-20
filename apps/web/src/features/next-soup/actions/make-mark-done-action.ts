@@ -11,7 +11,10 @@ import {
 import { t } from '@app/lib/i18n';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { toast } from '@core/component/Toast/Toast';
-import { ENABLE_GRAPHQL_SOUP } from '@core/constant/featureFlags';
+import {
+  enableGraphqlSoup,
+  isFeatureEnabled,
+} from '@core/constant/featureFlags';
 import type { HotkeyGroup } from '@core/hotkey/types';
 import type { EntityData } from '@entity';
 import type { NotificationSource } from '@notifications';
@@ -21,7 +24,10 @@ import {
   toNotificationEntityRef,
 } from '@queries/notification/entity-mutations';
 import { type UndoHandle, useUndoableMutation } from '@queries/undo';
-import type { SoupState } from '../create-soup-state';
+import type {
+  EntityActionListState,
+  EntityActionNavigationHandler,
+} from './entity-action-context';
 
 // Valid list views where the mark done should be allowed to run
 const VALID_MARK_DONE_LIST_VIEWS: `${ListView}-${string}`[] = [
@@ -33,6 +39,9 @@ const VALID_MARK_DONE_LIST_VIEWS: `${ListView}-${string}`[] = [
   'mail-important',
   'mail-all',
   'mail-noise',
+  // Calendar lists invite threads from the "all" email view, so done rows
+  // stay in place and flip to the done state exactly like mail "All".
+  'mail-calendar',
   'mail-shared',
   // Completing a reminder is the whole point of the Reminders view: without
   // it the only way to clear one is to delete it. Done is listed too so a
@@ -88,6 +97,7 @@ type MarkDoneExecuteOpts = Pick<
 >;
 
 type MarkDoneExecuteWithSoupOpts = MarkDoneExecuteOpts & {
+  anchorKey?: string;
   nextEntityId?: string;
 };
 
@@ -252,7 +262,7 @@ export const makeMarkDoneAction = (options: MakeMarkDoneOptions) => {
       scopeChannelNotificationsToEntity: scopeChannelNotifications,
     });
 
-    const useEntityMutations = ENABLE_GRAPHQL_SOUP();
+    const useEntityMutations = isFeatureEnabled(enableGraphqlSoup);
     // A whole-channel row in the new inbox intentionally excludes notification
     // stacks rendered as separate thread rows. The entity endpoint cannot
     // express "channel except its threads", so only that selective case keeps
@@ -300,8 +310,8 @@ export const makeMarkDoneAction = (options: MakeMarkDoneOptions) => {
 
   const executeWithSoup = async (
     entities: EntityData[],
-    soup: SoupState,
-    onNavigate?: (entity: EntityData) => void,
+    soup: EntityActionListState,
+    onNavigate?: EntityActionNavigationHandler,
     opts?: MarkDoneExecuteWithSoupOpts
   ) => {
     // Apply execute's already-done filter up front so navigation, selection
@@ -310,7 +320,7 @@ export const makeMarkDoneAction = (options: MakeMarkDoneOptions) => {
     const targets = entities.filter(isMarkDoneTarget);
     if (targets.length === 0) return;
 
-    const focusedIdBeforeMarkDone = soup.focus.id();
+    const focusedIdBeforeMarkDone = opts?.anchorKey ?? soup.focus.id();
     const markedEntityIds = new Set(targets.map((entity) => entity.id));
     const adjacentRow = (direction: 1 | -1) => {
       let previousCandidateIndex: number | undefined;
@@ -357,14 +367,28 @@ export const makeMarkDoneAction = (options: MakeMarkDoneOptions) => {
 
     if (nextRow) {
       soup.focus.set(nextRow.id);
+    } else {
+      soup.focus.set(undefined);
+    }
+
+    if (onNavigate) {
+      onNavigate({
+        actionId: 'mark-done',
+        entity: nextRow?.original,
+      });
+    } else {
       const controller = splitPanel?.handle;
       if (controller?.isControllerSplit()) {
-        void openEntityInSplitFromUnifiedList(nextRow.original, {
-          splitHandle: controller,
-          mergeHistory: true,
-        });
+        if (nextRow) {
+          void openEntityInSplitFromUnifiedList(nextRow.original, {
+            splitHandle: controller,
+            mergeHistory: true,
+            notificationSource: options.notificationSource(),
+          });
+        } else {
+          controller.resetPreview();
+        }
       }
-      onNavigate?.(nextRow.original);
     }
 
     // When marking done navigated the view to the next item, undo navigates
@@ -372,8 +396,12 @@ export const makeMarkDoneAction = (options: MakeMarkDoneOptions) => {
     const firstEntity = targets[0];
     const navigateBack =
       opts?.navigateBack ??
-      (nextRow && onNavigate && firstEntity
-        ? () => onNavigate(firstEntity)
+      (onNavigate && firstEntity
+        ? () =>
+            onNavigate({
+              actionId: 'mark-done',
+              entity: firstEntity,
+            })
         : undefined);
 
     await execute(targets, restoreFocus, { ...opts, navigateBack });

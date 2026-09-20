@@ -24,16 +24,14 @@ use channels::outbound::{
 use chat::domain::service::ChatServiceImpl;
 use chat::inbound::toolset::ChatToolContext;
 use chat::outbound::postgres::PgChatRepo;
-use conation_event_broker::{
-    EventBrokerError, KafkaEventPublisher, MacroEvent, MacroEventBroker, MacroEventBrokerService,
-    NoopMacroEventBroker,
-};
-use conation_user_id::user_id::MacroUserIdStr;
 use connection::domain::ports::ConnectionService;
 use connection_gateway_client::ConnectionGatewayClient;
 use contacts::{domain::service::SqsContactsIngress, outbound::ingress::SqsContactsQueue};
 use crm::inbound::toolset::CrmToolContext;
-use documents::{domain::ports::TaskPropertiesPort, inbound::toolset::DocumentToolContext};
+use documents::{
+    domain::ports::{TaskPropertiesPort, task_property_edit_receipt},
+    inbound::toolset::DocumentToolContext,
+};
 use email::{
     domain::service::EmailServiceImpl, inbound::toolset::EmailToolContext, outbound::EmailPgRepo,
 };
@@ -44,6 +42,11 @@ use foreign_entity::{
     outbound::pg_foreign_entity_repo::PgForeignEntityRepo,
 };
 use lexical_mention_extractor::LexicalMentionExtractor;
+use macro_event_broker::{
+    EventBrokerError, KafkaEventPublisher, MacroEvent, MacroEventBroker, MacroEventBrokerService,
+    NoopMacroEventBroker,
+};
+use macro_user_id::user_id::MacroUserIdStr;
 use notification::domain::service::SqsNotificationIngress;
 use notification::inbound::ai_tool::NotificationToolContext;
 use projects::inbound::toolset::ProjectToolContext;
@@ -193,16 +196,50 @@ pub fn build_channel_tool_context_without_side_effects(
     pool: sqlx::PgPool,
     lexical_client: Arc<lexical_client::LexicalClient>,
 ) -> ToolChannelToolContext {
+    let messages = Arc::new(shared_message_service(
+        pool.clone(),
+        messages::domain::ports::NoMessageEventPublisher,
+        lexical_client.clone(),
+    ));
     build_channel_tool_context_with_dispatcher(
         pool,
         std::sync::Arc::new(NoopChannelEventDispatcher),
         lexical_client,
+        messages,
+    )
+}
+
+/// Shared message service used by agent tools: the same persistence, reference
+/// authorization, and group-mention policy as the channel HTTP API, over the
+/// delivery `effects` a host composed.
+pub fn shared_message_service<E: messages::domain::ports::MessageEventPublisher>(
+    pool: sqlx::PgPool,
+    effects: E,
+    lexical_client: Arc<lexical_client::LexicalClient>,
+) -> messages::domain::service::MessageService<
+    messages::outbound::pg_message_repo::PgMessageRepository,
+    E,
+> {
+    messages::domain::service::MessageService::new(
+        messages::outbound::pg_message_repo::PgMessageRepository::new(pool.clone()),
+        effects,
+    )
+    .with_group_recipients(channels::domain::group_mentions::ChannelGroupRecipients(
+        PgChannelsRepo::new(pool.clone()),
+    ))
+    .with_mention_extractor(LexicalMentionExtractor::new(lexical_client))
+    .with_references(
+        messages::outbound::entity_access_audience::EntityAccessMessageReferences(
+            entity_access::domain::service::EntityAccessServiceImpl::new(
+                entity_access::outbound::PgAccessRepository::new(pool),
+            ),
+        ),
     )
 }
 
 /// Clients a host provides to wire the real channel side effects for AI
 /// tools. Notification-ingress and contacts queue names are resolved through
-/// `conation_queues`, so hosts only supply the shared clients.
+/// `macro_queues`, so hosts only supply the shared clients.
 pub struct ChannelSideEffectClients {
     /// Connection gateway client used to fan realtime updates out to
     /// connected clients.
@@ -210,7 +247,7 @@ pub struct ChannelSideEffectClients {
     /// SQS client used for the notification-ingress and contacts queues.
     pub sqs: aws_sdk_sqs::Client,
     /// Broker publishing channel events to the `macro.channels` topic.
-    pub conation_event_broker: ToolEventBroker,
+    pub macro_event_broker: ToolEventBroker,
 }
 
 /// Build the channel AI tool context dispatching the same side effects as the
@@ -227,27 +264,48 @@ pub fn build_channel_tool_context_with_side_effects(
     let notification_ingress = Arc::new(SqsNotificationIngress {
         queue: notification::outbound::queue::SqsQueue::new(
             clients.sqs.clone(),
-            conation_queues::NotificationIngressQueue::new().to_string(),
+            macro_queues::NotificationIngressQueue::new().to_string(),
         ),
     });
     let contacts_ingress = Arc::new(SqsContactsIngress {
         queue: SqsContactsQueue::new(
             clients.sqs.clone(),
-            conation_queues::ContactsQueue::new().to_string(),
+            macro_queues::ContactsQueue::new().to_string(),
         ),
     });
     let side_effects = ChannelSideEffectService::new(
         PgChannelSideEffectContext::new(pool.clone()),
-        ConnectionGatewayChannelRealtimePublisher::new(clients.connection_gateway),
+        ConnectionGatewayChannelRealtimePublisher::new(clients.connection_gateway.clone()),
         NotificationChannelSender::new(notification_ingress),
         ContactsChannelDispatcher::new(contacts_ingress),
     )
-    .with_conation_event_broker(clients.conation_event_broker);
-    build_channel_tool_context_with_dispatcher(
-        pool,
-        Arc::new(SpawnedChannelEventDispatcher::new(side_effects)),
-        lexical_client,
-    )
+    .with_macro_event_broker(clients.macro_event_broker.clone());
+    let dispatcher: ToolChannelEventDispatcher =
+        Arc::new(SpawnedChannelEventDispatcher::new(side_effects));
+    let access = entity_access::domain::service::EntityAccessServiceImpl::new(
+        entity_access::outbound::PgAccessRepository::new(pool.clone()),
+    );
+    let effects = messages::domain::effects::MessageEffects::new(
+        messages::outbound::broker::BrokerMessagePublisher::new(clients.macro_event_broker),
+        messages::domain::ports::NoMessageEventPublisher,
+        channels::domain::message_delivery::ChannelMessageDelivery::new(
+            PgChannelsRepo::new(pool.clone()),
+            dispatcher.clone(),
+            channels::outbound::pg_channel_reference_share_permissions::PgChannelReferenceSharePermissions::new(
+                pool.clone(),
+                Arc::new(access),
+            ),
+            messages::outbound::connection_gateway::ConnectionGatewayMessages(
+                clients.connection_gateway,
+            ),
+        ),
+    );
+    let messages = Arc::new(shared_message_service(
+        pool.clone(),
+        effects,
+        lexical_client.clone(),
+    ));
+    build_channel_tool_context_with_dispatcher(pool, dispatcher, lexical_client, messages)
 }
 
 /// Build the channel AI tool context wired to `dispatcher`, so messages sent by
@@ -257,8 +315,10 @@ pub fn build_channel_tool_context_with_dispatcher(
     pool: sqlx::PgPool,
     dispatcher: ToolChannelEventDispatcher,
     lexical_client: Arc<lexical_client::LexicalClient>,
+    messages: Arc<dyn messages::domain::api::MessageCommands>,
 ) -> ToolChannelToolContext {
     ChannelToolContext::new(
+        messages,
         ChannelServiceImpl::with_dependencies(
             PgChannelsRepo::new(pool.clone()),
             dispatcher,
@@ -393,6 +453,7 @@ impl TaskPropertiesPort for NoOpTaskProperties {
         _entity_id: &str,
         _property_definition_id: uuid::Uuid,
         _value: Option<models_properties::api::requests::SetPropertyValue>,
+        _attribution: &activity::Attribution,
     ) -> anyhow::Result<()> {
         Ok(())
     }
@@ -440,19 +501,18 @@ impl TaskPropertiesPort for TaskPropertiesAdapter {
         entity_id: &str,
         property_definition_id: uuid::Uuid,
         value: Option<models_properties::api::requests::SetPropertyValue>,
+        attribution: &activity::Attribution,
     ) -> anyhow::Result<()> {
         use properties::PropertiesService as _;
 
-        let user_id = conation_user_id::user_id::MacroUserIdStr::parse_from_str(user_id)?;
-        let entity_access_receipt = self
-            .entity_access_service
-            .generate_entity_access_receipt::<EditAccessLevel>(
-                &user_id,
-                None,
-                entity_id,
-                model_entity::EntityType::Document,
-            )
-            .await?;
+        let user_id = macro_user_id::user_id::MacroUserIdStr::parse_from_str(user_id)?;
+        let entity_access_receipt = task_property_edit_receipt(
+            self.entity_access_service.as_ref(),
+            &user_id,
+            attribution,
+            entity_id,
+        )
+        .await?;
         self.properties
             .set_entity_property(&entity_access_receipt, property_definition_id, value)
             .await
@@ -693,6 +753,7 @@ pub type ToolDocumentService = documents::domain::service::DocumentServiceImpl<
     ToolEntityAccessManagementService,
     ToolForeignEntityService,
     ToolEventBroker,
+    sync_service_client::SyncServiceClient,
 >;
 
 /// Type alias for the entity access service implementation
@@ -793,6 +854,7 @@ pub fn build_properties_tool_context(
     PropertiesToolContext {
         service: properties,
         entity_access_service,
+        actor: bot_id::MACRO_AI_BOT_ID,
     }
 }
 
@@ -887,7 +949,7 @@ pub type ToolProjectToolContext = ProjectToolContext<
 /// email tool contexts run on so moves share their side-effect wiring.
 pub fn build_project_tool_context(
     pool: sqlx::PgPool,
-    conation_event_broker: ToolEventBroker,
+    macro_event_broker: ToolEventBroker,
     entity_access_service: Arc<ToolEntityAccessService>,
     document_service: Arc<ToolDocumentService>,
     chat_service: Arc<ToolChatService>,
@@ -903,7 +965,7 @@ pub fn build_project_tool_context(
         ),
         projects::domain::ports::UnavailableProjectSearchIndexer,
         None,
-        conation_event_broker,
+        macro_event_broker,
     );
     ProjectToolContext::new(
         Arc::new(project_service),
@@ -953,7 +1015,7 @@ impl ToolEntityCreator {
         let document = documents::domain::create::NewPlainTextDocument::builder(
             documents::domain::create::NewDocumentMetadata::builder(name.to_string())
                 .attribution(activity::Attribution::delegated(
-                    activity::Actor::new_from_bot(bot_id::CONATION_AI_BOT_ID),
+                    activity::Actor::new_from_bot(bot_id::MACRO_AI_BOT_ID),
                     user.clone(),
                 ))
                 .build(),
@@ -996,7 +1058,7 @@ impl ToolEntityCreator {
                 Some(team_id),
                 members
                     .into_iter()
-                    .map(|member| conation_user_id::cowlike::CowLike::into_owned(member.user_id))
+                    .map(|member| macro_user_id::cowlike::CowLike::into_owned(member.user_id))
                     .collect(),
             ),
             Err(e) => {
@@ -1018,6 +1080,9 @@ impl ToolEntityCreator {
     ) {
         use models_properties::api::requests::SetPropertyValue;
         use system_properties::SystemPropertyKey;
+
+        let attribution =
+            activity::Attribution::direct(activity::Actor::new_from_user(user.clone()));
 
         if let Some(status) = properties.status.as_deref()
             && let Err(e) = self
@@ -1047,6 +1112,7 @@ impl ToolEntityCreator {
                             Some(SetPropertyValue::SelectOption {
                                 option_id: option.uuid(),
                             }),
+                            &attribution,
                         )
                         .await
                     {
@@ -1068,6 +1134,7 @@ impl ToolEntityCreator {
                             task_id,
                             SystemPropertyKey::DueDate.uuid(),
                             Some(SetPropertyValue::Date { value }),
+                            &attribution,
                         )
                         .await
                     {
@@ -1102,6 +1169,7 @@ impl ToolEntityCreator {
                     Some(SetPropertyValue::MultiEntityReference {
                         references: vec![reference],
                     }),
+                    &attribution,
                 )
                 .await
             {
@@ -1303,6 +1371,19 @@ pub struct ToolServiceContext {
     /// this context. Set per-session by the caller so AI calls made by tools
     /// (e.g. subagents) are attributed to the feature that spawned them.
     pub usage_context: ai_usage::UsageContext,
+}
+
+impl ToolServiceContext {
+    /// Run the mutating tools as `actor`, delegated for the requesting user,
+    /// instead of the default Macro AI bot. Hosts running a specific agent
+    /// call this once when they build the context for that agent's session.
+    pub fn with_actor(mut self, actor: bot_id::BotId) -> Self {
+        self.document_tool_context = self.document_tool_context.with_actor(actor);
+        self.properties_tool_context = self.properties_tool_context.with_actor(actor);
+        self.project_tool_context = self.project_tool_context.with_actor(actor);
+        self.channel_tool_context = self.channel_tool_context.with_actor(actor);
+        self
+    }
 }
 
 impl FromRef<ToolServiceContext> for ai_toolset::NoContext {

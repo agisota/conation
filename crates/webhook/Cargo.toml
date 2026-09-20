@@ -11,26 +11,28 @@ consumer = [
   "dep:tokio",
   "dep:tokio-retry",
   "ingestion",
-  "conation_event_broker/outbound",
+  "macro_event_broker/outbound",
 ]
-default = ["consumer", "inbound", "outbound", "ports"]
+default = ["consumer", "inbound", "outbound", "ports", "stream"]
 inbound = [
   "dep:axum",
   "dep:axum-extra",
   "dep:channels",
   "dep:documents",
-  "dep:conation_authorization",
+  "dep:macro_authorization",
   "dep:model-error-response",
   "dep:model_user",
   "dep:rate_limit",
   "dep:serde_json",
   "dep:utoipa",
+  "agent_session/schema",
   "channels/schema",
   "documents/schema",
   "ports",
   "rate_limit/axum",
 ]
 ingestion = [
+  "dep:agent_session",
   "dep:agent_trigger",
   "dep:channels",
   "dep:documents",
@@ -41,7 +43,7 @@ ingestion = [
 ]
 outbound = [
   "dep:webhook_signature",
-  "dep:conation_uuid",
+  "dep:macro_uuid",
   "dep:reqwest",
   "dep:sqlx",
   "dep:sqs_client",
@@ -50,12 +52,23 @@ outbound = [
   "ports",
 ]
 ports = ["dep:serde_json", "dep:url"]
+stream = [
+  "dep:futures",
+  "dep:kafka_util",
+  "dep:tokio",
+  "dep:uuid",
+  "ingestion",
+  "inbound",
+  "macro_event_broker/outbound",
+]
 worker = ["dep:tokio", "ports"]
 
 [dependencies]
+messages = { path = "../messages", features = ["broker"] }
 anyhow = { workspace = true }
 axum = { workspace = true, optional = true }
 axum-extra = { workspace = true, optional = true }
+agent_session = { path = "../agent_session", default-features = false, optional = true }
 agent_trigger = { path = "../agent_trigger", optional = true }
 channels = { path = "../channels", default-features = false, optional = true }
 chrono = { workspace = true }
@@ -65,13 +78,13 @@ entity_access = { path = "../entity_access", default-features = false, features 
 ], optional = true }
 futures = { workspace = true, optional = true }
 kafka_util = { path = "../kafka_util", optional = true }
-conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = [
+macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = [
   "axum",
 ] }
-conation_event_broker = { path = "../conation_event_broker", default-features = false }
-conation_event_topics = { path = "../conation_event_topics" }
-conation_user_id = { path = "../conation_user_id" }
-conation_uuid = { path = "../conation_uuid", optional = true }
+macro_event_broker = { path = "../macro_event_broker", default-features = false }
+macro_event_topics = { path = "../macro_event_topics" }
+macro_user_id = { path = "../macro_user_id" }
+macro_uuid = { path = "../macro_uuid", optional = true }
 model-error-response = { path = "../model-error-response", optional = true }
 model_user = { path = "../model_user", optional = true }
 rate_limit = { path = "../rate_limit", optional = true, default-features = false }
@@ -83,8 +96,9 @@ serde_json = { workspace = true, optional = true }
 webhook_signature = { path = "../webhook_signature", optional = true }
 sqlx = { workspace = true, optional = true }
 sqs_client = { path = "../sqs_client", default-features = false, optional = true }
+strum = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["macros", "time"], optional = true }
+tokio = { workspace = true, features = ["macros", "sync", "time"], optional = true }
 tokio-retry = { workspace = true, optional = true }
 tracing = { workspace = true }
 url = { workspace = true, optional = true }
@@ -93,10 +107,15 @@ uuid = { workspace = true, optional = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-agent_session = { path = "../agent_session", features = ["test-utils"] }
+agent_fold = { path = "../agent_fold" }
+agent_runtime_protocol = { path = "../agent_runtime_protocol", default-features = false }
+agent_session = { path = "../agent_session", default-features = false, features = [
+  "test-utils",
+] }
 bot_id = { path = "../bot_id", features = ["test-utils"] }
 channel_sender = { path = "../channel_sender" }
-conation_db_migrator = { path = "../conation_db_migrator" }
+macro_db_migrator = { path = "../macro_db_migrator" }
+messages = { path = "../messages" }
 rate_limit = { path = "../rate_limit", default-features = false, features = [
   "axum",
   "testing",

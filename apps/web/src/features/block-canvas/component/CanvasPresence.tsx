@@ -12,7 +12,8 @@ import {
   subscribeCanvasPresence,
   type CanvasPeerPresence,
 } from '../store/canvas-sync';
-import { renderStateStore, useRenderState } from '../store/RenderState';
+import { useCanvasDocument } from '../context/canvas-document-context';
+import { useRenderState } from '../store/RenderState';
 
 const HEARTBEAT_MS = 4_000;
 const MOVE_THROTTLE_MS = 40;
@@ -55,6 +56,7 @@ export function CanvasPresenceCursors() {
   const documentId = useBlockId();
   const userId = useUserId();
   const render = useRenderState();
+  const [renderStore] = useCanvasDocument().state.stores.render;
   const [peers, setPeers] = createSignal<CanvasPeerPresence[]>([]);
 
   createEffect(() => {
@@ -106,7 +108,7 @@ export function CanvasPresenceCursors() {
       <For each={peers()}>
         {(peer) => {
           const style = () => {
-            const state = unwrap(renderStateStore.get);
+            const state = unwrap(renderStore);
             const rect = state.containerRect;
             return canvasPointToOverlayStyle(peer.x, peer.y, {
               x: state.x,

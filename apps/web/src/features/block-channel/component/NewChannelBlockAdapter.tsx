@@ -1,4 +1,9 @@
 import {
+  ChatWithAgentButton,
+  ChatWithAgentIcon,
+  openChatWithAgent,
+} from '@app/features/chat/ChatWithAgentButton';
+import {
   makeRenameAction,
   useBlockEntityCommands,
 } from '@app/features/next-soup/actions';
@@ -17,8 +22,8 @@ import { useCall } from '@channel/Call/use-call';
 import { isNativeIosCallKitEnabled } from '@channel/Call/use-callkit';
 import {
   type ChannelHandle,
-  type ChannelMessagesStateSnapshot,
   type ChannelProps,
+  type MessageTimelineStateSnapshot,
   Channel as NewChannel,
 } from '@channel/Channel/Channel';
 import {
@@ -36,9 +41,10 @@ import {
   isJoinCallRequested,
   isOpenCallTabRequested,
 } from '@channel/Channel/link';
+import { useChannelPictureActions } from '@channel/channel-picture';
 import { ChannelParticipantsTab } from '@channel/Participants/ChannelParticipantsTab';
 import { HeaderIsland } from '@components/app/split-layout/components/HeaderIsland';
-import { SplitFileMenu } from '@components/app/split-layout/components/SplitFileMenu';
+import { BlockSplitFileMenu } from '@components/app/split-layout/components/SplitFileMenu';
 import { SplitHeaderRight } from '@components/app/split-layout/components/SplitHeader';
 import { SplitTitleFileMenu } from '@components/app/split-layout/components/SplitLabel';
 import {
@@ -60,15 +66,17 @@ import { awaitCondition, createMethodRegistration } from '@core/orchestrator';
 import { blockHotkeyScopeSignal } from '@core/signal/blockElement';
 import { blockHandleSignal } from '@core/signal/load';
 import { buildEntityData } from '@entity';
+import PictureIcon from '@phosphor/image.svg';
 import RenameIcon from '@phosphor/pencil-line.svg';
+import TrashIcon from '@phosphor/trash.svg';
 import { useActiveCallQuery } from '@queries/call/call';
+import { useChannelParticipantsQuery } from '@queries/channel/channel-participants';
 import {
   fetchResolvedChannelMessage,
-  findThreadIdInChannelMessages,
-  findTopLevelMessageInChannelMessages,
-} from '@queries/channel/channel-messages';
-import { useChannelParticipantsQuery } from '@queries/channel/channel-participants';
-import { ChannelTypeEnum } from '@service-storage/client';
+  findThreadIdInMessageTimeline,
+  findTopLevelMessageInMessageTimeline,
+} from '@queries/messages/timeline';
+import { ChannelType } from '@service-storage/generated/schemas/channelType';
 import { useSearchParams } from '@solidjs/router';
 import { cn } from '@ui';
 import {
@@ -96,7 +104,7 @@ export type BlockChannelProps = ChannelTargetMessageParams;
 
 type ChannelEntryStateSnapshot = {
   activeTab?: ChannelTabId;
-  messages?: ChannelMessagesStateSnapshot;
+  messages?: MessageTimelineStateSnapshot;
 };
 
 type ChannelPropsTargetMessage = Pick<
@@ -147,11 +155,21 @@ function NewTop(props: { channelId: string }) {
   const activeCallQuery = useActiveCallQuery(() => props.channelId);
   const participants = () =>
     participantsQuery.isLoading ? [] : participantsQuery.data;
+  const picture = useChannelPictureActions({
+    channelId: () => props.channelId,
+    canEdit: () =>
+      channelType() !== ChannelType.direct_message &&
+      (participants() ?? []).some(
+        (participant) =>
+          participant.user_id === userId() &&
+          (participant.role === 'admin' || participant.role === 'owner')
+      ),
+  });
   // Show the Call tab whenever we're actually in the call, mid-join, or
   // the tab is being displayed (e.g. via the auto-join flow that flips
   // `activeTab` to `call` before the join request resolves).
   const showCallTab = () =>
-    ENABLE_CALLS() &&
+    ENABLE_CALLS &&
     canUseInlineCallTab() &&
     (call.isInThisChannel() ||
       call.isJoining() ||
@@ -159,7 +177,7 @@ function NewTop(props: { channelId: string }) {
       !!activeCallQuery.data);
   const availableTabs = () => {
     let filtered = [...CHANNEL_TABS];
-    if (channelType() === ChannelTypeEnum.DirectMessage)
+    if (channelType() === ChannelType.direct_message)
       filtered = filtered.filter((tab) => tab.value !== 'participants');
     if (!showCallTab())
       filtered = filtered.filter((tab) => tab.value !== 'call');
@@ -171,10 +189,6 @@ function NewTop(props: { channelId: string }) {
       label: tab.value === 'call' ? <CallTabLabel /> : t(tab.labelKey),
     }));
 
-  // The generic rename op is gated on the document block-load signals, which
-  // the channel block never sets — so the menu offers a channel-local rename
-  // built from the channels context instead. The action's own gate keeps it
-  // off DMs and channels the user does not own.
   const channelEntity = () => {
     const ch = channel();
     if (!ch) return undefined;
@@ -184,7 +198,25 @@ function NewTop(props: { channelId: string }) {
       blockName: 'channel',
       channelType: ch.channel_type,
       ownerId: ch.owner_id,
+      isParticipant: participantsQuery.isSuccess
+        ? (participantsQuery.data ?? []).some(
+            (participant) => participant.user_id === userId()
+          )
+        : undefined,
     });
+  };
+
+  // Seed for "Ask Macro": a new chat with this channel @mentioned, so the
+  // user does not have to create an agent and mention the channel by hand.
+  const askMacroEntity = () => {
+    const type = channelType();
+    if (!type) return undefined;
+    return {
+      type: 'channel' as const,
+      id: props.channelId,
+      name: channelName() ?? 'New Channel',
+      channelType: type,
+    };
   };
 
   // Mobile has no room for inline tabs; the title file-menu drawer leads with
@@ -213,7 +245,7 @@ function NewTop(props: { channelId: string }) {
         onTabChange={setActiveTab}
       />
       <SplitTitleFileMenu>
-        <SplitFileMenu
+        <BlockSplitFileMenu
           id={props.channelId}
           itemType="channel"
           name={channelName() ?? t('channel.defaultName')}
@@ -223,6 +255,17 @@ function NewTop(props: { channelId: string }) {
           entity={channelEntity()}
           mobileViews={isMobile() ? mobileViews() : undefined}
           tools={[
+            {
+              label: 'Ask Macro',
+              icon: ChatWithAgentIcon,
+              action: () => {
+                const entity = askMacroEntity();
+                if (!entity) return;
+                void openChatWithAgent(entity);
+              },
+              // Desktop gets a header button instead (see below).
+              condition: () => isMobile() && !!askMacroEntity(),
+            },
             {
               group: 'file',
               label: t('channel.rename'),
@@ -238,11 +281,35 @@ function NewTop(props: { channelId: string }) {
                 return !!entity && renameAction.canExecute(entity);
               },
             },
+            {
+              group: 'file',
+              label: 'Set channel picture',
+              icon: PictureIcon,
+              action: picture.pickFile,
+              condition: picture.isAvailable,
+            },
+            {
+              group: 'file',
+              label: 'Remove channel picture',
+              icon: TrashIcon,
+              action: picture.remove,
+              condition: () => picture.isAvailable() && picture.hasPicture(),
+            },
           ]}
         />
       </SplitTitleFileMenu>
+      {/* Desktop only: on mobile the action lives in the title drawer above. */}
+      <Show when={!isMobile() && askMacroEntity()}>
+        {(entity) => (
+          <SplitHeaderRight>
+            <HeaderIsland>
+              <ChatWithAgentButton entity={entity()} label="Ask Macro" />
+            </HeaderIsland>
+          </SplitHeaderRight>
+        )}
+      </Show>
       {/* Hidden once the user has joined — the call surface owns the UI. */}
-      <Show when={ENABLE_CALLS() && !call.isInThisChannel()}>
+      <Show when={ENABLE_CALLS && !call.isInThisChannel()}>
         <SplitHeaderRight>
           <HeaderIsland
             class={cn(
@@ -386,13 +453,16 @@ export function NewChannelBlockAdapter(props: BlockChannelProps) {
     callCtx.syncCallPageTab(channelId, false);
   });
 
-  // Once the call actually mounts for this channel, replace the URL so a
-  // reload doesn't re-trigger auto-join after the user has left. Waiting for
-  // the call to mount (instead of running on adapter mount) preserves the
-  // deep link if the join fails so the user can retry by refreshing.
+  // Once the auto-join attempt settles — joined, failed, or calls disabled —
+  // replace the URL so the deep link cannot fire a second time. This used to
+  // wait for the call to mount, which left `join_call=true` in the URL forever
+  // when the join failed; any later reload (the browser discarding this tab
+  // overnight and restoring it on wake, say) then re-ran the join — and since
+  // the join API is a get-or-create, that starts a brand-new call in the
+  // channel. Retrying a failed join is the Call tab's "Try again", not a
+  // refresh.
   createComputed(() => {
-    if (!callCtx) return;
-    if (!callCtx.isInCall() || callCtx.activeChannelId() !== channelId) return;
+    if (pendingJoinCall()) return;
     if (searchParams[CHANNEL_URL_PARAMS.joinCall] === undefined) return;
     setSearchParams(
       { [CHANNEL_URL_PARAMS.joinCall]: undefined },
@@ -417,10 +487,18 @@ export function NewChannelBlockAdapter(props: BlockChannelProps) {
     // plain send (the common inbox-row click) or a reply in a loaded thread
     // preview resolves synchronously with no roundtrip. Only a genuinely
     // unknown id — an old mention/link opening a cold channel — pays a resolve.
-    if (findTopLevelMessageInChannelMessages(channelId, messageId)) {
+    if (
+      findTopLevelMessageInMessageTimeline(
+        { type: 'channel', id: channelId },
+        messageId
+      )
+    ) {
       return { targetMessageId: messageId, targetMessageReplyId: undefined };
     }
-    const cachedThreadId = findThreadIdInChannelMessages(channelId, messageId);
+    const cachedThreadId = findThreadIdInMessageTimeline(
+      { type: 'channel', id: channelId },
+      messageId
+    );
     if (cachedThreadId) {
       return {
         targetMessageId: cachedThreadId,
@@ -429,10 +507,10 @@ export function NewChannelBlockAdapter(props: BlockChannelProps) {
     }
 
     const resolved = await fetchResolvedChannelMessage(
-      channelId,
+      { type: 'channel', id: channelId },
       messageId
     ).catch(() => undefined);
-    if (resolved?.kind === 'threadReply') {
+    if (resolved?.kind === 'thread_reply') {
       return {
         targetMessageId: resolved.thread_id,
         targetMessageReplyId: messageId,

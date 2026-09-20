@@ -1,4 +1,3 @@
-import { t } from '@app/lib/i18n';
 import { isInBlock, useBlockAliasedName } from '@core/block';
 import {
   ContextMenuContent,
@@ -30,6 +29,7 @@ import {
   type Component,
   createEffect,
   createMemo,
+  createSignal,
   For,
   type JSX,
   type ParentProps,
@@ -50,14 +50,21 @@ export function StaticSplitLabel(props: {
   badges?: JSX.Element;
   class?: string;
   colorIcon?: boolean;
-  /** Enables in-place editing while retaining the split title/menu chrome. */
+  /** Enables double-click renaming while retaining the split title/menu
+   * chrome. */
   onRename?: (name: string) => void;
   renameAriaLabel?: string;
 }) {
   const panel = useSplitPanelOrThrow();
+  const [renaming, setRenaming] = createSignal(false);
   createEffect(() => {
     panel.handle.setDisplayName(props.label);
   });
+  const startRename = (event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setRenaming(true);
+  };
   const openTitleFileMenu = (e: MouseEvent) => {
     if (!isTouchDevice()) return;
     const trigger = panel.titleFileMenuTrigger();
@@ -71,7 +78,7 @@ export function StaticSplitLabel(props: {
       <HeaderIsland class="shrink" onClick={openTitleFileMenu}>
         <div
           class={cn(
-            'z-split-header-content relative flex items-center gap-2 max-w-full h-full shrink',
+            'z-split-header-content relative flex items-center gap-1.5 max-w-full h-full shrink',
             props.class
           )}
         >
@@ -84,7 +91,9 @@ export function StaticSplitLabel(props: {
             />
           </Show>
           <Show when={props.icon}>
-            <div class="shrink-0">{props.icon}</div>
+            <div class="flex shrink-0 items-center justify-center">
+              {props.icon}
+            </div>
           </Show>
           <Show when={props.badges}>{props.badges}</Show>
           <span class="inline-flex min-w-0 items-center gap-1">
@@ -97,17 +106,35 @@ export function StaticSplitLabel(props: {
               }
             >
               {(onRename) => (
-                <span onClick={(event) => event.stopPropagation()}>
-                  <InlineTitleEditor
-                    value={props.label}
-                    placeholder={t('shell.split.untitled')}
-                    ariaLabel={
-                      props.renameAriaLabel ?? t('shell.actions.rename')
-                    }
-                    onRename={onRename()}
-                    class="text-sm"
-                  />
-                </span>
+                <Show
+                  when={renaming()}
+                  fallback={
+                    <span
+                      class="inline-block truncate text-sm font-semibold"
+                      onDblClick={startRename}
+                      onClick={(event) => {
+                        if (isTouchDevice()) startRename(event);
+                      }}
+                    >
+                      {props.label}
+                    </span>
+                  }
+                >
+                  <span
+                    onClick={(event) => event.stopPropagation()}
+                    onDblClick={(event) => event.stopPropagation()}
+                  >
+                    <InlineTitleEditor
+                      value={props.label}
+                      placeholder="Untitled"
+                      ariaLabel={props.renameAriaLabel ?? 'Rename'}
+                      onRename={onRename()}
+                      class="text-sm"
+                      autofocus
+                      onExit={() => setRenaming(false)}
+                    />
+                  </span>
+                </Show>
               )}
             </Show>
             <Show when={panel.titleFileMenuTrigger()}>
@@ -203,6 +230,7 @@ export function SplitPermissionsBadge() {
 }
 
 export function BlockItemSplitLabel(props: {
+  icon?: JSX.Element;
   fallbackName?: string;
   name?: Accessor<string | undefined>;
   lockRename?: boolean;
@@ -245,7 +273,18 @@ export function BlockItemSplitLabel(props: {
     <SplitLabelContextMenu>
       <HeaderIsland class="shrink" onClick={openTitleFileMenu}>
         <div class="ph-no-capture z-split-header-content relative flex items-center gap-2 min-w-0 max-w-full h-full shrink">
-          <EntityIcon class="shrink-0" targetType={targetType()} size="xs" />
+          <Show
+            when={props.icon}
+            fallback={
+              <EntityIcon
+                class="shrink-0"
+                targetType={targetType()}
+                size="xs"
+              />
+            }
+          >
+            {props.icon}
+          </Show>
           <Show when={props.badges}>{props.badges}</Show>
           <SplitLabel
             label={displayName() ?? ''}

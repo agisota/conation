@@ -4,16 +4,16 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_middleware::tracking::ClientIp;
+use macro_middleware::tracking::ClientIp;
 
 use std::borrow::Cow;
 
 use crate::{
-    api::{context::ApiContext, login::sso::parse_allowed_original_url},
+    api::{context::ApiContext, signup_policy::signup_forbidden_response},
     generate_password::generate_random_password,
 };
-use conation_user_id::user_id::MacroUserIdStr;
 use fusionauth::error::FusionAuthClientError;
+use macro_user_id::user_id::MacroUserId;
 use model::{
     authentication::login::{
         request::PasswordlessRequest,
@@ -49,11 +49,6 @@ pub async fn handler(
         return Err((StatusCode::BAD_REQUEST, "invalid email").into_response());
     }
 
-    if parse_allowed_original_url(&req.redirect_uri).is_none() {
-        tracing::warn!("passwordless redirect_uri is not allowed");
-        return Err((StatusCode::BAD_REQUEST, "redirect_uri is not allowed").into_response());
-    }
-
     let lowercase_email = req.email.to_lowercase();
 
     match ctx
@@ -79,7 +74,7 @@ pub async fn handler(
         .unwrap_or(Cow::Borrowed(lowercase_email.as_str()))
         .to_string();
 
-    let blocked_email = conation_db_client::blocked_email::get_blocked_emails(
+    let blocked_email = macro_db_client::blocked_email::get_blocked_emails(
         &ctx.db,
         &[&lowercase_email, &blocked_email_without_alias],
     )
@@ -107,62 +102,54 @@ pub async fn handler(
             match e {
                 FusionAuthClientError::UserDoesNotExist => {
                     tracing::trace!(email=%lowercase_email, "user does not exist, we need to create user");
-                    let proof = req.antibot.as_ref().ok_or_else(|| {
-                        (
-                            StatusCode::FORBIDDEN,
-                            Json(ErrorResponse {
-                                message: crate::api::antibot::AntibotError::Missing.code().into(),
-                            }),
-                        )
-                            .into_response()
-                    })?;
-                    crate::api::antibot::verify_proof(
-                        &lowercase_email,
-                        &crate::api::antibot::proof_from_request(proof),
-                        chrono::Utc::now().timestamp(),
-                    )
-                    .map_err(|err| {
-                        tracing::warn!(code=%err.code(), email=%lowercase_email, "signup antibot rejected");
-                        (
-                            StatusCode::FORBIDDEN,
-                            Json(ErrorResponse {
-                                message: err.code().into(),
-                            }),
-                        )
-                            .into_response()
-                    })?;
+                    ctx.signup_policy
+                        .authorize_public_email(&lowercase_email)
+                        .map_err(|denial| {
+                            tracing::warn!(error=?denial, "signup policy denied passwordless user creation");
+                            signup_forbidden_response()
+                        })?;
+
                     let fusionauth_user_id = ctx
-                    .auth_client
-                    .create_user(fusionauth::user::create::User {
-                        email: (&lowercase_email).into(),
-                        password: generate_random_password().into(),
-                        username: None,
-                    }, true, ip_context.origin_ip())
-                    .await
-                    .map_err(|e| {
-                        tracing::error!(error=?e, email=%lowercase_email, "unable to create user");
-                        (StatusCode::INTERNAL_SERVER_ERROR, "unable to create user").into_response()
-                    })?;
+                        .auth_client
+                        .create_user(
+                            fusionauth::user::create::User {
+                                email: (&lowercase_email).into(),
+                                password: generate_random_password().into(),
+                                username: None,
+                            },
+                            true,
+                            ip_context.origin_ip(),
+                        )
+                        .await
+                        .map_err(|e| {
+                            tracing::error!(error=?e, email=%lowercase_email, "unable to create user");
+                            (StatusCode::INTERNAL_SERVER_ERROR, "unable to create user").into_response()
+                        })?;
 
                     tracing::trace!(fusionauth_user_id, "created new fusionauth user");
 
                     if let Some(referral_code) = req.referral_code {
                         tracing::trace!(referral_code, "referral code found");
-                        let referred_user_id = MacroUserIdStr::try_from_email(&lowercase_email)
+                        let macro_user_id = format!("macro|{}", req.email.to_lowercase());
+                        let referrerd_user_id = MacroUserId::parse_from_str(&macro_user_id)
                             .map_err(|_| {
                                 (
                                     StatusCode::BAD_REQUEST,
                                     Json(ErrorResponse {
-                                        message: "invalid Conation user id".into(),
+                                        message: "invalid macro user id".into(),
                                     }),
                                 )
                                     .into_response()
-                            })?;
+                            })?
+                            .lowercase();
 
                         // initiates tracking the referral
                         let _ = ctx
                             .referral_service
-                            .track_referral(&referred_user_id, &ReferralCode(referral_code.clone()))
+                            .track_referral(
+                                &referrerd_user_id,
+                                &ReferralCode(referral_code.clone()),
+                            )
                             .await
                             .inspect_err(|e| {
                                 tracing::error!(error=?e, "unable to track referral");
@@ -192,7 +179,7 @@ pub async fn handler(
         })?;
 
     // Save the passwordless login code to the users email to tie the code to an account
-    ctx.conation_cache_client
+    ctx.macro_cache_client
         .set_passwordless_login_code(&lowercase_email, &code)
         .await.map_err(|e| {
             tracing::error!(error=?e, email=%lowercase_email, "unable to set passwordless login code");

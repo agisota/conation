@@ -3,18 +3,15 @@ import {
   ChatWithAgentIcon,
   openChatWithAgent,
 } from '@app/features/chat/ChatWithAgentButton';
-import { t } from '@app/lib/i18n';
 import { useHasModificationData } from '@block-pdf/signal/save';
 import { useHasComments } from '@block-pdf/store/comments/commentStore';
 import { doPrint } from '@block-pdf/util/printUtil';
 import { exportPdf } from '@block-pdf/websocket/export';
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import {
-  BLOCK_TOOL_IDS,
   ResponsiveBlockToolbar,
   ResponsivePermissionsBadge,
 } from '@components/app/ResponsiveBlockToolbar';
-import { useDrawerControl } from '@components/app/split-layout/components/SplitDrawerContext';
 import type { FileOperation } from '@components/app/split-layout/components/SplitFileMenu';
 import {
   SplitHeaderLeft,
@@ -24,10 +21,6 @@ import { BlockItemSplitLabel } from '@components/app/split-layout/components/Spl
 import { useIsAuthenticated } from '@core/auth';
 import { useBlockId, useBlockName } from '@core/block';
 import { BlockLiveIndicators } from '@core/component/LiveIndicators';
-import {
-  REFERENCES_DRAWER_ID,
-  ReferencesButton,
-} from '@core/component/ReferencesModal';
 import { toast } from '@core/component/Toast/Toast';
 import { openLoginModal } from '@core/component/TopBar/LoginButton';
 import {
@@ -35,25 +28,25 @@ import {
   ShareTrigger,
   useShareDialogContext,
 } from '@core/component/TopBar/ShareButton';
-import { ENABLE_REFERENCES_MODAL } from '@core/constant/featureFlags';
 import { blockMetadataSignal } from '@core/signal/load';
 import { useBlockDocumentName } from '@core/util/currentBlockDocumentName';
 import { platformFetch } from '@core/util/platformFetch';
 import { downloadFile } from '@filesystem/download';
-import IconShared from '@icon/wide-share.svg';
 import DownloadIcon from '@phosphor/download-simple.svg';
 import Printer from '@phosphor/printer.svg';
-import Quotes from '@phosphor/quotes.svg';
+import IconShared from '@phosphor/share.svg';
 import {
   blockNameToItemType,
   storageServiceClient,
 } from '@service-storage/client';
 import { createCallback } from '@solid-primitives/rootless';
-import { pdfDocumentProxy } from '../signal/document';
+import { usePdfDocument } from '../context/pdf-document-context';
 import { LocationType, useCreateShareUrl } from '../signal/location';
 import { PdfSplitToolbar } from './PdfSplitToolbar';
 
 export function TopBar() {
+  const pdf = usePdfDocument();
+  const [documentProxy] = pdf.state.signals.documentProxy;
   const isAuth = useIsAuthenticated();
   const documentId = useBlockId();
   const blockName = useBlockName();
@@ -61,7 +54,6 @@ export function TopBar() {
   const hasComments = useHasComments();
   const fileName = useBlockDocumentName('Unknown Filename');
 
-  const referencesControl = useDrawerControl(REFERENCES_DRAWER_ID);
   const shareCtx = useShareDialogContext();
 
   const createShareUrl = useCreateShareUrl();
@@ -73,16 +65,16 @@ export function TopBar() {
 
   const copyLink = () => {
     createShareUrl(LocationType.General);
-    toast.success(t('pdf.toast.linkCopied'));
+    toast.success('Link copied to clipboard');
   };
 
   const printFile = createCallback(async () => {
     if (!isAuth()) return openLoginModal();
 
-    const documentProxy = pdfDocumentProxy();
-    if (!documentProxy) return;
+    const proxy = documentProxy();
+    if (!proxy) return;
 
-    const data = (await documentProxy.getData()) as Uint8Array<ArrayBuffer>;
+    const data = (await proxy.getData()) as Uint8Array<ArrayBuffer>;
     const blob = new Blob([data], { type: 'application/pdf' });
 
     return doPrint(blob);
@@ -91,10 +83,10 @@ export function TopBar() {
   const download = createCallback(async () => {
     if (!isAuth()) return openLoginModal();
 
-    const documentProxy = pdfDocumentProxy();
-    if (!documentProxy) return toast.failure(t('pdf.error.downloadFailed'));
+    const proxy = documentProxy();
+    if (!proxy) return toast.failure('Unable to download file');
 
-    const data = (await documentProxy.getData()) as Uint8Array<ArrayBuffer>;
+    const data = (await proxy.getData()) as Uint8Array<ArrayBuffer>;
     const blob = new Blob([data], { type: 'application/pdf' });
 
     const fileNameWithExtension = `${fileName()}.pdf`;
@@ -115,7 +107,7 @@ export function TopBar() {
       try {
         downloadFile(blob, fileNameWithExtension);
       } catch (_) {
-        toast.failure(t('pdf.error.downloadFailed'));
+        toast.failure('Unable to download file');
       }
     }
   });
@@ -125,7 +117,7 @@ export function TopBar() {
 
     const data = await storageServiceClient.exportDocument({ documentId });
     if (data.isErr()) {
-      return toast.failure(t('pdf.error.downloadFailed'));
+      return toast.failure('Unable to download file');
     }
 
     const fileNameWithExtension = `${fileName()}.docx`;
@@ -147,10 +139,10 @@ export function TopBar() {
 
       downloadFile(blob, fileNameWithExtension);
 
-      toast.success(t('pdf.toast.downloaded'));
+      toast.success('File downloaded successfully');
     } catch (error) {
       console.error('Download failed:', error);
-      toast.failure(t('pdf.error.downloadFailed'));
+      toast.failure('Failed to download file');
     }
   });
 
@@ -159,13 +151,13 @@ export function TopBar() {
     { op: 'copy' },
     { op: 'moveToProject' },
     {
-      label: t('pdf.actions.print'),
+      label: 'Print',
       icon: Printer,
       action: () => printFile(),
     },
     {
       group: 'file',
-      label: t('block.actions.download'),
+      label: 'Download',
       icon: DownloadIcon,
       action: download,
     },
@@ -173,7 +165,7 @@ export function TopBar() {
       ? [
           {
             group: 'file',
-            label: t('pdf.actions.downloadDocx'),
+            label: 'Download DOCX',
             icon: DownloadIcon,
             action: downloadDocx,
           } as const,
@@ -184,22 +176,7 @@ export function TopBar() {
 
   const tools: BlockTool[] = [
     {
-      id: BLOCK_TOOL_IDS.references,
-      label: t('pdf.actions.references'),
-      icon: Quotes,
-      action: referencesControl.toggle,
-      condition: () => !!isAuth() && ENABLE_REFERENCES_MODAL,
-      buttonComponent: () => (
-        <ReferencesButton
-          documentId={documentId}
-          documentName={fileName()}
-          buttonSize="sm"
-        />
-      ),
-    },
-    {
-      id: BLOCK_TOOL_IDS.chat,
-      label: t('chat.actions.chat'),
+      label: 'Chat',
       icon: ChatWithAgentIcon,
       action: () =>
         openChatWithAgent({
@@ -220,9 +197,8 @@ export function TopBar() {
       ),
     },
     {
-      id: BLOCK_TOOL_IDS.share,
       group: 'sharing',
-      label: t('block.actions.share'),
+      label: 'Share',
       icon: IconShared,
       action: () => shareCtx.open(),
       buttonComponent: () => <ShareTrigger copyLink={copyLink} />,
@@ -232,7 +208,7 @@ export function TopBar() {
 
   const menuTools: BlockTool[] = [
     {
-      label: t('chat.actions.askConation'),
+      label: 'Ask Macro',
       icon: ChatWithAgentIcon,
       action: () =>
         openChatWithAgent({

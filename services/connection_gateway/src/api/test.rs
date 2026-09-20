@@ -7,12 +7,14 @@ use axum::{
     http::{Method, Request, StatusCode},
     routing::{get, post},
 };
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{
+use http_body_util::BodyExt;
+use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+#[allow(deprecated)]
+use macro_authorization::LEGACY_DSS_INTERNAL_API_KEY_HEADER;
+use macro_authorization::{
     INTERNAL_API_KEY_HEADER, InternalAuthConfig, InternalOnly, MacroAuthJwtValidator,
     MacroAuthorizationExtractor, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
-use http_body_util::BodyExt;
 use serde_json::{Value, json};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tower::ServiceExt;
@@ -25,7 +27,6 @@ use crate::{
 
 const TEST_INTERNAL_API_KEY: &str = "connection-gateway-test-internal-key";
 const WRONG_INTERNAL_API_KEY: &str = "wrong-internal-key";
-const LEGACY_DSS_INTERNAL_API_KEY_HEADER: &str = "x-document-storage-service-auth-key";
 const WEBSOCKET_PATH: &str = "/";
 const UNAUTHORIZED_BODY: &str = r#"{"message":"unauthorized"}"#;
 
@@ -71,7 +72,8 @@ fn test_state() -> TestState {
             api_key: TEST_INTERNAL_API_KEY.to_string(),
             default_user_id: None,
         },
-        conation_authorization::NoBotAuthorizer,
+        macro_authorization::NoBotAuthorizer,
+        macro_authorization::NoUserApiKeyAuthorizer,
     );
 
     TestState {
@@ -167,7 +169,7 @@ async fn websocket_rejects_invalid_credentials_before_infrastructure_state() {
         vec![("authorization", "Bearer not-a-token")],
         vec![(INTERNAL_API_KEY_HEADER, TEST_INTERNAL_API_KEY)],
     ] {
-        let (status, body) = send_websocket_request(address, &headers).await;
+        let (status, body) = send_websocket_request(address, WEBSOCKET_PATH, &headers).await;
         assert_eq!(status, StatusCode::UNAUTHORIZED);
         assert_eq!(body, UNAUTHORIZED_BODY);
     }
@@ -177,13 +179,14 @@ async fn websocket_rejects_invalid_credentials_before_infrastructure_state() {
 
 async fn send_websocket_request(
     address: std::net::SocketAddr,
+    path: &str,
     headers: &[(&str, &str)],
 ) -> (StatusCode, String) {
     let mut stream = tokio::net::TcpStream::connect(address)
         .await
         .expect("test client should connect");
     let mut request = format!(
-        "GET {WEBSOCKET_PATH} HTTP/1.1\r\n\
+        "GET {path} HTTP/1.1\r\n\
          Host: {address}\r\n\
          Connection: Upgrade\r\n\
          Upgrade: websocket\r\n\
@@ -276,30 +279,122 @@ fn find_bytes(haystack: &[u8], needle: &[u8]) -> Option<usize> {
         .position(|window| window == needle)
 }
 
+#[allow(deprecated)]
 #[tokio::test]
-async fn internal_probe_accepts_canonical_header_and_rejects_legacy_headers() {
-    let valid_request = Request::get("/internal-auth-probe")
-        .header(INTERNAL_API_KEY_HEADER, TEST_INTERNAL_API_KEY)
-        .body(Body::empty())
-        .expect("valid probe request should build");
-    let (status, body) = send(valid_request).await;
-    assert_eq!(status, StatusCode::OK);
-    assert_eq!(body, json!({ "authorized": true }));
+async fn internal_probe_accepts_both_header_conventions_and_rejects_wrong_keys() {
+    for header in [INTERNAL_API_KEY_HEADER, LEGACY_DSS_INTERNAL_API_KEY_HEADER] {
+        let valid_request = Request::get("/internal-auth-probe")
+            .header(header, TEST_INTERNAL_API_KEY)
+            .body(Body::empty())
+            .expect("valid probe request should build");
+        let (status, body) = send(valid_request).await;
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(body, json!({ "authorized": true }));
 
-    let invalid_request = Request::get("/internal-auth-probe")
-        .header(INTERNAL_API_KEY_HEADER, WRONG_INTERNAL_API_KEY)
-        .body(Body::empty())
-        .expect("invalid probe request should build");
-    assert_unauthorized(send(invalid_request).await);
+        let invalid_request = Request::get("/internal-auth-probe")
+            .header(header, WRONG_INTERNAL_API_KEY)
+            .body(Body::empty())
+            .expect("invalid probe request should build");
+        assert_unauthorized(send(invalid_request).await);
+    }
+}
 
-    let legacy_request = Request::get("/internal-auth-probe")
-        .header(LEGACY_DSS_INTERNAL_API_KEY_HEADER, TEST_INTERNAL_API_KEY)
-        .body(Body::empty())
-        .expect("legacy probe request should build");
-    let (status, body) = send(legacy_request).await;
-    assert_eq!(status, StatusCode::BAD_REQUEST);
-    assert_eq!(
-        body,
-        json!({ "message": "legacy internal credentials are not supported" })
-    );
+#[tokio::test]
+async fn health_is_reachable_at_root_and_gateway_prefix() {
+    for path in ["/health", "/connection-gateway/health"] {
+        let response = super::mount_at_root_and_prefix(super::health::router())
+            .oneshot(
+                Request::builder()
+                    .uri(path)
+                    .method("GET")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK, "{path}");
+    }
+}
+
+#[tokio::test]
+async fn unprefixed_unknown_path_is_not_rewritten_onto_the_prefix() {
+    let response = super::mount_at_root_and_prefix(super::health::router())
+        .oneshot(
+            Request::builder()
+                .uri("/missing")
+                .method("GET")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn websocket_upgrade_is_authorized_at_root_and_gateway_prefix() {
+    for path in [
+        WEBSOCKET_PATH,
+        "/connection-gateway",
+        "/connection-gateway/",
+        "/connection-gateway?macro-api-token=not-a-token",
+    ] {
+        let listener = tokio::net::TcpListener::bind(("127.0.0.1", 0))
+            .await
+            .expect("test listener should bind");
+        let address = listener
+            .local_addr()
+            .expect("test listener should have a local address");
+        let server = tokio::spawn(async move {
+            axum::serve(
+                listener,
+                super::mount_at_root_and_prefix(test_router())
+                    .merge(
+                        Router::new()
+                            .route("/connection-gateway/", get(connection::ws_handler))
+                            .with_state(test_state()),
+                    )
+                    .into_make_service(),
+            )
+            .await
+            .expect("test server should run");
+        });
+
+        let (status, body) =
+            send_websocket_request(address, path, &[("authorization", "Bearer not-a-token")]).await;
+        assert_eq!(status, StatusCode::UNAUTHORIZED, "{path}");
+        assert_eq!(body, UNAUTHORIZED_BODY, "{path}");
+
+        server.abort();
+    }
+}
+
+#[tokio::test]
+async fn openapi_document_is_served_at_root_and_gateway_prefix() {
+    for path in [
+        "/api-doc/openapi.json",
+        "/connection-gateway/api-doc/openapi.json",
+    ] {
+        let response = super::swagger_ui()
+            .oneshot(
+                Request::builder()
+                    .uri(path)
+                    .method("GET")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK, "{path}");
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let spec: Value = serde_json::from_slice(&body)
+            .unwrap_or_else(|_| panic!("{path} should be OpenAPI JSON"));
+        assert!(
+            spec.get("openapi").is_some(),
+            "{path} should contain an openapi version"
+        );
+    }
 }

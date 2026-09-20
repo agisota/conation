@@ -8,6 +8,7 @@ import {
 import { TZDateMini } from '@date-fns/tz';
 import type { ConferenceChange } from '@service-email/generated/schemas/conferenceChange';
 import type { EventTime } from '@service-email/generated/schemas/eventTime';
+import type { OutOfOfficeProperties } from '@service-email/generated/schemas/outOfOfficeProperties';
 import type { EventReminderOverride } from '@service-storage/generated/schemas/eventReminderOverride';
 import type { EventReminders } from '@service-storage/generated/schemas/eventReminders';
 import type { EventType } from '@service-storage/generated/schemas/eventType';
@@ -32,6 +33,7 @@ import {
   recurrenceConfigsEqual,
   recurrencePresetsFor,
 } from '../../utils/recurrence';
+import type { EventEditorOutOfOffice } from './out-of-office';
 
 /** `<input type="date">` value. */
 const DATE_VALUE = 'yyyy-MM-dd';
@@ -48,6 +50,11 @@ export interface EventEditorRecurrenceOption {
 
 function shiftDateValue(value: string, days: number) {
   return format(addDays(parseISO(value), days), DATE_VALUE);
+}
+
+/** Local midnight of a `yyyy-MM-dd` date, as a UTC ISO instant. */
+function localMidnightIso(date: string): string {
+  return new Date(`${date}T00:00`).toISOString();
 }
 
 /** Default editor slot: the next full hour, one hour long. */
@@ -78,6 +85,14 @@ export interface EventEditorInitialValues {
   reminders?: EventReminders;
   /** Provider event type of the edited event; absent for new events. */
   eventType?: EventType;
+  /**
+   * Out-of-office decline behavior. Absent while the event is not out of
+   * office, and on an edited out-of-office event until the user picks decline
+   * settings — the provider readback does not expose the stored ones.
+   */
+  outOfOffice?: EventEditorOutOfOffice;
+  /** Event type of the copy `reminders` belong to. Absent for new events. */
+  reminderEventType?: EventType;
 }
 
 /** Calendar option displayed by the event editor. */
@@ -87,6 +102,9 @@ export interface EventEditorCalendarOption {
   color: string;
   /** Provider defaults shown until the event's reminders are customized. */
   defaultReminders?: EventReminderOverride[];
+  /** Whether this is its account's primary calendar, the only kind Google
+   * accepts out-of-office events on. */
+  isPrimary?: boolean;
 }
 
 /** Editable fields that a create/edit owner may disable. */
@@ -121,6 +139,12 @@ export interface EventEditorSubmitValues {
   conference?: ConferenceChange;
   /** Present only when the user changed the event's reminder configuration. */
   reminders?: EventReminders;
+  /**
+   * Present when the save is out of office: on create its presence marks the
+   * event as out of office, on edit it patches the decline behavior of an
+   * event that already is.
+   */
+  outOfOffice?: OutOfOfficeProperties;
 }
 
 export function defaultEditorInitialValues(
@@ -140,6 +164,7 @@ export function defaultEditorInitialValues(
     conference: 'none',
     reminders: undefined,
     eventType: undefined,
+    outOfOffice: undefined,
   };
 }
 
@@ -175,14 +200,23 @@ function initialConferenceChoice(
     : 'existing';
 }
 
+/**
+ * Guest emails an existing event seeds into the editor: every attendee except
+ * the viewer when they are a mere guest. The organizer is kept even when it is
+ * the viewer, so a replacement attendee list submitted by the organizer never
+ * drops them.
+ */
+export function eventGuestEmails(event: CalendarEvent): string[] {
+  return event.attendees
+    .filter((attendee) => attendee.isOrganizer || !attendee.isSelf)
+    .map((attendee) => attendee.email);
+}
+
 /** Converts an existing event into values for the shared editor. */
 export function calendarEventToEditorInitialValues(
   event: CalendarEvent
 ): EventEditorInitialValues {
-  const guests = event.attendees
-    .filter((attendee) => attendee.isOrganizer || !attendee.isSelf)
-    .map((attendee) => attendee.email)
-    .join(', ');
+  const guests = eventGuestEmails(event).join(', ');
 
   if (event.allDay) {
     const start = isDateOnly(event.start)
@@ -204,6 +238,7 @@ export function calendarEventToEditorInitialValues(
       conference: initialConferenceChoice(event),
       reminders: event.reminders,
       eventType: event.eventType,
+      reminderEventType: event.reminderEventType,
     };
   }
 
@@ -220,6 +255,7 @@ export function calendarEventToEditorInitialValues(
     conference: initialConferenceChoice(event),
     reminders: event.reminders,
     eventType: event.eventType,
+    reminderEventType: event.reminderEventType,
   };
 }
 
@@ -229,6 +265,18 @@ export function buildEventTime(
   if (state.allDay) {
     if (!state.start || !state.end || state.end < state.start) {
       return undefined;
+    }
+    // Google has no date-based out-of-office event, so encode an all-day one as
+    // a timed span covering whole days in the editor's time zone. It then reads
+    // and renders as a full-day timed block, the same as Google Calendar shows
+    // its own all-day out-of-office events.
+    if (state.eventType === 'out_of_office') {
+      return {
+        kind: 'timed',
+        startsAt: localMidnightIso(state.start),
+        endsAt: localMidnightIso(shiftDateValue(state.end, 1)),
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      };
     }
     return {
       kind: 'allDay',

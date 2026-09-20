@@ -1,8 +1,4 @@
-import { t } from '@app/lib/i18n';
-import {
-  canvasDraggingSignal,
-  useCanvasFileDrop,
-} from '@block-canvas/signal/fileDrop';
+import { useCanvasFileDrop } from '@block-canvas/signal/fileDrop';
 import { useRenderState } from '@block-canvas/store/RenderState';
 import { vec2 } from '@block-canvas/util/vector2';
 import { EntityIcon } from '@core/component/EntityIcon';
@@ -27,7 +23,7 @@ import { Dropdown } from '@ui';
 import { createMemo, createSignal, Show } from 'solid-js';
 import { VList } from 'virtua/solid';
 import { Tools } from '../constants';
-import { selectedImageSignal } from '../operation/image';
+import { useCanvasDocument } from '../context/canvas-document-context';
 import { useSelect } from '../operation/select';
 import { useToolManager } from '../signal/toolManager';
 
@@ -43,7 +39,7 @@ type MediaItem = {
 };
 
 function ItemOption(props: { media: MediaItem }) {
-  const setSelectedImage = selectedImageSignal.set;
+  const [, setSelectedImage] = useCanvasDocument().state.signals.selectedImage;
   const toolManager = useToolManager();
   const select = useSelect();
 
@@ -80,7 +76,8 @@ export function MediaSelector() {
   //const copiedFileID = copiedFile();
   const select = useSelect();
   const { handleFileDrop } = useCanvasFileDrop();
-  const [isDragging, setIsDragging] = canvasDraggingSignal;
+  const [isDragging, setIsDragging] =
+    useCanvasDocument().state.signals.canvasDragging;
   const { viewBox } = useRenderState();
   const centerVec = createMemo(() => {
     return vec2(viewBox().x + viewBox().w / 2, viewBox().y + viewBox().h / 2);
@@ -133,8 +130,8 @@ export function MediaSelector() {
     <Dropdown open={imageSelectorOpen()} onOpenChange={setImageSelectorOpen}>
       <Dropdown.Trigger
         variant="ghost"
-        size="icon-md"
-        label={t('canvas.tools.media')}
+        size="icon-sm"
+        label="Media"
         tabIndex={-1}
       >
         <Image />
@@ -156,7 +153,7 @@ export function MediaSelector() {
           >
             <Show when={isDragging()}>
               <FileDropOverlay valid={true}>
-                <div class="font-mono">{t('canvas.media.dropFiles')}</div>
+                Drop any file here to add it to your canvas
               </FileDropOverlay>
             </Show>
             <Dropdown.Item closeOnSelect={false}>
@@ -186,7 +183,7 @@ export function MediaSelector() {
                 >
                   <UploadSimple class="size-3.5 shrink-0 text-accent" />
                   <span class="text-sm font-medium text-accent">
-                    {t('shell.actions.uploadFile')}
+                    Upload File
                   </span>
                 </div>
               </div>
@@ -195,9 +192,7 @@ export function MediaSelector() {
               <Show
                 when={userMediaFiles().length > 0}
                 fallback={
-                  <div class="p-4 text-sm text-center">
-                    {t('canvas.media.empty')}
-                  </div>
+                  <div class="p-4 text-sm text-center">No media found.</div>
                 }
               >
                 <VList

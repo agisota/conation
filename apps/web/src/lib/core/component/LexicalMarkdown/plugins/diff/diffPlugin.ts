@@ -1,4 +1,6 @@
-import type { NodeIdMappings } from '@conation/lexical-core';
+import { useUserId } from '@core/context/user';
+import { $wrapNodeInElement, mergeRegister } from '@lexical/utils';
+import type { NodeIdMappings } from '@macro-inc/lexical-core';
 import {
   $createDiffDeleteNode,
   $createDiffInsertNode,
@@ -6,17 +8,14 @@ import {
   $diffNodeDeleteAtStart,
   $getNodeById,
   $isDiffNode,
-} from '@conation/lexical-core';
-import type { createBlockSignal } from '@core/block';
-import { useUserId } from '@core/context/user';
-import { $wrapNodeInElement, mergeRegister } from '@lexical/utils';
+} from '@macro-inc/lexical-core';
 import type { LexicalEditor } from 'lexical';
 import {
   COMMAND_PRIORITY_CRITICAL,
   COMMAND_PRIORITY_NORMAL,
   createCommand,
 } from 'lexical';
-import { createEffect } from 'solid-js';
+import { createEffect, type Signal } from 'solid-js';
 import { mapRegisterDelete } from '../shared/utils';
 
 interface Diff {
@@ -26,7 +25,7 @@ interface Diff {
 }
 
 type DiffPluginArgs = {
-  revisionsSignal: ReturnType<typeof createBlockSignal<Diff[] | undefined>>;
+  revisionsSignal: Signal<Diff[] | undefined>;
   nodeIdMap: NodeIdMappings;
 };
 
@@ -49,13 +48,14 @@ const DELETE_DIFF_COMMAND = createCommand<string>('DELETE_DIFF_COMMAND');
 
 function registerDiffPlugin(editor: LexicalEditor, props: DiffPluginArgs) {
   const userId = useUserId();
+  const [revisions, setRevisions] = props.revisionsSignal;
 
   createEffect(() => {
-    const revisionsResponse = props.revisionsSignal();
+    const revisionsResponse = revisions();
     if (!revisionsResponse) {
       return;
     }
-    props.revisionsSignal.set(undefined);
+    setRevisions(undefined);
 
     let cleanedRevisions: Diff[] = [];
     for (const revision of revisionsResponse) {

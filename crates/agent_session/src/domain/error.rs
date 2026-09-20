@@ -6,8 +6,15 @@ pub type Result<T, E = AgentSessionError> = std::result::Result<T, E>;
 
 #[derive(Error, Debug)]
 pub enum AgentSessionError {
+    /// A repository or branch cannot be used by this session.
+    #[error("{0}")]
+    InvalidRepositorySelection(&'static str),
     #[error("agent session {0} already has an active transport")]
     AlreadyConnected(AgentSessionId),
+    #[error("agent session {0} is managed by another live replica")]
+    ManagedElsewhere(AgentSessionId),
+    #[error("agent session {0} write was fenced out: another replica claimed the session")]
+    FencedOut(AgentSessionId),
     #[error("acp handshake failed: {0}")]
     Handshake(String),
     #[error("agent session {0} is no longer connected")]
@@ -16,14 +23,37 @@ pub enum AgentSessionError {
     ThreadSessionExists,
     #[error("the session owner is not a known user")]
     UnknownOwner,
+    #[error("expected a GitHub PR URL: https://github.com/owner/repo/pull/number")]
+    InvalidPullRequestUrl,
     #[error("invalid agent session name: {0}")]
     InvalidName(&'static str),
+    #[error("a preview request may name at most {0} sessions")]
+    TooManyPreviewIds(usize),
     #[error("the caller may not control this agent session")]
     Forbidden,
+    #[error("no queued action with this id; it may already have been dispatched")]
+    QueuedControlNotFound,
+    #[error("only queued prompts can be edited")]
+    QueuedControlNotEditable,
+    #[error("a queued prompt cannot be edited to say nothing; remove it instead")]
+    EmptyQueuedPrompt,
+    #[error("agent session {0} has too many queued actions")]
+    ControlQueueFull(AgentSessionId),
+    #[error(
+        "agent session {0} has no open permission request with this id; it may already have been answered or cancelled"
+    )]
+    PermissionRequestNotFound(AgentSessionId),
+    #[error("agent session {0} was not offered that permission option")]
+    PermissionOptionUnknown(AgentSessionId),
     #[error(
         "agent session {0} cannot be restored because the agent supports neither session/resume nor session/load"
     )]
     ResumeUnsupported(AgentSessionId),
+    /// The answer names an elicitation the live connection is not holding:
+    /// already answered, cancelled by a stop, lost with the connection, or
+    /// never asked.
+    #[error("agent session {0} has no pending elicitation matching that request id")]
+    ElicitationNotPending(AgentSessionId),
     #[error("agent session {0} action delivery timed out")]
     DeliveryTimedOut(AgentSessionId),
     #[error("agent session {0} log persistence timed out")]

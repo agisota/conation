@@ -11,8 +11,8 @@ use crate::api::context::{AppState, AuthorizationService};
 use anyhow::Context;
 use axum::Router;
 use axum::extract::DefaultBodyLimit;
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
+use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use macro_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
 use std::sync::Arc;
 use tower_http::limit::RequestBodyLimitLayer;
 use utoipa::OpenApi;
@@ -21,15 +21,15 @@ use utoipa_swagger_ui::SwaggerUi;
 static MAX_REQUEST_SIZE: usize = 4096;
 
 /// Identity assumed for internal service callers that don't forward an acting user.
-pub const MACRO_INTERNAL_USER_ID: &str = "conation|INTERNAL@conation.dev";
+pub const MACRO_INTERNAL_USER_ID: &str = "macro|INTERNAL@macro.com";
 
 pub async fn setup_and_serve(
     config: Config,
     jwt_validation_args: JwtValidationArgs,
 ) -> anyhow::Result<()> {
-    let cors = conation_cors::cors_layer();
+    let cors = macro_cors::cors_layer();
 
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
+    let aws_config = macro_aws_config::get_macro_aws_config().await;
 
     let metadata_client = DynamodbClient::new(
         &aws_config,
@@ -40,7 +40,7 @@ pub async fn setup_and_serve(
     );
 
     let sqs_client = aws_sdk_sqs::Client::new(&aws_config);
-    let inner_client = conation_aws_config::s3_client().await;
+    let inner_client = macro_aws_config::s3_client().await;
     let storage_client = S3Client::new(
         inner_client,
         config.static_storage_bucket.as_ref().to_owned(),
@@ -52,7 +52,8 @@ pub async fn setup_and_serve(
             api_key: config.internal_api_key.as_ref().to_string(),
             default_user_id: Some(MACRO_INTERNAL_USER_ID.to_string()),
         },
-        conation_authorization::NoBotAuthorizer,
+        macro_authorization::NoBotAuthorizer,
+        macro_authorization::NoUserApiKeyAuthorizer,
     )));
 
     let state = AppState {

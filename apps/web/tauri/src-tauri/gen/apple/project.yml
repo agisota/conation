@@ -1,8 +1,8 @@
 name: app
 options:
-  bundleIdPrefix: dev.conation
+  bundleIdPrefix: com.macro.app.prod
   deploymentTarget:
-    iOS: 14.0
+    iOS: 15.0
 packages:
   CallKitPlugin:
     path: ../../../callkit_plugin/ios
@@ -13,8 +13,8 @@ configs:
 settingGroups:
   app:
     base:
-      PRODUCT_NAME: Conation
-      PRODUCT_BUNDLE_IDENTIFIER: dev.conation.app
+      PRODUCT_NAME: macro
+      PRODUCT_BUNDLE_IDENTIFIER: com.macro.app.prod
       DEVELOPMENT_TEAM: TY74Q77JBD
       CODE_SIGN_STYLE: Automatic
       CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
@@ -62,8 +62,8 @@ targets:
         CFBundleVersion: "179"
         CFBundleURLTypes:
           - CFBundleURLSchemes:
-              - conation
-            CFBundleURLName: conation
+              - macro
+            CFBundleURLName: macro
         NSUserActivityTypes:
           - INSendMessageIntent
           - NSUserActivityTypeBrowsingWeb
@@ -71,7 +71,12 @@ targets:
         NSMicrophoneUsageDescription: "This app needs access to the microphone to record videos for attachments."
         NSPhotoLibraryUsageDescription: "This app needs access to your photo library to upload attachments."
         LSApplicationQueriesSchemes:
-          - conation
+          - macro
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: TaoScene
         UIBackgroundModes:
           - audio
           - voip
@@ -80,11 +85,13 @@ targets:
       properties:
         aps-environment: production
         com.apple.developer.associated-domains:
-          - applinks:conation.dev
+          - applinks:macro.com
+          - applinks:dev.macro.com
+          - applinks:staging.macro.com
         com.apple.developer.usernotifications.communication: true
         com.apple.developer.usernotifications.time-sensitive: true
         com.apple.security.application-groups:
-          - group.dev.conation.app
+          - group.com.macro.app.prod
     scheme:
       environmentVariables:
         RUST_BACKTRACE: full
@@ -133,11 +140,11 @@ targets:
     info:
       path: ShareExtension/Info.plist
       properties:
-        CFBundleDisplayName: Поделиться в Conation
+        CFBundleDisplayName: Share to Macro
         CFBundleShortVersionString: 2.0.7
         CFBundleVersion: "179"
         LSApplicationQueriesSchemes:
-          - conation
+          - macro
         NSExtension:
           NSExtensionAttributes:
             NSExtensionActivationRule:
@@ -150,10 +157,10 @@ targets:
       path: ShareExtension/ShareExtension.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.dev.conation.app
+          - group.com.macro.app.prod
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: dev.conation.app.ShareExtension
+        PRODUCT_BUNDLE_IDENTIFIER: com.macro.app.prod.ShareExtension
         DEVELOPMENT_TEAM: TY74Q77JBD
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
@@ -176,7 +183,7 @@ targets:
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationService
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: dev.conation.app.NotificationServiceExtension
+        PRODUCT_BUNDLE_IDENTIFIER: com.macro.app.prod.NotificationServiceExtension
         DEVELOPMENT_TEAM: TY74Q77JBD
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES

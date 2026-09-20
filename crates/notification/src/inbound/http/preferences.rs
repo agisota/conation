@@ -3,19 +3,20 @@
 use axum::{
     Json,
     extract::{OriginalUri, Path, Query, State},
-    http::{StatusCode, uri::PathAndQuery},
+    http::{HeaderMap, StatusCode, header, uri::PathAndQuery},
     response::Html,
 };
-use conation_authorization::{
-    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
-};
-use conation_service_urls::{NotificationServiceUrl, Url};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
+use macro_service_urls::NotificationServiceUrl;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_error_response::ErrorResponse;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::domain::{models::signing::SignedUrl, service::NotificationReader};
+use crate::domain::{
+    models::signing::{self, SignedUrl},
+    service::NotificationReader,
+};
 
 use super::NotificationRouterState;
 
@@ -111,23 +112,6 @@ pub struct PresignedQueryParams {
     id: MacroUserIdStr<'static>,
 }
 
-/// Reconstruct the public URL used to create a signed preferences link.
-///
-/// The notification service may be mounted below a reverse-proxy path prefix.
-/// Treating the incoming request path as relative preserves that prefix, so the
-/// verifier uses the exact URL that the digest renderer signed.
-pub(super) fn signed_request_url(
-    mut notification_service_url: Url,
-    path_and_query: &str,
-) -> Result<Url, ()> {
-    if !notification_service_url.path().ends_with('/') {
-        notification_service_url.path_segments_mut()?.push("");
-    }
-    notification_service_url
-        .join(path_and_query.trim_start_matches('/'))
-        .map_err(|_| ())
-}
-
 /// Disable a notification type for the authenticated user via a GET request with a presigned url.
 /// This guarantees the signed url was produced in a trusted environment
 pub async fn presigned_disable_notification_type<
@@ -139,6 +123,7 @@ pub async fn presigned_disable_notification_type<
         notification_event_type,
     }): Path<NotificationEventTypePath>,
     Query(params): Query<PresignedQueryParams>,
+    headers: HeaderMap,
     original_uri: OriginalUri,
 ) -> Result<Html<String>, (StatusCode, Html<String>)> {
     let notification_service_url = NotificationServiceUrl::new().map_err(|err| {
@@ -155,15 +140,20 @@ pub async fn presigned_disable_notification_type<
             Html("Invalid link".to_string()),
         )
     })?;
-    let path_and_query = original_uri
-        .path_and_query()
-        .map(PathAndQuery::as_str)
-        .unwrap_or("/");
-    let to_verify = signed_request_url(notification_service_url, path_and_query);
-
-    let Ok(to_verify) = to_verify else {
-        return Err((StatusCode::BAD_REQUEST, Html("Invalid link".to_string())));
-    };
+    let host = headers
+        .get(header::HOST)
+        .and_then(|value| value.to_str().ok())
+        .or_else(|| notification_service_url.host_str())
+        .ok_or_else(|| (StatusCode::BAD_REQUEST, Html("Invalid link".to_string())))?;
+    let to_verify = signing::public_request_url(
+        notification_service_url.scheme(),
+        host,
+        original_uri
+            .path_and_query()
+            .map(PathAndQuery::as_str)
+            .unwrap_or("/"),
+    )
+    .map_err(|_| (StatusCode::BAD_REQUEST, Html("Invalid link".to_string())))?;
 
     let Some(_verified) = SignedUrl::verify(to_verify, state.hmac_signing_key.clone()) else {
         return Err((
@@ -176,7 +166,7 @@ pub async fn presigned_disable_notification_type<
         .await
         .map(|()| {
             Html(format!(
-                "Вы отписались от уведомлений типа {notification_event_type}"
+                "You have been unsubscribed from {notification_event_type}"
             ))
         })
         .map_err(|(status, Json(ErrorResponse { message }))| (status, Html(message.to_string())))

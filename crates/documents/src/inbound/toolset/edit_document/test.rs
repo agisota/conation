@@ -9,26 +9,24 @@ use crate::domain::models::{
     DocumentTeamShareResponse, EditDocumentServiceArgs, GithubPullRequestsResponse,
     ImportEmailAttachmentRepoArgs, LocationQueryParams, TaskBranchName,
 };
-use crate::domain::ports::editing::{EditResult, EditingWorkerService};
+use crate::domain::permission_token::decode_permission_token;
+use crate::domain::ports::editing::{EditMode, EditResult, EditingWorkerService};
 use crate::domain::response::{
     CreateDocumentResponseData, DocumentResponse, GetDocumentResponseData, LocationResponseV3,
 };
-use conation_sync_service_jwt::DocumentPermissionToken;
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use entity_access::domain::models::{
     AccessError, BotAccessScope, BotId, CallChannelInfo, EntityAccessReceipt, EntityPermission,
     MemberTeamRole, OwnerAccessLevel, RequiredPermission, TeamRole, UserTeamInfo, ViewAccessLevel,
 };
 use lexical_client::LexicalClient;
-use model::{
-    document::{DocumentBasic, FileType},
-    sync_service::SyncServiceVersionID,
-};
+use macro_sync_service_jwt::DocumentPermissionToken;
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
+use model::{document::DocumentBasic, sync_service::SyncServiceVersionID};
 use model_entity::Entity;
 use sync_service_client::SyncServiceClient;
 use uuid::Uuid;
 
-const TEST_USER_ID: &str = "conation|editor@example.com";
+const TEST_USER_ID: &str = "macro|editor@example.com";
 const TEST_DOCUMENT_ID: &str = "019fd3b9-3c6c-7c05-89c2-a27f0121813b";
 
 fn document_with_file_type(file_type: Option<&str>) -> DocumentBasic {
@@ -49,39 +47,12 @@ fn document_with_file_type(file_type: Option<&str>) -> DocumentBasic {
 
 struct FakeDocumentService {
     file_type: Option<String>,
-    overwrites: Arc<Mutex<Vec<(String, String)>>>,
-    stored: Arc<Mutex<Option<String>>>,
-    read_error: Arc<Mutex<Option<String>>>,
 }
 
 impl FakeDocumentService {
     fn new(file_type: &str) -> Self {
         Self {
             file_type: Some(file_type.to_string()),
-            overwrites: Arc::new(Mutex::new(Vec::new())),
-            stored: Arc::new(Mutex::new(None)),
-            read_error: Arc::new(Mutex::new(None)),
-        }
-    }
-
-    fn with_stored_board(self, json: &str) -> Self {
-        *self.stored.lock().expect("stored lock poisoned") = Some(json.to_string());
-        self
-    }
-
-    fn with_read_error(self, message: &str) -> Self {
-        *self.read_error.lock().expect("read_error lock poisoned") = Some(message.to_string());
-        self
-    }
-}
-
-impl Clone for FakeDocumentService {
-    fn clone(&self) -> Self {
-        Self {
-            file_type: self.file_type.clone(),
-            overwrites: self.overwrites.clone(),
-            stored: self.stored.clone(),
-            read_error: self.read_error.clone(),
         }
     }
 }
@@ -235,6 +206,7 @@ impl DocumentService for FakeDocumentService {
         _user_id: MacroUserIdStr<'static>,
         _document_id: &str,
         _request: &CreateTaskRequest,
+        _attribution: &activity::Attribution,
     ) -> Result<(), DocumentError> {
         panic!("unexpected handle_task_properties call")
     }
@@ -286,6 +258,7 @@ impl DocumentCreationService for FakeDocumentService {
         _user_id: MacroUserIdStr<'static>,
         _document_id: &str,
         _request: &CreateTaskRequest,
+        _attribution: &activity::Attribution,
     ) -> Result<(), DocumentError> {
         panic!("unexpected handle_task_properties call")
     }
@@ -304,32 +277,6 @@ impl DocumentCreationService for FakeDocumentService {
 
     async fn cleanup_created_document(&self, _document_id: &str) {
         panic!("unexpected cleanup_created_document call")
-    }
-
-    async fn overwrite_plain_text(
-        &self,
-        document_id: &str,
-        file_type: FileType,
-        text: String,
-    ) -> Result<(), DocumentError> {
-        assert_eq!(file_type, FileType::Canvas);
-        self.overwrites
-            .lock()
-            .expect("overwrites lock poisoned")
-            .push((document_id.to_string(), text));
-        Ok(())
-    }
-
-    async fn read_plain_text(&self, _document_id: &str) -> Result<Option<String>, DocumentError> {
-        if let Some(message) = self
-            .read_error
-            .lock()
-            .expect("read_error lock poisoned")
-            .clone()
-        {
-            return Err(DocumentError::Internal(anyhow::anyhow!(message)));
-        }
-        Ok(self.stored.lock().expect("stored lock poisoned").clone())
     }
 }
 
@@ -447,19 +394,39 @@ impl EntityAccessService for FakeEntityAccessService {
 #[derive(Clone, Default)]
 struct FakeEditingWorker {
     edit_calls: Arc<Mutex<Vec<String>>>,
+    modes: Arc<Mutex<Vec<EditMode>>>,
+    tokens: Arc<Mutex<Vec<DocumentPermissionToken>>>,
 }
 
 impl EditingWorkerService for FakeEditingWorker {
+    async fn spreadsheet(
+        &self,
+        _document_id: &str,
+        _document_token: &DocumentPermissionToken,
+        _request: &crate::domain::spreadsheet::SpreadsheetRequest,
+    ) -> anyhow::Result<crate::domain::spreadsheet::SpreadsheetResponse> {
+        panic!("unexpected spreadsheet call")
+    }
+
     async fn edit(
         &self,
         document_id: &str,
-        _document_token: &DocumentPermissionToken,
+        document_token: &DocumentPermissionToken,
         _instructions: &str,
+        mode: EditMode,
     ) -> anyhow::Result<EditResult> {
         self.edit_calls
             .lock()
             .expect("edit calls lock poisoned")
             .push(document_id.to_string());
+        self.modes
+            .lock()
+            .expect("edit modes lock poisoned")
+            .push(mode);
+        self.tokens
+            .lock()
+            .expect("edit tokens lock poisoned")
+            .push(document_token.clone());
 
         Ok(EditResult {
             edits_applied: 1,
@@ -505,22 +472,48 @@ fn request_context() -> RequestContext {
 async fn call_edit_document(
     file_type: &str,
 ) -> (ToolResult<EditDocumentResponse>, FakeEditingWorker) {
+    call_edit_document_as(file_type, None).await
+}
+
+async fn call_edit_document_as(
+    file_type: &str,
+    actor: Option<BotId>,
+) -> (ToolResult<EditDocumentResponse>, FakeEditingWorker) {
+    call_edit_document_with(file_type, actor, false).await
+}
+
+async fn call_edit_document_with(
+    file_type: &str,
+    actor: Option<BotId>,
+    fast: bool,
+) -> (ToolResult<EditDocumentResponse>, FakeEditingWorker) {
     let editing = FakeEditingWorker::default();
     let tool = EditDocument {
         document_id: TEST_DOCUMENT_ID.to_string(),
         instructions: "tidy up the imports".to_string(),
-        file_content: None,
-        canvas_ops: None,
+        fast,
     };
 
-    let result = tool
-        .call(
-            tool_context(FakeDocumentService::new(file_type), editing.clone()),
-            request_context(),
-        )
-        .await;
+    let mut context = tool_context(FakeDocumentService::new(file_type), editing.clone());
+    if let Some(actor) = actor {
+        context.0 = context.0.with_actor(actor);
+    }
+    let result = tool.call(context, request_context()).await;
 
     (result, editing)
+}
+
+fn minted_token_actor(editing: &FakeEditingWorker) -> Option<String> {
+    let token = editing
+        .tokens
+        .lock()
+        .expect("edit tokens lock poisoned")
+        .first()
+        .expect("edit minted a document token")
+        .clone();
+    decode_permission_token(&token, "unused-jwt-secret")
+        .expect("edit token should decode")
+        .actor
 }
 
 #[tokio::test]
@@ -554,6 +547,32 @@ async fn rejects_non_markdown_document_without_calling_the_worker() {
 /// into sync-service when its upload finalizes, and a location check during
 /// that window would reject an edit the sync handshake is designed to serve.
 #[tokio::test]
+async fn fast_flag_selects_the_fast_pipeline() {
+    let (_, editing) = call_edit_document_with("md", None, true).await;
+    assert_eq!(
+        *editing.modes.lock().expect("edit modes lock poisoned"),
+        vec![EditMode::Fast]
+    );
+
+    let (_, editing) = call_edit_document("md").await;
+    assert_eq!(
+        *editing.modes.lock().expect("edit modes lock poisoned"),
+        vec![EditMode::Supervised]
+    );
+}
+
+/// `fast` is optional on the wire so existing callers keep working.
+#[test]
+fn fast_defaults_to_false() {
+    let tool: EditDocument = serde_json::from_value(serde_json::json!({
+        "document_id": TEST_DOCUMENT_ID,
+        "instructions": "x",
+    }))
+    .expect("fast should be optional");
+    assert!(!tool.fast);
+}
+
+#[tokio::test]
 async fn allows_markdown_document() {
     let (result, editing) = call_edit_document("md").await;
 
@@ -562,6 +581,56 @@ async fn allows_markdown_document() {
     assert_eq!(
         *editing.edit_calls.lock().expect("edit calls lock poisoned"),
         vec![TEST_DOCUMENT_ID.to_string()]
+    );
+
+    let token = editing
+        .tokens
+        .lock()
+        .expect("edit tokens lock poisoned")
+        .first()
+        .expect("edit minted a document token")
+        .clone();
+    let claims =
+        decode_permission_token(&token, "unused-jwt-secret").expect("edit token should decode");
+    assert_eq!(
+        claims.user_id.as_ref().map(|user| user.as_ref()),
+        Some(TEST_USER_ID)
+    );
+    assert_eq!(
+        claims.actor.as_deref(),
+        Some(bot_id::MACRO_AI_BOT_ID.into_storage_id().as_ref())
+    );
+}
+
+#[tokio::test]
+async fn edit_token_carries_the_context_actor() {
+    let (result, editing) = call_edit_document_as("md", Some(BotId::TEST_A)).await;
+    result.expect("a markdown document should be editable");
+
+    assert_eq!(
+        minted_token_actor(&editing).as_deref(),
+        Some(BotId::TEST_A.into_storage_id().as_ref())
+    );
+}
+
+#[test]
+fn tool_writes_are_delegated_from_the_context_actor_to_the_requesting_user() {
+    let user = MacroUserIdStr::try_from(TEST_USER_ID.to_string()).expect("valid user");
+    let default_context =
+        tool_context(FakeDocumentService::new("md"), FakeEditingWorker::default());
+    assert_eq!(default_context.actor, bot_id::MACRO_AI_BOT_ID);
+
+    let attribution = default_context
+        .0
+        .with_actor(BotId::TEST_A)
+        .attribution(user);
+    assert_eq!(
+        attribution.actor().as_ref(),
+        BotId::TEST_A.into_storage_id().as_ref()
+    );
+    assert_eq!(
+        attribution.on_behalf_of().as_ref().map(|id| id.as_ref()),
+        Some(TEST_USER_ID)
     );
 }
 
@@ -580,297 +649,4 @@ fn only_markdown_is_editable() {
         ensure_markdown(&document_with_file_type(None)).is_err(),
         "a document with no file type must be rejected"
     );
-}
-
-async fn call_overwrite_canvas(
-    file_content: Option<&str>,
-) -> (
-    ToolResult<EditDocumentResponse>,
-    FakeDocumentService,
-    FakeEditingWorker,
-) {
-    let service = FakeDocumentService::new("canvas");
-    let editing = FakeEditingWorker::default();
-    let tool = EditDocument {
-        document_id: TEST_DOCUMENT_ID.to_string(),
-        instructions: "add a box".to_string(),
-        file_content: file_content.map(str::to_string),
-        canvas_ops: None,
-    };
-
-    let result = tool
-        .call(
-            tool_context(service.clone(), editing.clone()),
-            request_context(),
-        )
-        .await;
-
-    (result, service, editing)
-}
-
-#[tokio::test]
-async fn overwrites_canvas_json_without_calling_the_worker() {
-    let json = r#"{"nodes":[{"id":"n1"}],"edges":[],"groups":[]}"#;
-    let (result, service, editing) = call_overwrite_canvas(Some(json)).await;
-
-    let response = result.expect("canvas JSON should overwrite");
-    assert_eq!(response.summary, "Overwrote canvas JSON.");
-    assert!(response.clarification.is_none());
-    assert_eq!(
-        *service.overwrites.lock().expect("overwrites lock poisoned"),
-        vec![(TEST_DOCUMENT_ID.to_string(), json.to_string())]
-    );
-    assert!(
-        editing
-            .edit_calls
-            .lock()
-            .expect("edit calls lock poisoned")
-            .is_empty(),
-        "canvas overwrite must not use the Loro markdown worker"
-    );
-}
-
-#[tokio::test]
-async fn empty_canvas_file_content_writes_the_same_empty_board_as_create() {
-    use crate::inbound::toolset::create_document::EMPTY_CANVAS_JSON;
-
-    let (result, service, _) = call_overwrite_canvas(Some("  ")).await;
-    result.expect("empty canvas body should become the UI empty board");
-    assert_eq!(
-        *service.overwrites.lock().expect("overwrites lock poisoned"),
-        vec![(TEST_DOCUMENT_ID.to_string(), EMPTY_CANVAS_JSON.to_string())]
-    );
-}
-
-#[tokio::test]
-async fn canvas_overwrite_requires_file_content() {
-    let (result, service, editing) = call_overwrite_canvas(None).await;
-    let error = result.expect_err("canvas without fileContent should fail");
-    assert!(
-        error.description.contains("fileContent"),
-        "description should ask for fileContent: {}",
-        error.description
-    );
-    assert!(
-        service
-            .overwrites
-            .lock()
-            .expect("overwrites lock poisoned")
-            .is_empty()
-    );
-    assert!(
-        editing
-            .edit_calls
-            .lock()
-            .expect("edit calls lock poisoned")
-            .is_empty()
-    );
-}
-
-#[tokio::test]
-async fn canvas_overwrite_rejects_json_without_nodes_and_edges() {
-    let (result, service, _) = call_overwrite_canvas(Some(r#"{"nodes":[]}"#)).await;
-    result.expect_err("canvas JSON must include nodes and edges");
-    assert!(
-        service
-            .overwrites
-            .lock()
-            .expect("overwrites lock poisoned")
-            .is_empty()
-    );
-}
-
-async fn call_canvas_ops(
-    file_content: Option<&str>,
-    canvas_ops: Option<Vec<crate::domain::canvas_loro::CanvasOp>>,
-) -> (
-    ToolResult<EditDocumentResponse>,
-    FakeDocumentService,
-    FakeEditingWorker,
-) {
-    call_canvas_ops_with(FakeDocumentService::new("canvas"), file_content, canvas_ops).await
-}
-
-async fn call_canvas_ops_with(
-    service: FakeDocumentService,
-    file_content: Option<&str>,
-    canvas_ops: Option<Vec<crate::domain::canvas_loro::CanvasOp>>,
-) -> (
-    ToolResult<EditDocumentResponse>,
-    FakeDocumentService,
-    FakeEditingWorker,
-) {
-    let editing = FakeEditingWorker::default();
-    let tool = EditDocument {
-        document_id: TEST_DOCUMENT_ID.to_string(),
-        instructions: "add a box".to_string(),
-        file_content: file_content.map(str::to_string),
-        canvas_ops,
-    };
-
-    let result = tool
-        .call(
-            tool_context(service.clone(), editing.clone()),
-            request_context(),
-        )
-        .await;
-
-    (result, service, editing)
-}
-
-#[tokio::test]
-async fn canvas_ops_upsert_node_without_whole_board() {
-    use crate::domain::canvas_loro::CanvasOp;
-
-    let (result, service, editing) = call_canvas_ops(
-        None,
-        Some(vec![CanvasOp::UpsertNode {
-            node: serde_json::json!({"id":"n1","type":"shape","x":8,"y":4}),
-        }]),
-    )
-    .await;
-
-    let response = result.expect("node-level op should apply");
-    assert_eq!(response.summary, "Applied 1 canvas op(s).");
-    let overwrites = service.overwrites.lock().expect("overwrites lock poisoned");
-    assert_eq!(overwrites.len(), 1);
-    let board: serde_json::Value = serde_json::from_str(&overwrites[0].1).unwrap();
-    assert_eq!(board["nodes"][0]["id"], "n1");
-    assert_eq!(board["nodes"][0]["x"], 8.0);
-    assert_eq!(board["edges"], serde_json::json!([]));
-    assert!(
-        editing
-            .edit_calls
-            .lock()
-            .expect("edit calls lock poisoned")
-            .is_empty()
-    );
-}
-
-#[tokio::test]
-async fn canvas_ops_delete_from_file_content_base() {
-    use crate::domain::canvas_loro::CanvasOp;
-
-    let base = r#"{"nodes":[{"id":"a"},{"id":"b"}],"edges":[{"id":"e1"}]}"#;
-    let (result, service, _) = call_canvas_ops(
-        Some(base),
-        Some(vec![
-            CanvasOp::DeleteNode { id: "b".into() },
-            CanvasOp::DeleteEdge { id: "e1".into() },
-        ]),
-    )
-    .await;
-
-    result.expect("delete ops should apply");
-    let overwrites = service.overwrites.lock().expect("overwrites lock poisoned");
-    let board: serde_json::Value = serde_json::from_str(&overwrites[0].1).unwrap();
-    assert_eq!(board["nodes"], serde_json::json!([{"id":"a"}]));
-    assert_eq!(board["edges"], serde_json::json!([]));
-}
-
-#[tokio::test]
-async fn canvas_ops_empty_list_is_rejected() {
-    let (result, service, editing) = call_canvas_ops(None, Some(vec![])).await;
-    let error = result.expect_err("empty canvasOps should fail");
-    assert!(
-        error.description.contains("canvasOps"),
-        "{}",
-        error.description
-    );
-    assert!(
-        service
-            .overwrites
-            .lock()
-            .expect("overwrites lock poisoned")
-            .is_empty()
-    );
-    assert!(
-        editing
-            .edit_calls
-            .lock()
-            .expect("edit calls lock poisoned")
-            .is_empty()
-    );
-}
-
-#[tokio::test]
-async fn canvas_ops_load_from_object_storage_when_snapshot_missing() {
-    use crate::domain::canvas_loro::CanvasOp;
-
-    let stored = r#"{"nodes":[{"id":"keep","x":1,"y":2}],"edges":[{"id":"e1"}]}"#;
-    let service = FakeDocumentService::new("canvas").with_stored_board(stored);
-    let (result, service, editing) = call_canvas_ops_with(
-        service,
-        None,
-        Some(vec![CanvasOp::UpsertNode {
-            node: serde_json::json!({"id":"n2","type":"shape","x":8,"y":4}),
-        }]),
-    )
-    .await;
-
-    let response = result.expect("ops should apply onto the stored board");
-    assert_eq!(response.summary, "Applied 1 canvas op(s).");
-    let overwrites = service.overwrites.lock().expect("overwrites lock poisoned");
-    let board: serde_json::Value = serde_json::from_str(&overwrites[0].1).unwrap();
-    assert_eq!(board["nodes"].as_array().map(|n| n.len()), Some(2));
-    assert_eq!(board["nodes"][0]["id"], "keep");
-    assert_eq!(board["nodes"][1]["id"], "n2");
-    assert_eq!(board["edges"], serde_json::json!([{"id":"e1"}]));
-    assert!(
-        editing
-            .edit_calls
-            .lock()
-            .expect("edit calls lock poisoned")
-            .is_empty()
-    );
-}
-
-#[tokio::test]
-async fn canvas_ops_do_not_start_empty_when_object_storage_read_fails() {
-    use crate::domain::canvas_loro::CanvasOp;
-
-    let service = FakeDocumentService::new("canvas").with_read_error("s3 unavailable");
-    let (result, service, editing) = call_canvas_ops_with(
-        service,
-        None,
-        Some(vec![CanvasOp::UpsertNode {
-            node: serde_json::json!({"id":"n1","type":"shape","x":8,"y":4}),
-        }]),
-    )
-    .await;
-
-    let error = result.expect_err("ops must not start from empty when DSS read fails");
-    assert!(
-        error.description.contains("object storage") || error.description.contains("s3"),
-        "{}",
-        error.description
-    );
-    assert!(
-        service
-            .overwrites
-            .lock()
-            .expect("overwrites lock poisoned")
-            .is_empty()
-    );
-    assert!(
-        editing
-            .edit_calls
-            .lock()
-            .expect("edit calls lock poisoned")
-            .is_empty()
-    );
-}
-
-#[test]
-fn canvas_ops_overwrite_dss_when_loro_session_is_missing() {
-    assert!(canvas_ops_should_overwrite_dss(None));
-    assert!(canvas_ops_should_overwrite_dss(Some(&[])));
-}
-
-#[test]
-fn canvas_ops_skip_dss_overwrite_when_live_snapshot_exists() {
-    let snap =
-        crate::domain::canvas_loro::snapshot_from_json(r#"{"nodes":[{"id":"a"}],"edges":[]}"#)
-            .expect("encode");
-    assert!(!canvas_ops_should_overwrite_dss(Some(&snap)));
 }

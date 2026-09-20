@@ -151,8 +151,8 @@ pub struct RealtimeNotif<T> {
     pub entity: Entity<'static>,
     /// Whether the notification has been sent.
     pub sent: bool,
-    /// Whether the notification is marked as done.
-    pub done: bool,
+    /// The authoritative lifecycle state, independent of viewing timestamps.
+    pub state: super::NotificationState,
     /// When the notification was created.
     pub created_at: DateTime<Utc>,
     /// When the notification was viewed/seen.
@@ -194,7 +194,7 @@ impl<'a, T: Clone> ConnGatewayNotification<'a, T> {
                 notification_event_type: req.req.notification.tag.as_ref().to_string(),
                 entity: req.req.notification_entity.clone().into_owned(),
                 sent: true,
-                done: false,
+                state: super::NotificationState::Unseen,
                 created_at: Utc::now(),
                 viewed_at: None,
                 updated_at: Utc::now(),
@@ -218,7 +218,7 @@ impl<'a, T: Notification> ConnGatewayNotification<'a, T> {
                     notification_event_type,
                     entity,
                     sent,
-                    done,
+                    state,
                     created_at,
                     viewed_at,
                     updated_at,
@@ -235,7 +235,7 @@ impl<'a, T: Notification> ConnGatewayNotification<'a, T> {
                 notification_event_type,
                 entity,
                 sent,
-                done,
+                state,
                 created_at,
                 viewed_at,
                 updated_at,
@@ -276,7 +276,7 @@ impl<'a, T, U> NotificationChannel<'a, T, U> {
                         notification_event_type,
                         entity,
                         sent,
-                        done,
+                        state,
                         created_at: _,
                         viewed_at,
                         updated_at: _,
@@ -291,7 +291,7 @@ impl<'a, T, U> NotificationChannel<'a, T, U> {
                     notification_event_type,
                     entity,
                     sent,
-                    done,
+                    state,
                     created_at,
                     viewed_at,
                     updated_at,

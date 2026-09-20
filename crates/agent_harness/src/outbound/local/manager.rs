@@ -188,7 +188,10 @@ impl ContainerManager for LocalContainerManager {
     // `skip_all`: `SpawnContainer` carries the egress session token; nothing
     // secret-bearing may be Debug-recorded into the span.
     #[tracing::instrument(err, skip_all, fields(session_id = %command.session_id))]
-    async fn spawn(&self, command: SpawnContainer) -> Result<Self::Transport> {
+    async fn spawn(
+        &self,
+        command: SpawnContainer,
+    ) -> Result<agent_session::domain::connection::RuntimeAttachment<Self::Transport>> {
         let SpawnContainer {
             session_id,
             // Routing already consumed the kind; every spawn that reaches
@@ -233,7 +236,9 @@ impl ContainerManager for LocalContainerManager {
         tracing::info!(container = %container.name, session = %session_id, "container created");
 
         match self.bring_up(&container).await {
-            Ok(transport) => Ok(transport),
+            Ok(transport) => Ok(agent_session::domain::connection::RuntimeAttachment::solo(
+                transport,
+            )),
             Err(error) => {
                 self.discard(&container).await;
                 Err(error)
@@ -252,7 +257,10 @@ impl ContainerManager for LocalContainerManager {
     }
 
     #[tracing::instrument(err, skip(self))]
-    async fn resume(&self, session: AgentSessionId) -> Result<Self::Transport> {
+    async fn resume(
+        &self,
+        session: AgentSessionId,
+    ) -> Result<agent_session::domain::connection::RuntimeAttachment<Self::Transport>> {
         let container = self.find(session).await?.ok_or_else(|| {
             HarnessError::Container(format!("session {session} has no container to resume"))
         })?;
@@ -260,7 +268,9 @@ impl ContainerManager for LocalContainerManager {
         // Idempotent: docker starts a stopped container and says nothing about
         // one already running.
         self.docker.start(&container).await.map_err(unavailable)?;
-        self.bring_up(&container).await
+        self.bring_up(&container)
+            .await
+            .map(agent_session::domain::connection::RuntimeAttachment::solo)
     }
 
     #[tracing::instrument(err, skip(self))]

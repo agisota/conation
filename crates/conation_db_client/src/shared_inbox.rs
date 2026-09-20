@@ -4,7 +4,6 @@
 //! Instead we mint a dedicated macro user for the mailbox, re-home the single existing
 //! link onto it, and grant both connectors access via `macro_user_links` edges.
 
-use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::types::Uuid;
 
 #[cfg(test)]
@@ -38,8 +37,9 @@ pub async fn promote_link_to_shared(
     mailbox_email: &str,
     organization_id: Option<i32>,
 ) -> anyhow::Result<PromotedSharedInbox> {
-    let mailbox_macro_id = MacroUserIdStr::try_from_email(mailbox_email)?.to_string();
-    let fusionauth_user_id = conation_uuid::generate_uuid_v7();
+    let mailbox_email = mailbox_email.to_lowercase();
+    let mailbox_macro_id = format!("macro|{mailbox_email}");
+    let fusionauth_user_id = macro_uuid::generate_uuid_v7();
     let stripe_customer_id = format!("cus_shared_{fusionauth_user_id}");
 
     sqlx::query!(
@@ -49,7 +49,7 @@ pub async fn promote_link_to_shared(
         "#,
         &fusionauth_user_id,
         &mailbox_macro_id,
-        mailbox_email,
+        &mailbox_email,
         stripe_customer_id,
     )
     .execute(&mut *conn)
@@ -61,7 +61,7 @@ pub async fn promote_link_to_shared(
         VALUES ($1, $2, true)
         "#,
         &fusionauth_user_id,
-        mailbox_email,
+        &mailbox_email,
     )
     .execute(&mut *conn)
     .await?;
@@ -72,7 +72,7 @@ pub async fn promote_link_to_shared(
         VALUES ($1, $2, $3, $4)
         "#,
         &mailbox_macro_id,
-        mailbox_email,
+        &mailbox_email,
         &fusionauth_user_id,
         organization_id,
     )
@@ -95,10 +95,11 @@ pub async fn promote_link_to_shared(
     let rehomed = sqlx::query!(
         r#"
         UPDATE email_links
-        SET macro_id = $1, updated_at = NOW()
-        WHERE id = $2
+        SET macro_id = $1, email_address = $2, updated_at = NOW()
+        WHERE id = $3
         "#,
         &mailbox_macro_id,
+        &mailbox_email,
         existing_link_id,
     )
     .execute(&mut *conn)

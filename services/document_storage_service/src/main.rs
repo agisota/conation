@@ -56,18 +56,6 @@ use collab_surface::{
     outbound::pg_collab_surface_repo::PgCollabSurfaceRepo,
     outbound::surface_init::LexicalSyncSurfaceInitializer,
 };
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{
-    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
-    MacroAuthorizationState, PgBotAuthorizationRepo, PgBotAuthorizer,
-};
-use conation_entrypoint::MacroEntrypoint;
-use conation_env_var::maybe_env_vars;
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
-#[cfg(feature = "delete_document_worker")]
-use conation_service_urls::AiEditingWorkerUrl;
-use conation_service_urls::{ConnectionGatewayUrl, LexicalServiceUrl, SyncServiceUrl};
-use conation_sha_count_client::Redis;
 use config::{Config, Environment};
 use connection::{
     domain::service::ConnectionServiceImpl,
@@ -86,7 +74,8 @@ use email::{
 };
 use embedding::embedding_provider::openai::TextEmbedding3Small;
 use favorites::{
-    domain::service::FavoritesServiceImpl, inbound::axum_router::FavoritesRouterState,
+    domain::{mutation_service::FavoritesMutationServiceImpl, service::FavoritesServiceImpl},
+    inbound::axum_router::FavoritesRouterState,
     outbound::pg_favorites_repo::PgFavoritesRepo,
 };
 use foreign_entity::{
@@ -95,9 +84,30 @@ use foreign_entity::{
 };
 use frecency::{domain::services::FrecencyQueryServiceImpl, outbound::postgres::FrecencyPgStorage};
 use github::domain::service::{GithubSyncConfig, GithubSyncServiceImpl};
+use github::outbound::connection_gateway_realtime::ConnectionGatewayGithubRealtime;
 use github::outbound::github_sync_client::GithubSyncClientImpl;
 use github::outbound::pg_github_sync_repo::PgGithubSyncRepo;
+use harnesses::outbound::pg_harness_repo::PgHarnessRepo;
+use initiative::{
+    domain::service::InitiativeServiceImpl, inbound::axum_router::InitiativeRouterState,
+    outbound::PgInitiativeRepo,
+};
 use lexical_client::LexicalClient;
+use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use macro_authorization::{
+    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
+    MacroAuthorizationState, PgBotAuthorizationRepo, PgBotAuthorizer, PgHarnessAuthorizationRepo,
+    PgHarnessAuthorizer, PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
+};
+use macro_entrypoint::MacroEntrypoint;
+use macro_env_var::maybe_env_vars;
+use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+#[cfg(feature = "delete_document_worker")]
+use macro_service_urls::AiEditingWorkerUrl;
+use macro_service_urls::{
+    ConnectionGatewayUrl, LexicalServiceUrl, StaticFileServiceUrl, SyncServiceUrl,
+};
+use macro_sha_count_client::Redis;
 use notification::domain::service::{
     NotificationReaderService, PlatformArnConfig, SqsNotificationIngress,
     WebSocketNotificationConsumerService,
@@ -150,6 +160,10 @@ use task_dedup::{
     },
 };
 use tokio_util::{sync::CancellationToken, task::TaskTracker};
+use user_api_key::{
+    domain::service::UserApiKeyServiceImpl, inbound::axum_router::UserApiKeyRouterState,
+    outbound::pg_user_api_keys_repo::PgUserApiKeysRepo,
+};
 
 mod api;
 mod config;
@@ -157,12 +171,8 @@ mod model;
 mod outbound;
 mod service;
 
-#[cfg(test)]
-mod test;
-
 const SOUP_CONSUMER_RESTART_MAX_DELAY_SECS: u64 = 60;
 const SOUP_CONSUMER_RESTART_ALERT_THRESHOLD: u32 = 5;
-const AGENT_TOOL_CONTEXT_BUILD_ERROR: &str = "failed to build Conation agent tool context";
 
 fn soup_consumer_restart_delay(consecutive_failures: u32) -> Duration {
     let exponent = consecutive_failures.saturating_sub(1).min(6);
@@ -185,7 +195,7 @@ async fn main() -> anyhow::Result<()> {
 async fn run() -> anyhow::Result<()> {
     let env = Environment::new_or_prod();
 
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
+    let aws_config = macro_aws_config::get_macro_aws_config().await;
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
@@ -243,24 +253,24 @@ async fn run() -> anyhow::Result<()> {
     );
     tracing::trace!("initialized dynamodb client");
 
-    let s3_client = conation_aws_config::s3_client().await;
+    let s3_client = macro_aws_config::s3_client().await;
 
     tracing::trace!("initialized s3 client");
 
-    let search_event_queue = conation_queues::SearchEventQueue::new();
-    let document_delete_queue = conation_queues::DocumentDeleteQueue::new();
-    let contacts_queue = conation_queues::ContactsQueue::new();
-    let notification_queue = conation_queues::NotificationIngressQueue::new();
-    let gmail_ops_queue = conation_queues::GmailOpsQueue::new();
-    let reminder_dispatch_queue = conation_queues::ReminderDispatchQueue::new();
-    let calendar_reminder_dispatch_queue = conation_queues::CalendarReminderDispatchQueue::new();
+    let search_event_queue = macro_queues::SearchEventQueue::new();
+    let document_delete_queue = macro_queues::DocumentDeleteQueue::new();
+    let contacts_queue = macro_queues::ContactsQueue::new();
+    let notification_queue = macro_queues::NotificationIngressQueue::new();
+    let gmail_ops_queue = macro_queues::GmailOpsQueue::new();
+    let reminder_dispatch_queue = macro_queues::ReminderDispatchQueue::new();
+    let calendar_reminder_dispatch_queue = macro_queues::CalendarReminderDispatchQueue::new();
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(&aws_config))
         .search_event_queue(&search_event_queue)
         .document_delete_queue(&document_delete_queue)
         .gmail_ops_queue(&gmail_ops_queue);
     let webhook_event_queue = webhook::outbound::SqsWebhookQueue::new(
         Arc::new(sqs_client.clone()),
-        conation_queues::WebhookEventQueue::new().to_string(),
+        macro_queues::WebhookEventQueue::new().to_string(),
         config.webhook_queue_max_messages,
         config.webhook_queue_wait_time_seconds,
     );
@@ -312,13 +322,13 @@ async fn run() -> anyhow::Result<()> {
     let consumer_cancellation_token = CancellationToken::new();
     let consumer_tracker = TaskTracker::new();
     let event_broker_tracker = TaskTracker::new();
-    let conation_event_broker = MacroEventBrokerService::new(
+    let macro_event_broker = MacroEventBrokerService::new(
         KafkaEventPublisher::new(config.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
         event_broker_tracker.clone(),
     );
     let bots_repo = PgBotsRepo::new(db.clone());
-    let bots_service = BotServiceImpl::new(bots_repo, conation_event_broker.clone());
+    let bots_service = BotServiceImpl::new(bots_repo, macro_event_broker.clone());
 
     let authorization_service: AuthorizationService = MacroAuthorizationServiceImpl::new(
         MacroAuthJwtValidator::new(jwt_validation_args.clone()),
@@ -327,8 +337,14 @@ async fn run() -> anyhow::Result<()> {
             default_user_id: Some(MACRO_INTERNAL_USER_ID.to_string()),
         },
         PgBotAuthorizer::new(PgBotAuthorizationRepo::new(db.clone())),
-    );
+        PgUserApiKeyAuthorizer::new(PgUserApiKeyAuthorizationRepo::new(db.clone())),
+    )
+    .with_harness_authorizer(PgHarnessAuthorizer::new(PgHarnessAuthorizationRepo::new(
+        db.clone(),
+    )));
     let authorization_state = MacroAuthorizationState::new(Arc::new(authorization_service));
+    let harnesses_service =
+        harnesses::domain::service::HarnessServiceImpl::new(PgHarnessRepo::new(db.clone()));
 
     // Initialize OpenSearch client
     let opensearch_client = OpensearchClient::new(
@@ -362,7 +378,7 @@ async fn run() -> anyhow::Result<()> {
         ),
         0,
     )
-    .with_conation_event_broker(conation_event_broker.clone());
+    .with_macro_event_broker(macro_event_broker.clone());
     let readonly_email_service = ReadonlyEmailPreviewAdapter(
         EmailServiceImpl::new(
             EmailPgRepo::new(readonly_db.clone()),
@@ -374,7 +390,7 @@ async fn run() -> anyhow::Result<()> {
             ),
             0,
         )
-        .with_conation_event_broker(conation_event_broker.clone()),
+        .with_macro_event_broker(macro_event_broker.clone()),
     );
     let system_properties_service =
         SystemPropertiesServiceImpl::new(PgSystemPropertiesRepository::new(db.clone()));
@@ -420,7 +436,7 @@ async fn run() -> anyhow::Result<()> {
             Some(permission_checker),
             Some(notification_service),
         )
-        .with_event_broker(conation_event_broker.clone()),
+        .with_event_broker(macro_event_broker.clone()),
     );
 
     // Create the channel list service used by soup.
@@ -466,7 +482,7 @@ async fn run() -> anyhow::Result<()> {
             .document_storage_service_presigned_url_browser_cache_expiry_seconds,
     };
     let s3_upload_adapter = S3UploadUrlAdapter::new(
-        conation_aws_config::s3_client().await,
+        macro_aws_config::s3_client().await,
         config.document_storage_bucket.as_ref(),
         config.docx_document_upload_bucket.as_ref(),
     );
@@ -495,7 +511,7 @@ async fn run() -> anyhow::Result<()> {
     let project_service = Arc::new(ProjectServiceImpl::new(
         PgProjectRepo::new(db.clone()),
         S3ProjectUploadAdapter::new(
-            conation_aws_config::s3_client().await,
+            macro_aws_config::s3_client().await,
             config.document_storage_bucket.as_ref(),
             config.docx_document_upload_bucket.as_ref(),
             config.upload_staging_bucket.as_ref(),
@@ -503,13 +519,13 @@ async fn run() -> anyhow::Result<()> {
         DynamoBulkUploadAdapter::new(dynamodb_client.clone()),
         ShaCountAdapter::new(Redis::new(redis_client.clone())),
         entity_access_management_service.clone(),
-        SqsProjectSearchIndexer::new(Arc::new(sqs_client.clone()), conation_event_broker.clone()),
+        SqsProjectSearchIndexer::new(Arc::new(sqs_client.clone()), macro_event_broker.clone()),
         if cfg!(feature = "local") {
             Some(uuid::uuid!("d50676e2-0a12-4c62-bc07-4b1cb6d8e9bc"))
         } else {
             None
         },
-        conation_event_broker.clone(),
+        macro_event_broker.clone(),
     ));
 
     let document_service = Arc::new(DocumentServiceImpl::new(
@@ -525,7 +541,7 @@ async fn run() -> anyhow::Result<()> {
         connection_service,
         entity_access_management_service.clone(),
         ForeignEntityServiceImpl::new(PgForeignEntityRepo::new(db.clone())),
-        conation_event_broker.clone(),
+        macro_event_broker.clone(),
     ));
 
     let foreign_entity_service = Arc::new(ForeignEntityServiceImpl::new(PgForeignEntityRepo::new(
@@ -546,6 +562,7 @@ async fn run() -> anyhow::Result<()> {
         (*notification_ingress_service).clone(),
         PgGithubSyncRepo::new(db.clone()),
         GithubSyncClientImpl::default(),
+        ConnectionGatewayGithubRealtime::new(conn_gateway_client.clone()),
     );
 
     let foreign_entity_state = ForeignEntityRouterState::new(
@@ -668,7 +685,7 @@ async fn run() -> anyhow::Result<()> {
     }
 
     // VoIP push is optional: enabled only when both env vars are present.
-    // APPLE_BUNDLE_ID:           the app bundle ID (e.g. "dev.conation.app")
+    // APPLE_BUNDLE_ID:           the app bundle ID (e.g. "com.macro.app.prod")
     // SNS_APNS_VOIP_PLATFORM_ARN: SNS platform app ARN for APNS_VOIP
     //
     // Option<VoipPushServiceImpl<...>> is used as the type parameter so the
@@ -706,7 +723,7 @@ async fn run() -> anyhow::Result<()> {
     let call_service = Arc::new(
         call_service_builder
             .with_voice_repo(PgVoiceRepo::new(db.clone()))
-            .with_event_broker(conation_event_broker.clone()),
+            .with_event_broker(macro_event_broker.clone()),
     );
 
     let call_state = CallRouterState::new(
@@ -732,7 +749,7 @@ async fn run() -> anyhow::Result<()> {
             webhook_repository.clone(),
             webhook_http_client.clone(),
             webhook_endpoint_scheme_policy,
-            conation_event_broker.clone(),
+            macro_event_broker.clone(),
         );
     let webhook_rate_limiter = RateLimitServiceImpl {
         repo: RedisRateLimitAdapter {
@@ -744,6 +761,50 @@ async fn run() -> anyhow::Result<()> {
         webhook_rate_limiter,
         authorization_state.clone(),
     );
+
+    let (webhook_stream_sender, _) =
+        tokio::sync::broadcast::channel(webhook::domain::stream::WEBHOOK_STREAM_CHANNEL_CAPACITY);
+    let sse_stream_service = webhook::domain::stream::WebhookEventStreamServiceImpl::new(
+        webhook_stream_sender.clone(),
+        entity_access_service.clone(),
+        webhook_repository.clone(),
+    );
+    let sse_stream_state = webhook::inbound::stream_router::WebhookStreamRouterState::new(
+        sse_stream_service,
+        authorization_state.clone(),
+    );
+    consumer_tracker.spawn({
+        let brokers = config.kafka_brokers.as_ref().to_string();
+        let sender = webhook_stream_sender;
+        let cancellation_token = consumer_cancellation_token.clone();
+        async move {
+            loop {
+                let result = tokio::select! {
+                    biased;
+                    _ = cancellation_token.cancelled() => break,
+                    result = webhook::inbound::kafka_stream_consumer::run_webhook_stream_consumer(
+                        &brokers,
+                        &sender,
+                    ) => result,
+                };
+
+                if cancellation_token.is_cancelled() {
+                    break;
+                }
+                if let Err(error) = result {
+                    tracing::error!(
+                        error = ?error,
+                        "webhook SSE Kafka consumer stopped"
+                    );
+                    tokio::select! {
+                        biased;
+                        _ = cancellation_token.cancelled() => break,
+                        _ = tokio::time::sleep(Duration::from_secs(1)) => {}
+                    }
+                }
+            }
+        }
+    });
 
     let webhook_ingestion_service =
         webhook::domain::ingestion::WebhookEventIngestionServiceImpl::new(
@@ -896,6 +957,9 @@ async fn run() -> anyhow::Result<()> {
         Arc::new(PgTaskMatchRepo::new(db.clone())),
     ));
     let channels_repo = PgChannelsRepo::new(db.clone());
+    // Built-in agents read the same committed-post stream as hosted and
+    // external agents, for channel and document posts alike, so the channel
+    // side effects no longer carry their own trigger queue.
     let (bot_trigger_sender, bot_trigger_receiver) = tokio::sync::mpsc::unbounded_channel();
 
     let channel_side_effects = ChannelSideEffectService::new(
@@ -904,8 +968,7 @@ async fn run() -> anyhow::Result<()> {
         NotificationChannelSender::new(notification_ingress_service.clone()),
         ContactsChannelDispatcher::new(contacts_ingress.clone()),
     )
-    .with_bot_trigger_sender(bot_trigger_sender)
-    .with_conation_event_broker(conation_event_broker.clone());
+    .with_macro_event_broker(macro_event_broker.clone());
 
     let channels_service = Arc::new(
         ChannelServiceImpl::with_dependencies(
@@ -913,10 +976,78 @@ async fn run() -> anyhow::Result<()> {
             SpawnedChannelEventDispatcher::new(channel_side_effects.clone()),
             PgChannelReferenceSharePermissions::new(db.clone(), entity_access_service.clone()),
         )
+        .with_picture_files(
+            channels::outbound::static_file_pictures::StaticFileChannelPictures::new(
+                static_file_service_client::StaticFileServiceClient::new(
+                    config.internal_api_key.to_string(),
+                    StaticFileServiceUrl::new()?.to_string(),
+                ),
+            ),
+        )
         .with_mention_extractor(lexical_mention_extractor::LexicalMentionExtractor::new(
             lexical_client.clone(),
         )),
     );
+
+    // One message implementation for channels and documents. Committed changes fan
+    // out to the broker, the local agent queue, and the parent's own delivery: channel
+    // messages keep every existing channel side effect (legacy realtime payloads,
+    // notifications, activity, bot triggers, channel broker events) and gain the
+    // common `message_update` payload; document discussions get the common payload
+    // and document comment notifications.
+    let message_realtime = messages::outbound::connection_gateway::ConnectionGatewayMessages(
+        conn_gateway_client.clone(),
+    );
+    let discussion_delivery = messages::domain::delivery::DiscussionDelivery::new(
+        messages::outbound::pg_discussion_context::PgDiscussionContext(db.clone()),
+        messages::outbound::entity_access_audience::EntityAccessMessageAudience(
+            (*entity_access_service).clone(),
+        ),
+        message_realtime.clone(),
+        messages::outbound::notification_sender::MessageNotificationSender(
+            notification_ingress_service.clone(),
+        ),
+    )
+    .with_sharing(messages::outbound::pg_discussion_context::PgDiscussionContext(db.clone()));
+    let channel_delivery = channels::domain::message_delivery::ChannelMessageDelivery::new(
+        PgChannelsRepo::new(db.clone()),
+        SpawnedChannelEventDispatcher::new(channel_side_effects.clone()),
+        PgChannelReferenceSharePermissions::new(db.clone(), entity_access_service.clone()),
+        message_realtime,
+    );
+    let message_service = Arc::new(
+        messages::domain::service::MessageService::new(
+            messages::outbound::pg_message_repo::PgMessageRepository::new(db.clone()),
+            messages::domain::effects::MessageEffects::new(
+                messages::outbound::broker::BrokerMessagePublisher::new(macro_event_broker.clone()),
+                channel_bots::outbound::conversation::LocalBotPublisher::new(bot_trigger_sender),
+                messages::domain::delivery::ParentMessagePublisher::new(
+                    channel_delivery,
+                    discussion_delivery,
+                ),
+            ),
+        )
+        .with_group_recipients(channels::domain::group_mentions::ChannelGroupRecipients(
+            PgChannelsRepo::new(db.clone()),
+        ))
+        .with_mention_extractor(lexical_mention_extractor::LexicalMentionExtractor::new(
+            lexical_client.clone(),
+        ))
+        .with_references(
+            messages::outbound::entity_access_audience::EntityAccessMessageReferences(
+                (*entity_access_service).clone(),
+            ),
+        ),
+    );
+    let message_commands: Arc<dyn messages::domain::api::MessageCommands> = message_service.clone();
+    let channel_messages: Arc<dyn channels::domain::ports::ChannelMessageCommands> = Arc::new(
+        channels::domain::message_commands::ChannelMessageAdapter::new(message_commands.clone()),
+    );
+    let messages_state = messages::inbound::axum_router::MessagesRouterState {
+        service: message_service.clone(),
+        access: entity_access_service.clone(),
+        authorization: authorization_state.clone(),
+    };
 
     let teammate_dms_brokers = config.kafka_brokers.as_ref().to_string();
     consumer_tracker.spawn({
@@ -959,48 +1090,63 @@ async fn run() -> anyhow::Result<()> {
         }
     });
 
-    // Wire Conation AI to react to mentions with the classic in-channel chat
+    // Wire Macro AI to react to mentions with the classic in-channel chat
     // reply. The router posts replies through the channel service we just
-    // built and runs the agent loop in-process with the same pre-configured
-    // toolset used by other AI hosts. Agent sessions belong to a different
-    // bot entirely (`bot_id::CONATION_NEW_BOT_ID`, served by the harness), so
-    // the two paths can never answer the same mention.
-    let mut conation_agent_tool_context =
+    // built and runs the agent loop in-process with the channel-bot toolset:
+    // a channel has no composer to finish a chat-deferred user tool in, so
+    // calendar event creation executes directly and SendEmail is unavailable.
+    // Agent sessions belong to a different bot entirely
+    // (`bot_id::MACRO_NEW_BOT_ID`, served by the harness), so the two paths
+    // can never answer the same mention.
+    let mut macro_agent_tool_context =
         ai_tools::build_tool_service_context_from_env(db.clone(), event_broker_tracker.clone())
             .await
-            .context(AGENT_TOOL_CONTEXT_BUILD_ERROR)?;
+            .context("failed to build Macro agent tool context")?;
     // Wire the agent's SendChannelMessage tool to this service's own
     // side-effect pipeline so agent-posted messages share the exact instance
     // used by the HTTP API, including the in-process bot trigger sender (the
     // env builder wires an equivalent pipeline, but without bot triggers).
-    conation_agent_tool_context.channel_tool_context =
+    macro_agent_tool_context.channel_tool_context =
         ai_tools::build_channel_tool_context_with_dispatcher(
             db.clone(),
             std::sync::Arc::new(SpawnedChannelEventDispatcher::new(channel_side_effects)),
             lexical_client.clone(),
+            message_commands.clone(),
         );
-    let conation_agent_tools = ai_tools::all_tools();
+    let macro_agent_tools = ai_tools::tools_for(ai_tools::AiHost::ChannelBot);
+    let conversation_access = Arc::new(
+        channel_bots::outbound::conversation::EntityAccessConversation(
+            entity_access_service.clone(),
+        ),
+    );
     let bot_trigger_router = channel_bots::inbound::BotTriggerRouter::new(
-        channels_service.clone(),
+        message_service.clone(),
+        conversation_access.clone(),
         Arc::new(channel_bots::outbound::AgentLoopResponder::new(
-            conation_agent_tool_context,
-            conation_agent_tools,
+            macro_agent_tool_context,
+            macro_agent_tools,
         )),
         Arc::new(
             channel_bots::domain::trigger_detector::MentionOrInferredDetector::new(
-                channels_service.clone(),
+                message_service.clone(),
+                conversation_access,
                 Arc::new(channel_bots::outbound::FastModelTriggerClassifier::new(
                     ai_usage::pg_recorder(db.clone()),
                 )),
             ),
         ),
+        Arc::new(channel_bots::outbound::PrimaryCalendarTimeZones::new(
+            Arc::new(calendar_events::domain::service::CalendarService::new(
+                calendar_events::outbound::pg::PgCalendarRepository::new(readonly_db.clone()),
+            )),
+        )),
     );
     bot_trigger_router.spawn(bot_trigger_receiver);
 
     let channel_bot_webhook_state =
         bots::inbound::channel_webhook_router::ChannelBotWebhookRouterState::new(
             bots_service.clone(),
-            channels_service.clone(),
+            message_commands.clone(),
             (*entity_access_service).clone(),
             authorization_state.clone(),
         );
@@ -1008,6 +1154,25 @@ async fn run() -> anyhow::Result<()> {
     // Held by value here and behind an `Arc` in the router state: the impl is a
     // pool handle, so cloning is cheap and `SoupImpl` needs an owned service.
     let reminders_service = RemindersServiceImpl::new(PgRemindersRepo::new(db.clone()));
+
+    let document_creator = documents_hex::domain::create::DocumentCreator::new(
+        document_service.clone(),
+        markdown_initializer,
+        documents_hex::outbound::document_bytes_upload::ReqwestDocumentBytesUploader::default(),
+        documents_hex::outbound::mention_tracker::LexicalCommsMentionTracker::new(
+            db.clone(),
+            lexical_client.clone(),
+        ),
+    );
+    let initiative_service = Arc::new(InitiativeServiceImpl::new(
+        PgInitiativeRepo::new(db.clone()),
+        outbound::initiative_description_documents::InitiativeDescriptionDocumentsAdapter::new(
+            document_creator.clone(),
+            db.clone(),
+            sqs_client.clone(),
+            macro_event_broker.clone(),
+        ),
+    ));
 
     let collab_surface_service = CollabSurfaceServiceImpl::new(
         Arc::new(PgCollabSurfaceRepo::new(db.clone())),
@@ -1108,7 +1273,7 @@ async fn run() -> anyhow::Result<()> {
     consumer_tracker.spawn({
         let brokers = config.kafka_brokers.as_ref().to_string();
         let entity_access_service = entity_access_service.as_ref().clone();
-        let conation_event_broker = conation_event_broker.clone();
+        let macro_event_broker = macro_event_broker.clone();
         let cancellation_token = consumer_cancellation_token.clone();
         async move {
             let mut consecutive_failures = 0_u32;
@@ -1119,7 +1284,7 @@ async fn run() -> anyhow::Result<()> {
 
                 let fanout_service = SoupRealtimeServiceImpl::new(
                     EntityAccessExpander::new(entity_access_service.clone()),
-                    KafkaSoupRealtimePublisher::new(conation_event_broker.clone()),
+                    KafkaSoupRealtimePublisher::new(macro_event_broker.clone()),
                 );
                 tracing::info!("starting realtime Soup entity consumer");
                 let result = fanout_service
@@ -1168,6 +1333,13 @@ async fn run() -> anyhow::Result<()> {
     });
 
     let favorites_service = Arc::new(FavoritesServiceImpl::new(PgFavoritesRepo::new(db.clone())));
+    let favorites_mutation_service = Arc::new(FavoritesMutationServiceImpl::new(
+        favorites_service.clone(),
+        entity_access_service.clone(),
+    ));
+    let user_api_key_service = Arc::new(UserApiKeyServiceImpl::new(PgUserApiKeysRepo::new(
+        db.clone(),
+    )));
     let calendar_state = CalendarRouterState::new(
         Arc::new(calendar_events::domain::service::CalendarService::new(
             calendar_events::outbound::pg::PgCalendarRepository::new(readonly_db.clone()),
@@ -1246,12 +1418,11 @@ async fn run() -> anyhow::Result<()> {
             Arc::new(email_service.clone()),
             project_service.clone(),
             entity_access_service.clone(),
-            favorites_service.clone(),
             Arc::new(outbound::entity_mutation::DssEntityLifecycleAdapter::new(
                 db.clone(),
                 redis_sha_client.clone(),
                 sqs_client.clone(),
-                conation_event_broker.clone(),
+                macro_event_broker.clone(),
             )),
         ));
 
@@ -1272,8 +1443,18 @@ async fn run() -> anyhow::Result<()> {
             authorization_state.clone(),
         ),
         favorites_service,
+        favorites_mutation_service,
+        user_api_key_state: UserApiKeyRouterState::new(
+            user_api_key_service,
+            authorization_state.clone(),
+        ),
         reminders_state: RemindersRouterState::new(
             Arc::new(reminders_service),
+            entity_access_service.clone(),
+            authorization_state.clone(),
+        ),
+        initiative_state: InitiativeRouterState::new(
+            initiative_service,
             entity_access_service.clone(),
             authorization_state.clone(),
         ),
@@ -1302,7 +1483,7 @@ async fn run() -> anyhow::Result<()> {
         s3_client: s3,
         dynamodb_client: Arc::new(dynamodb_client),
         dynamo_db,
-        conation_event_broker: conation_event_broker.clone(),
+        macro_event_broker: macro_event_broker.clone(),
         sqs_client: sqs_client.clone(),
         notification_ingress_service: notification_ingress_service.clone(),
         conn_gateway_client: conn_gateway_client.clone(),
@@ -1324,44 +1505,49 @@ async fn run() -> anyhow::Result<()> {
             authorization_state: authorization_state.clone(),
         },
         documents_state: DocumentRouterState {
-            service: document_service.clone(),
+            service: document_service,
             access_service: entity_access_service.clone(),
             authorization_state: authorization_state.clone(),
             pool: db.clone(),
             task_dedup_service,
             lexical_client: lexical_client.clone(),
-            creator: documents_hex::domain::create::DocumentCreator::new(
-                document_service,
-                markdown_initializer,
-                documents_hex::outbound::document_bytes_upload::ReqwestDocumentBytesUploader::default(),
-                documents_hex::outbound::mention_tracker::LexicalCommsMentionTracker::new(
-                    db.clone(),
-                    lexical_client.clone(),
-                ),
-            ),
+            creator: document_creator,
             document_permission_jwt_secret: config.document_permission_jwt.as_ref().to_string(),
         },
         config: Arc::new(config),
         channel_service: channels_service.clone(),
         channels_state: ChannelsRouterState::from_arc(
+            channel_messages,
             channels_service,
             (*entity_access_service).clone(),
             authorization_state.clone(),
         ),
+        messages_state,
         bots_state: bots::inbound::axum_router::BotsRouterState::new(
             bots_service.clone(),
             (*entity_access_service).clone(),
+            authorization_state.clone(),
+        ),
+        harnesses_state: harnesses::inbound::axum_router::HarnessesRouterState::new(
+            harnesses_service,
             authorization_state.clone(),
         ),
         channel_bot_webhook_state,
         call_state,
         call_webhook_state,
         webhook_state,
+        sse_stream_state,
         call_internal_state,
         cal_webhook_state,
         entity_access_management_service,
         crm_state: crm::inbound::axum_router::CrmRouterState {
             service: Arc::new(crm_service),
+            stage_service: Arc::new(crm::domain::stages::CrmStageServiceImpl::new(
+                crm::outbound::companies_repo::CompaniesRepositoryImpl::new(db.clone()),
+                crm::outbound::stage_definitions::PropertiesStageDefinitionStore::new(
+                    properties_service.clone(),
+                ),
+            )),
             entity_access_service: entity_access_service.clone(),
             authorization_state: authorization_state.clone(),
         },

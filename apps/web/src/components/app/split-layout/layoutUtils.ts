@@ -1,4 +1,5 @@
 import { isListViewID, LIST_VIEW_ID } from '@app/constants/list-views';
+import { agentsRouteFromSegments } from '@app/features/agents-view/core/route';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import type { BlockAlias, BlockName } from '@core/block';
 import { isBlockAlias, resolveBlockAlias } from '@core/constant/allBlocks';
@@ -28,8 +29,11 @@ export function decodePairs(segments: string[]): SplitContent[] {
     const type = segments[i];
     const id = segments[i + 1];
     if (!type || !id) break;
+    const agentsRoute = agentsRouteFromSegments(type, id);
 
-    if (type === 'settings') {
+    if (agentsRoute) {
+      pairs.push({ type: 'component', id: agentsRoute });
+    } else if (type === 'settings') {
       // `settings/<tab>` is the URL form of the docked settings panel; it maps
       // to the internal `component/settings` content. The active tab is read
       // reactively from the URL by SettingsPanelComponentWrapper, so it isn't
@@ -126,6 +130,13 @@ export function useSplitPanelOrThrow() {
 }
 
 /**
+ * Creates or replaces a named resource under the current split panel's owner.
+ */
+export function withSplitPanelOwner<T>(name: string, factory: () => T): T {
+  return useSplitPanelOrThrow().replaceOwnedSlot(name, factory);
+}
+
+/**
  * Get the context value for the the SplitPanel with possible undefined.
  * @returns
  */
@@ -148,13 +159,15 @@ export function shouldShowSplitCloseButton(
 
 /**
  * Whether content may claim focus automatically when it mounts in the current
- * split. Preview Pair Viewers stay passive until the user focuses them.
+ * split. Preview Pair Viewers and inline previews stay passive until the user
+ * focuses them.
  *
  * This is intentionally a snapshot: dissolving a Preview Pair later must not
  * trigger delayed autofocus in content that is already mounted.
  */
 export function useCanAutofocusSplitContent() {
-  return !useSplitPanel()?.handle.isViewerSplit();
+  const panel = useSplitPanel();
+  return !panel?.handle.isViewerSplit() && !panel?.isInlinePreview;
 }
 
 /**

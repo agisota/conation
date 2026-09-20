@@ -1,22 +1,15 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
-import { t } from '@app/lib/i18n';
-import {
-  canStartUserCall,
-  joinChannelCall,
-} from '@channel/Call/join-channel-call';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { toast } from '@core/component/Toast/Toast';
-import {
-  ENABLE_CRM_FLAG,
-  ENABLE_CRM_OVERRIDE,
-} from '@core/constant/featureFlags';
+import { enableCrm } from '@core/constant/featureFlags';
+import { isBotPrincipalId } from '@core/constant/macroAgent';
+import { useUserId } from '@core/context/user';
 import { useIsConnectedSecondaryInbox } from '@core/user';
-import WideCall from '@icon/wide-call.svg';
-import WideChat from '@icon/wide-chat.svg';
-import WideContact from '@icon/wide-contact.svg';
-import WideCopy from '@icon/wide-copy.svg';
-import WideTask from '@icon/wide-task.svg';
+import WideContact from '@phosphor/address-book.svg';
+import WideChat from '@phosphor/chat.svg';
 import IconCheck from '@phosphor/check.svg';
+import CopyIcon from '@phosphor/copy.svg';
+import WideTask from '@phosphor/list-checks.svg';
 import { useGetOrCreateDirectMessageMutation } from '@queries/channel/get-or-create-dm';
 import { useCrmContactByEmailQuery } from '@queries/crm/contacts';
 import { useCurrentTeamQuery } from '@queries/team/teams';
@@ -50,15 +43,20 @@ function copyableName(
 }
 
 export function UserTooltip(props: UserTooltipProps) {
+  const currentUserId = useUserId();
   const isConnectedSecondaryInbox = useIsConnectedSecondaryInbox();
   const canTreatAsUser = () =>
     !!props.id && !props.isDeleted && !isConnectedSecondaryInbox(props.id);
+  // An agent is mentioned like a person and hovers like one, but there is
+  // nobody on the other end of a direct message to it: an agent answers where
+  // it was mentioned, and a DM channel it never reads would look like a
+  // conversation that is simply being ignored.
+  const canDirectMessage = () =>
+    canTreatAsUser() && !isBotPrincipalId(props.id);
   const { openWithSplit, popoverSplit } = useSplitLayout();
-  const crmFlag = useFeatureFlag(ENABLE_CRM_FLAG, {
-    enabledOverride: ENABLE_CRM_OVERRIDE,
-  });
+  const crmFlag = useFeatureFlag(enableCrm);
   const getOrCreateDmMutation = useGetOrCreateDirectMessageMutation({
-    onError: () => toast.failure(t('core.userActions.directMessageFailed')),
+    onError: () => toast.failure('Failed to open direct message'),
   });
 
   const openDM = async (e: MouseEvent) => {
@@ -76,22 +74,6 @@ export function UserTooltip(props: UserTooltipProps) {
       );
     } catch {
       // The mutation's onError callback handles the toast.
-    } finally {
-      props.onClose?.();
-    }
-  };
-
-  const openCall = async (e: MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!props.id) return;
-    try {
-      const { channel_id } = await getOrCreateDmMutation.mutateAsync({
-        recipient_id: props.id,
-      });
-      await joinChannelCall(channel_id);
-    } catch {
-      toast.failure(t('core.userActions.callFailed'));
     } finally {
       props.onClose?.();
     }
@@ -154,21 +136,15 @@ export function UserTooltip(props: UserTooltipProps) {
           <div class="p-1.5 flex flex-col gap-0.5">
             <Show when={props.email}>
               {(email) => (
-                <CopyActionItem
-                  value={email()}
-                  toastMessage={t('core.userActions.emailCopied')}
-                >
-                  {t('core.userActions.copyEmail')}
+                <CopyActionItem value={email()} toastMessage="Email copied">
+                  Copy email
                 </CopyActionItem>
               )}
             </Show>
             <Show when={copyableName(props.displayName, props.email)}>
               {(name) => (
-                <CopyActionItem
-                  value={name()}
-                  toastMessage={t('core.userActions.nameCopied')}
-                >
-                  {t('core.userActions.copyName')}
+                <CopyActionItem value={name()} toastMessage="Name copied">
+                  Copy name
                 </CopyActionItem>
               )}
             </Show>
@@ -179,22 +155,16 @@ export function UserTooltip(props: UserTooltipProps) {
                 </Suspense>
               )}
             </Show>
-            <Show when={canTreatAsUser()}>
+            <Show when={canDirectMessage() && props.id !== currentUserId()}>
               <ActionItem onClick={openDM}>
                 <WideChat class="size-3.5" />
-                {t('core.userActions.message')}
-              </ActionItem>
-            </Show>
-            <Show when={canTreatAsUser() && canStartUserCall()}>
-              <ActionItem onClick={openCall}>
-                <WideCall class="size-3.5" />
-                {t('core.userActions.call')}
+                DM
               </ActionItem>
             </Show>
             <Show when={canTreatAsUser()}>
               <ActionItem onClick={openTaskComposer}>
                 <WideTask class="size-3.5" />
-                {t('core.userActions.assignTask')}
+                Assign task
               </ActionItem>
             </Show>
           </div>
@@ -234,7 +204,7 @@ function OpenContactAction(props: { email: string; onClose?: () => void }) {
       {(contact) => (
         <ActionItem onClick={(e) => openContact(e, contact().id)}>
           <WideContact class="size-3.5" />
-          {t('core.userActions.openContact')}
+          Open contact
         </ActionItem>
       )}
     </Show>
@@ -262,7 +232,7 @@ function CopyActionItem(props: {
       {copied() ? (
         <IconCheck class="size-3.5" />
       ) : (
-        <WideCopy class="size-3.5" />
+        <CopyIcon class="size-3.5" />
       )}
       {props.children}
     </ActionItem>

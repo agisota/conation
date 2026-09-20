@@ -1,4 +1,4 @@
-import { t } from '@app/lib/i18n';
+import { useSpreadsheetAccess } from '@app/features/block-spreadsheet/primitives/use-spreadsheet-access';
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import type { BlockAlias, BlockName } from '@core/block';
@@ -28,7 +28,7 @@ type MenuItemProps = {
 };
 
 type CreateBlockSpec = {
-  labelKey: string;
+  label: string;
   blockName: BlockName | BlockAlias;
   hotkeyToken: HotkeyToken;
   icon: Component;
@@ -39,7 +39,27 @@ type CreateBlockSpec = {
 
 const BLOCK_CREATE_SPECS: CreateBlockSpec[] = [
   {
-    labelKey: 'project.create.types.note',
+    label: 'Spreadsheet',
+    blockName: 'spreadsheet',
+    hotkeyToken: TOKENS.create.spreadsheet,
+    icon: () => (
+      <div class="size-4 shrink-0">
+        <EntityIcon
+          targetType="spreadsheet"
+          size="shrinkFill"
+          theme="monochrome"
+        />
+      </div>
+    ),
+    loading: true,
+    createFn: async (projectId) => {
+      const documentId = await createSpreadsheetDocument({ projectId });
+      if (!documentId) throw new Error('Failed to create spreadsheet');
+      return documentId;
+    },
+  },
+  {
+    label: 'Note',
     blockName: 'md' as BlockName,
     hotkeyToken: TOKENS.create.note,
     icon: () => (
@@ -54,13 +74,13 @@ const BLOCK_CREATE_SPECS: CreateBlockSpec[] = [
         content: '',
         projectId,
       });
-      if (!result) throw new Error(t('project.create.errors.note'));
+      if (!result) throw new Error('Failed to create markdown file');
       return result;
     },
     params: { fromScratch: true },
   },
   {
-    labelKey: 'project.create.types.task',
+    label: 'Task',
     blockName: 'task' as BlockAlias,
     hotkeyToken: TOKENS.create.task,
     icon: () => (
@@ -84,12 +104,12 @@ const BLOCK_CREATE_SPECS: CreateBlockSpec[] = [
           },
         ],
       });
-      if (!result) throw new Error(t('project.create.errors.task'));
+      if (!result) throw new Error('Failed to create task');
       return result;
     },
   },
   {
-    labelKey: 'project.create.types.aiChat',
+    label: 'AI',
     blockName: 'chat' as BlockName,
     hotkeyToken: TOKENS.create.chat,
     icon: () => (
@@ -101,13 +121,13 @@ const BLOCK_CREATE_SPECS: CreateBlockSpec[] = [
       const result = await createChat({ projectId });
       if ('error' in result) {
         console.error(result.error);
-        throw new Error(t('project.create.errors.aiChat'));
+        throw new Error('Failed to create chat');
       }
       return result.chatId;
     },
   },
   {
-    labelKey: 'project.create.types.canvas',
+    label: 'Canvas',
     blockName: 'canvas' as BlockName,
     hotkeyToken: TOKENS.create.canvas,
     icon: () => (
@@ -119,18 +139,18 @@ const BLOCK_CREATE_SPECS: CreateBlockSpec[] = [
     createFn: async (projectId) => {
       const result = await createCanvasFileFromJsonString({
         json: JSON.stringify({ nodes: [], edges: [] }),
-        title: t('project.create.defaultNames.canvas'),
+        title: 'New Canvas',
         projectId,
       });
       if ('error' in result) {
         console.error(result.error);
-        throw new Error(t('project.create.errors.canvas'));
+        throw new Error('Failed to create canvas');
       }
       return result.documentId;
     },
   },
   {
-    labelKey: 'project.create.types.folder',
+    label: 'Folder',
     blockName: 'project' as BlockName,
     hotkeyToken: TOKENS.create.project,
     icon: () => (
@@ -140,10 +160,10 @@ const BLOCK_CREATE_SPECS: CreateBlockSpec[] = [
     ),
     createFn: async (projectId) => {
       const result = await createProject({
-        name: t('project.create.defaultNames.folder'),
+        name: 'New Project',
         parentId: projectId,
       });
-      if (!result) throw new Error(t('project.create.errors.folder'));
+      if (!result) throw new Error('Failed to create folder');
       return result;
     },
   },
@@ -217,6 +237,7 @@ function ProjectCreateDialog(props: {
 }) {
   const { replaceSplit, insertSplit } = useSplitLayout();
   const createBlock = makeCreateBlock({ replaceSplit, insertSplit });
+  const spreadsheetAccess = useSpreadsheetAccess();
 
   return (
     <Dialog open={props.open} onOpenChange={(o) => !o && props.onClose()}>
@@ -224,9 +245,14 @@ function ProjectCreateDialog(props: {
         <div class="*:max-h-[75vh]">
           <div class="p-2">
             <Dialog.Title class="text-base font-semibold text-ink pb-3">
-              {t('project.create.dialogTitle', { name: props.name })}
+              Create in {props.name}
             </Dialog.Title>
-            <For each={BLOCK_CREATE_SPECS}>
+            <For
+              each={BLOCK_CREATE_SPECS.filter(
+                (spec) =>
+                  spec.blockName !== 'spreadsheet' || spreadsheetAccess()
+              )}
+            >
               {(spec) => (
                 <button
                   class="flex items-center gap-2 py-1 text-sm hover:bg-hover w-full text-left min-h-11"
@@ -243,7 +269,7 @@ function ProjectCreateDialog(props: {
                   <div class="size-4 shrink-0">
                     <spec.icon />
                   </div>
-                  {t(spec.labelKey)}
+                  {spec.label}
                 </button>
               )}
             </For>
@@ -268,25 +294,27 @@ function MenuItem(props: MenuItemProps) {
 function MenuContent(props: { projectId: string }) {
   const { replaceSplit, insertSplit } = useSplitLayout();
   const createBlock = makeCreateBlock({ replaceSplit, insertSplit });
+  const spreadsheetAccess = useSpreadsheetAccess();
 
-  const items: MenuItemProps[] = BLOCK_CREATE_SPECS.map((spec) => ({
-    get label() {
-      return t(spec.labelKey);
-    },
-    Icon: spec.icon,
-    action: () =>
-      createBlock({
-        blockName: spec.blockName,
-        loading: spec.loading,
-        createFn: () => spec.createFn(props.projectId),
-        params: spec.params,
-      }),
-  }));
+  const items = (): MenuItemProps[] =>
+    BLOCK_CREATE_SPECS.filter(
+      (spec) => spec.blockName !== 'spreadsheet' || spreadsheetAccess()
+    ).map((spec) => ({
+      label: spec.label,
+      Icon: spec.icon,
+      action: () =>
+        createBlock({
+          blockName: spec.blockName,
+          loading: spec.loading,
+          createFn: () => spec.createFn(props.projectId),
+          params: spec.params,
+        }),
+    }));
 
   return (
     <Dropdown.Content class="min-w-max">
       <Dropdown.Group>
-        <For each={items}>{(item) => <MenuItem {...item} />}</For>
+        <For each={items()}>{(item) => <MenuItem {...item} />}</For>
       </Dropdown.Group>
     </Dropdown.Content>
   );
@@ -301,9 +329,7 @@ export function useProjectCreateTools(
 
   const tools: BlockTool[] = [
     {
-      get label() {
-        return t('project.actions.create');
-      },
+      label: 'Create',
       icon: PlusIcon,
       // Using a setTimeout here so that the synthetic click event after the touch doesn't instantly select an item
       action: () => setTimeout(() => setOpen(true), 0),
@@ -335,7 +361,7 @@ export function ProjectCreateMenu(props: { id: string }) {
           depth={2}
         >
           <CirclePlus />
-          {t('project.actions.create')}
+          Create
           <CaretDown />
         </Dropdown.Trigger>
       </div>
@@ -343,3 +369,5 @@ export function ProjectCreateMenu(props: { id: string }) {
     </Dropdown>
   );
 }
+
+import { createSpreadsheetDocument } from '@app/features/block-spreadsheet/queries/create-spreadsheet';

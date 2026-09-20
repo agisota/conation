@@ -1,8 +1,5 @@
-import { t } from '@app/lib/i18n';
-import { useIsNestedBlock } from '@core/block';
 import { LOCAL_ONLY } from '@core/constant/featureFlags';
 import { isMobileWidth } from '@core/mobile/mobileWidth';
-import { useCanEdit } from '@core/signal/permissions';
 import Circuitry from '@phosphor/circuitry.svg';
 import { cn } from '@ui';
 import { nanoid } from 'nanoid';
@@ -14,6 +11,7 @@ import {
   Show,
 } from 'solid-js';
 import { type RenderMode, RenderModes } from '../constants';
+import { useCanvasDocument } from '../context/canvas-document-context';
 import type { CanvasEdge, CanvasId, CanvasNode } from '../model/CanvasModel';
 import { useSelection } from '../signal/selection';
 import {
@@ -144,8 +142,7 @@ function CanvasLayer(
 }
 
 export function CanvasRenderer() {
-  const canEdit = useCanEdit();
-  const isNestedBlock = useIsNestedBlock();
+  const { canEdit, isNested } = useCanvasDocument();
   const { currentSize, currentScale, currentPosition } = useRenderState();
   const { selectionBox } = useSelection();
   const nodes = useCanvasNodes();
@@ -193,7 +190,7 @@ export function CanvasRenderer() {
         ref={(el) => {
           baseLayerRef = el;
         }}
-        inert={isNestedBlock}
+        inert={isNested()}
       >
         <Show when={LOCAL_ONLY}>
           <div class="pointer-events-none">
@@ -254,7 +251,7 @@ export function CanvasRenderer() {
         ref={(el) => {
           selectionLayerRef = el;
         }}
-        inert={isNestedBlock}
+        inert={isNested()}
       />
 
       <CanvasLayer
@@ -262,7 +259,7 @@ export function CanvasRenderer() {
         y={canvasY}
         z={() => 2}
         scale={scale}
-        inert={isNestedBlock}
+        inert={isNested()}
       >
         <SelectionRenderer />
         <SelectionBox rect={selectionBox()} />
@@ -276,19 +273,19 @@ export function CanvasRenderer() {
         ref={(el) => {
           lineSelectionLayerRef = el;
         }}
-        inert={isNestedBlock}
+        inert={isNested()}
       />
 
       <Show when={!visibleObjects()}>
         <div class="size-full absolute top-0 left-0 flex flex-col text-center items-center justify-center gap-4 z-20 pointer-events-none">
           <Circuitry class="size-12 text-canvas" />
           <div class="w-80 h-14 text-ink-extra-muted">
-            {t('canvas.empty.description')}
+            Create whiteboards, diagrams, mind maps, designs and more.
           </div>
         </div>
       </Show>
 
-      <Show when={!isNestedBlock && canEdit()}>
+      <Show when={!isNested() && canEdit()}>
         <div
           class={cn(
             'w-full absolute flex',

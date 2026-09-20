@@ -2,12 +2,13 @@ import { openBulkEditModal } from '@app/features/entity/bulk-edit/BulkEditEntity
 import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import type { EntityData } from '@entity';
-import type { SoupState } from '../create-soup-state';
 import { restoreSoupFocus } from '../utils';
+import type { EntityActionListState } from './entity-action-context';
 
 export const makeMoveToProjectAction = () => {
   const canExecute = (entity: EntityData): boolean => {
     return (
+      entity.type !== 'agent_session' &&
       entity.type !== 'channel' &&
       entity.type !== 'channel_message' &&
       entity.type !== 'channel_thread' &&
@@ -30,7 +31,10 @@ export const makeMoveToProjectAction = () => {
     });
   };
 
-  const executeWithSoup = async (entities: EntityData[], soup: SoupState) => {
+  const executeWithSoup = async (
+    entities: EntityData[],
+    soup: EntityActionListState
+  ) => {
     const currentIndex = soup.focus.index();
     const nextRow =
       soup.items.at(currentIndex + 1) ?? soup.items.at(currentIndex - 1);

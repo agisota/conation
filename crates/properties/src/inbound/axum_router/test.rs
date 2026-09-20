@@ -7,21 +7,22 @@ use axum::{
     http::{Request, StatusCode, header},
     routing::get,
 };
-use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, InternalAuthConfig, JwtValidator, MacroAuthorizationError,
-    MacroAuthorizationExtractor, MacroAuthorizationServiceImpl, MacroAuthorizationState,
-    UserOrInternal, ValidatedIdentity,
-};
-use conation_user_id::{
-    lowercased::Lowercase,
-    user_id::{MacroUserId, MacroUserIdStr},
-};
 use entity_access::domain::{
     models::{
         AccessError, AccessLevel, BotAccessScope, BotId, CallChannelInfo, EntityAccessAuth,
         EntityAccessReceipt, EntityPermission, EntityType, RequiredPermission, UserTeamInfo,
     },
     ports::EntityAccessService,
+};
+#[allow(deprecated)]
+use macro_authorization::{
+    INTERNAL_API_KEY_HEADER, InternalAuthConfig, JwtValidator, LEGACY_DSS_INTERNAL_API_KEY_HEADER,
+    MacroAuthorizationError, MacroAuthorizationExtractor, MacroAuthorizationServiceImpl,
+    MacroAuthorizationState, UserOrInternal, ValidatedIdentity,
+};
+use macro_user_id::{
+    lowercased::Lowercase,
+    user_id::{MacroUserId, MacroUserIdStr},
 };
 use rootcause::Report;
 use tower::ServiceExt;
@@ -249,7 +250,8 @@ fn authorization_state() -> MacroAuthorizationState<TestAuthorizationService> {
             api_key: INTERNAL_API_KEY.to_string(),
             default_user_id: Some(DEFAULT_INTERNAL_USER_ID.to_string()),
         },
-        conation_authorization::NoBotAuthorizer,
+        macro_authorization::NoBotAuthorizer,
+        macro_authorization::NoUserApiKeyAuthorizer,
     );
     MacroAuthorizationState::new(Arc::new(service))
 }
@@ -383,36 +385,23 @@ async fn property_team_extractor_uses_authorized_user() {
     );
 }
 
+#[allow(deprecated)]
 #[tokio::test]
-async fn canonical_internal_header_uses_the_default_user_and_legacy_is_rejected() {
-    let request = Request::builder()
-        .uri("/required")
-        .header(INTERNAL_API_KEY_HEADER, INTERNAL_API_KEY)
-        .body(Body::empty())
-        .expect("request should be valid");
-    let response = test_router(FakeEntityAccessService::default())
-        .oneshot(request)
-        .await
-        .expect("request should complete");
+async fn standard_and_legacy_internal_headers_use_the_default_user() {
+    for key_header in [INTERNAL_API_KEY_HEADER, LEGACY_DSS_INTERNAL_API_KEY_HEADER] {
+        let request = Request::builder()
+            .uri("/required")
+            .header(key_header, INTERNAL_API_KEY)
+            .body(Body::empty())
+            .expect("request should be valid");
+        let response = test_router(FakeEntityAccessService::default())
+            .oneshot(request)
+            .await
+            .expect("request should complete");
 
-    assert_eq!(response.status(), StatusCode::OK);
-    assert_eq!(response_body(response).await, DEFAULT_INTERNAL_USER_ID);
-
-    let legacy_request = Request::builder()
-        .uri("/required")
-        .header("x-document-storage-service-auth-key", INTERNAL_API_KEY)
-        .body(Body::empty())
-        .expect("legacy request should be valid");
-    let response = test_router(FakeEntityAccessService::default())
-        .oneshot(legacy_request)
-        .await
-        .expect("legacy request should complete");
-
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-    assert_eq!(
-        response_body(response).await,
-        r#"{"message":"legacy internal credentials are not supported"}"#
-    );
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response_body(response).await, DEFAULT_INTERNAL_USER_ID);
+    }
 }
 
 #[tokio::test]
@@ -824,4 +813,178 @@ async fn promote_tag_without_a_team_is_forbidden() {
         .await
         .expect("request should complete");
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
+}
+
+const MANAGED_NAME: &str = "Deal Stage";
+
+fn managed_router(
+    service: TestPropertiesService,
+    entity_access_service: FakeEntityAccessService,
+) -> Router {
+    let state = PropertiesRouterState::new(
+        Arc::new(service),
+        Arc::new(entity_access_service),
+        authorization_state(),
+    )
+    .with_managed_team_definitions([MANAGED_NAME.to_string()]);
+    super::router::<TestPropertiesService, FakeEntityAccessService, TestAuthorizationService>()
+        .with_state(state)
+}
+
+fn select_def(
+    id: Uuid,
+    owner: models_properties::PropertyOwner,
+    display_name: &str,
+) -> models_properties::service::property_definition::PropertyDefinition {
+    models_properties::service::property_definition::PropertyDefinition {
+        id,
+        owner,
+        display_name: display_name.to_string(),
+        data_type: models_properties::DataType::SelectString,
+        is_multi_select: false,
+        specific_entity_type: None,
+        created_at: chrono::Utc::now(),
+        updated_at: chrono::Utc::now(),
+        is_system: false,
+        is_metadata: false,
+    }
+}
+
+fn repo_with_definition(
+    definition: models_properties::service::property_definition::PropertyDefinition,
+) -> MockPropertiesRepo {
+    let mut repo = MockPropertiesRepo::new();
+    let by_id = definition.clone();
+    repo.expect_get_property_definition().returning(move |_| {
+        let definition = by_id.clone();
+        Box::pin(async move { Ok(Some(definition)) })
+    });
+    repo.expect_get_property_definition_with_owner()
+        .returning(move |_, _, _| {
+            let definition = definition.clone();
+            Box::pin(async move { Ok(Some(definition)) })
+        });
+    repo
+}
+
+fn json_request(method: &str, uri: &str, body: serde_json::Value) -> Request<Body> {
+    Request::builder()
+        .method(method)
+        .uri(uri)
+        .header(header::AUTHORIZATION, "Bearer valid")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body.to_string()))
+        .expect("request should be valid")
+}
+
+#[tokio::test]
+async fn creating_a_managed_team_definition_is_forbidden() {
+    let router = managed_router(
+        no_op_properties_service(),
+        FakeEntityAccessService::on_team(Uuid::from_u128(0x7EA3)),
+    );
+    let body = serde_json::json!({
+        "scope": "team",
+        "display_name": MANAGED_NAME,
+        "data_type": { "type": "select_string", "options": [], "multi": false },
+    });
+    let response = router
+        .oneshot(json_request("POST", "/definitions", body))
+        .await
+        .expect("request should complete");
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn writes_to_a_managed_team_definition_are_forbidden() {
+    let definition_id = Uuid::from_u128(0xD001);
+    let option_id = Uuid::from_u128(0xD002);
+    let team_id = Uuid::from_u128(0x7EA3);
+    let definition = select_def(
+        definition_id,
+        models_properties::PropertyOwner::Team { team_id },
+        MANAGED_NAME,
+    );
+    let option_body = serde_json::json!({
+        "type": "select_string",
+        "option": { "value": "Renewal", "display_order": 0 },
+    });
+    let requests = [
+        json_request(
+            "POST",
+            &format!("/definitions/{definition_id}/options"),
+            option_body,
+        ),
+        json_request(
+            "PATCH",
+            &format!("/definitions/{definition_id}/options/{option_id}"),
+            serde_json::json!({ "value": "Renamed" }),
+        ),
+        json_request(
+            "DELETE",
+            &format!("/definitions/{definition_id}/options/{option_id}"),
+            serde_json::json!({}),
+        ),
+        json_request(
+            "DELETE",
+            &format!("/definitions/{definition_id}"),
+            serde_json::json!({}),
+        ),
+    ];
+    for request in requests {
+        let service = PropertiesServiceImpl::new(
+            repo_with_definition(definition.clone()),
+            None::<MockPermissionService>,
+            None::<MockNotificationService>,
+        );
+        let router = managed_router(service, FakeEntityAccessService::on_team(team_id));
+        let response = router
+            .oneshot(request)
+            .await
+            .expect("request should complete");
+        assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    }
+}
+
+#[tokio::test]
+async fn the_guard_only_covers_team_definitions_with_a_managed_name() {
+    let definition_id = Uuid::from_u128(0xD003);
+    let team_id = Uuid::from_u128(0x7EA3);
+    let user = MacroUserIdStr::try_from(VALID_USER_ID.to_string()).expect("valid user id");
+    let cases = [
+        (
+            models_properties::PropertyOwner::User {
+                user_id: VALID_USER_ID.to_string(),
+            },
+            MANAGED_NAME,
+            true,
+        ),
+        (
+            models_properties::PropertyOwner::Team { team_id },
+            "Region",
+            true,
+        ),
+        (
+            models_properties::PropertyOwner::Team { team_id },
+            MANAGED_NAME,
+            false,
+        ),
+    ];
+    for (owner, name, allowed) in cases {
+        let service = PropertiesServiceImpl::new(
+            repo_with_definition(select_def(definition_id, owner.clone(), name)),
+            None::<MockPermissionService>,
+            None::<MockNotificationService>,
+        );
+        let state = PropertiesRouterState::new(
+            Arc::new(service),
+            Arc::new(FakeEntityAccessService::on_team(team_id)),
+            authorization_state(),
+        )
+        .with_managed_team_definitions([MANAGED_NAME.to_string()]);
+        let result = state
+            .reject_managed_definition(definition_id, &user, None)
+            .await;
+        assert_eq!(result.is_ok(), allowed, "{name} owned by {owner:?}");
+    }
 }

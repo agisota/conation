@@ -1,8 +1,8 @@
 //! Issue comment, PR review, and PR review comment event handlers.
 
 use crate::domain::{
-    models::{ConationTaskId, GithubError, ValidatedGithubWebhookEvent},
-    ports::{GithubSyncClient, GithubSyncRepo},
+    models::{GithubError, MacroTaskId, ValidatedGithubWebhookEvent},
+    ports::{GithubSyncClient, GithubSyncRealtime, GithubSyncRepo},
 };
 use documents::domain::ports::DocumentService;
 use foreign_entity::domain::ports::ForeignEntityService;
@@ -16,7 +16,8 @@ impl<
     C: GithubSyncClient,
     F: ForeignEntityService,
     N: NotificationIngress,
-> GithubSyncServiceImpl<D, R, C, F, N>
+    P: GithubSyncRealtime,
+> GithubSyncServiceImpl<D, R, C, F, N, P>
 {
     /// Handle `issue_comment`, `pull_request_review`, and
     /// `pull_request_review_comment` events.
@@ -96,7 +97,7 @@ impl<
         );
 
         if !truly_new.is_empty() {
-            let new_task_id_set: std::collections::HashSet<&ConationTaskId> =
+            let new_task_id_set: std::collections::HashSet<&MacroTaskId> =
                 truly_new.iter().collect();
             let new_task_links: Vec<_> = resolved
                 .validated_task_ids

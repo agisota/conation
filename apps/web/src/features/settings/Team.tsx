@@ -1,4 +1,3 @@
-import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import {
   getLinkShareScope,
@@ -55,6 +54,7 @@ import type { TeamMember } from '@service-auth/generated/schemas/teamMember';
 import { TeamRole } from '@service-auth/generated/schemas/teamRole';
 import {
   Button,
+  ConfirmDialog,
   cn,
   Dialog,
   Panel,
@@ -90,7 +90,6 @@ import {
   buildTeamTaskAutolinkTargetUrl,
   getTeamSlugError,
   normalizeTeamSlugInput,
-  TEAM_SLUG_MAX_LENGTH,
 } from './teamSlug';
 
 const roleOrder: Record<string, number> = {
@@ -101,20 +100,9 @@ const roleOrder: Record<string, number> = {
 
 type RoleOption = { value: TeamRole; label: string };
 
-const teamRoleLabel = (role: TeamRole): string => {
-  switch (role) {
-    case TeamRole.owner:
-      return t('settings.team.roles.owner');
-    case TeamRole.admin:
-      return t('settings.team.roles.admin');
-    case TeamRole.member:
-      return t('settings.team.roles.member');
-  }
-};
-
-const roleOptions = (): RoleOption[] => [
-  { value: TeamRole.member, label: teamRoleLabel(TeamRole.member) },
-  { value: TeamRole.admin, label: teamRoleLabel(TeamRole.admin) },
+const roleOptions: RoleOption[] = [
+  { value: TeamRole.member, label: 'Member' },
+  { value: TeamRole.admin, label: 'Admin' },
 ];
 
 function RoleSelect(props: {
@@ -123,11 +111,11 @@ function RoleSelect(props: {
   disabled?: boolean;
 }) {
   const selectedOption = () =>
-    roleOptions().find((o) => o.value === props.value) ?? roleOptions()[0];
+    roleOptions.find((o) => o.value === props.value) ?? roleOptions[0];
 
   return (
     <Select<RoleOption>
-      options={roleOptions()}
+      options={roleOptions}
       value={selectedOption()}
       onChange={(opt) => opt && props.onChange(opt.value)}
       optionValue="value"
@@ -188,12 +176,12 @@ function InviteEntryRow(props: {
           value={props.entry.email}
           onInput={(e) => props.onEmailChange(e.currentTarget.value)}
           onBlur={() => props.onBlur()}
-          placeholder={t('settings.team.invites.emailPlaceholder')}
+          placeholder="Enter email address"
           class="settings-input flex-1 min-w-0"
           aria-invalid={!!props.error}
         />
         <Show when={props.showRemove}>
-          <Tooltip label={t('common.remove')}>
+          <Tooltip label="Remove">
             <Button
               variant="outline"
               size="icon-sm"
@@ -220,14 +208,12 @@ function getEmailError(
 ): string | undefined {
   const trimmed = email.trim();
   if (trimmed === '') return undefined;
-  if (!emailSchema.safeParse(trimmed).success) {
-    return t('settings.team.invites.errors.invalidEmail');
-  }
+  if (!emailSchema.safeParse(trimmed).success) return 'Invalid email address';
   const isDuplicate = existingEmails.some(
     (existing, i) =>
       i !== excludeIndex && existing.toLowerCase() === trimmed.toLowerCase()
   );
-  if (isDuplicate) return t('settings.team.invites.errors.duplicateEmail');
+  if (isDuplicate) return 'Email already added';
   return undefined;
 }
 
@@ -322,7 +308,7 @@ function InviteEmailsInput(props: {
         onClick={addRow}
       >
         <PlusIcon class="size-4" />
-        {t('settings.team.invites.addAnother')}
+        Add another
       </Button>
     </div>
   );
@@ -358,10 +344,7 @@ function MemberRow(props: {
           <div class="text-sm font-medium text-ink truncate">
             {displayName()}
             {props.isCurrentUser && (
-              <span class="text-ink-muted font-normal">
-                {' '}
-                {t('settings.team.members.you')}
-              </span>
+              <span class="text-ink-muted font-normal"> (you)</span>
             )}
           </div>
           <Show when={showEmail()}>
@@ -374,7 +357,7 @@ function MemberRow(props: {
           when={props.isOwner && !isMemberOwner()}
           fallback={
             <span class="text-xs text-ink-muted capitalize">
-              {teamRoleLabel(props.member.role)}
+              {props.member.role}
             </span>
           }
         >
@@ -387,8 +370,8 @@ function MemberRow(props: {
               <Tooltip
                 label={
                   isMemberOwner()
-                    ? t('settings.team.members.cannotRemoveOwner')
-                    : t('settings.team.members.cannotRemoveSelf')
+                    ? 'Cannot remove team owner'
+                    : 'Cannot remove yourself'
                 }
               >
                 <Button
@@ -402,7 +385,7 @@ function MemberRow(props: {
               </Tooltip>
             }
           >
-            <Tooltip label={t('settings.team.members.remove')}>
+            <Tooltip label="Remove member">
               <Button variant="ghost" size="sm" onClick={props.onRemove}>
                 <TrashIcon class="size-4" />
               </Button>
@@ -412,6 +395,11 @@ function MemberRow(props: {
       </div>
     </div>
   );
+}
+
+function MemberName(props: { memberId: string }) {
+  const displayName = () => getDisplayName(tryMacroId(props.memberId));
+  return <span class="font-medium">{displayName()}</span>;
 }
 
 function InviteRow(props: {
@@ -445,10 +433,7 @@ function InviteRow(props: {
         <div class="min-w-0 flex-1">
           <div class="text-sm text-ink truncate">{props.invite.email}</div>
           <div class="text-xs text-ink-muted">
-            {t('settings.team.invites.invitedAs', {
-              role: teamRoleLabel(props.invite.team_role),
-            })}{' '}
-            ·{' '}
+            Invited as {props.invite.team_role} ·{' '}
             {formatRelativeTimestamp(props.invite.created_at, {
               condensed: true,
             })}
@@ -456,13 +441,7 @@ function InviteRow(props: {
         </div>
       </div>
       <Show when={props.canChange}>
-        <Tooltip
-          label={
-            copied()
-              ? t('settings.team.invites.linkCopied')
-              : t('settings.team.invites.copyLink')
-          }
-        >
+        <Tooltip label={copied() ? 'Copied' : 'Copy invite link'}>
           <Button
             variant="ghost"
             size="sm"
@@ -474,7 +453,7 @@ function InviteRow(props: {
             </Show>
           </Button>
         </Tooltip>
-        <Tooltip label={t('settings.team.invites.cancel')}>
+        <Tooltip label="Cancel invite">
           <Button
             variant="ghost"
             size="sm"
@@ -509,14 +488,10 @@ function UserInviteRow(props: {
         </div>
         <div class="min-w-0 flex-1">
           <div class="text-sm text-ink">
-            <InviterName inviterId={props.invite.invited_by} />{' '}
-            {t('settings.team.invitations.invitedYou')}
+            <InviterName inviterId={props.invite.invited_by} /> invited you to
+            join a team
           </div>
-          <div class="text-xs text-ink-muted">
-            {t('settings.team.invitations.asRole', {
-              role: teamRoleLabel(props.invite.team_role),
-            })}
-          </div>
+          <div class="text-xs text-ink-muted">as {props.invite.team_role}</div>
         </div>
       </div>
       <div class="flex items-center gap-2 shrink-0">
@@ -526,10 +501,7 @@ function UserInviteRow(props: {
           disabled={props.isAccepting || props.isDeclining}
           onClick={props.onDecline}
         >
-          <Show
-            when={props.isDeclining}
-            fallback={t('settings.team.invitations.decline')}
-          >
+          <Show when={props.isDeclining} fallback="Decline">
             <SpinnerIcon class="size-4 animate-spin" />
           </Show>
         </Button>
@@ -539,10 +511,7 @@ function UserInviteRow(props: {
           disabled={props.isAccepting || props.isDeclining}
           onClick={props.onAccept}
         >
-          <Show
-            when={props.isAccepting}
-            fallback={t('settings.team.invitations.join')}
-          >
+          <Show when={props.isAccepting} fallback="Join">
             <SpinnerIcon class="size-4 animate-spin" />
           </Show>
         </Button>
@@ -566,11 +535,11 @@ function TeamInvites() {
     rejectMutation.variables?.teamInviteId === inviteId;
 
   return (
-    <SettingsPage title={t('settings.team.title')}>
+    <SettingsPage title="Team">
       <Show when={invites().length > 0}>
         <SettingsSection
-          title={t('settings.team.invitations.title')}
-          description={t('settings.team.invitations.description')}
+          title="Invitations"
+          description="You've been invited to join a team."
         >
           <SettingsCard>
             <For each={invites()}>
@@ -597,30 +566,15 @@ function TeamInvites() {
 
 const TEAM_NAME_MAX_LENGTH = 50;
 
-const createTeamNameSchema = () =>
-  z
-    .string()
-    .transform((s) => s.trim())
-    .pipe(
-      z
-        .string()
-        .min(1, t('settings.team.name.errors.required'))
-        .max(TEAM_NAME_MAX_LENGTH, t('settings.team.name.errors.tooLong'))
-    );
-
-function localizedTeamSlugError(input: string): string | undefined {
-  const error = getTeamSlugError(input);
-  if (!error) return undefined;
-  if (error.includes('may only contain')) {
-    return t('settings.team.slug.errors.invalidCharacters');
-  }
-  if (error.includes('cannot be empty')) {
-    return t('settings.team.slug.errors.empty');
-  }
-  return t('settings.team.slug.errors.tooLong', {
-    max: TEAM_SLUG_MAX_LENGTH,
-  });
-}
+const teamNameSchema = z
+  .string()
+  .transform((s) => s.trim())
+  .pipe(
+    z
+      .string()
+      .min(1, 'Team name is required')
+      .max(TEAM_NAME_MAX_LENGTH, 'Team name is too long')
+  );
 
 function CreateTeamDialog(props: { open: boolean; onClose: () => void }) {
   let teamNameInputRef: HTMLInputElement | undefined;
@@ -643,7 +597,7 @@ function CreateTeamDialog(props: { open: boolean; onClose: () => void }) {
   };
 
   const validateTeamName = () => {
-    const result = createTeamNameSchema().safeParse(teamName());
+    const result = teamNameSchema.safeParse(teamName());
     const error = result.success ? undefined : result.error.issues[0]?.message;
     setTeamNameError(error);
     return result.success;
@@ -670,7 +624,7 @@ function CreateTeamDialog(props: { open: boolean; onClose: () => void }) {
       return;
     }
 
-    const result = createTeamNameSchema().safeParse(teamName());
+    const result = teamNameSchema.safeParse(teamName());
     if (!result.success) return;
 
     const inviteEntries = invites()
@@ -701,15 +655,13 @@ function CreateTeamDialog(props: { open: boolean; onClose: () => void }) {
             <XIcon />
           </Dialog.CloseButton>
           <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-            {t('settings.team.create.title')}
+            Create Team
           </Dialog.Title>
         </Panel.Header>
         <Panel.Body class="p-3 flex flex-col gap-3">
           <div class="flex flex-col gap-1">
             <div class="flex items-center justify-between">
-              <label class="text-sm text-ink-muted">
-                {t('settings.team.name.label')}
-              </label>
+              <label class="text-sm text-ink-muted">Team name</label>
               <span class={cn('text-xs', charCountColor())}>
                 {teamName().length}/{TEAM_NAME_MAX_LENGTH}
               </span>
@@ -720,7 +672,7 @@ function CreateTeamDialog(props: { open: boolean; onClose: () => void }) {
               value={teamName()}
               onInput={(e) => handleTeamNameChange(e.currentTarget.value)}
               onBlur={() => validateTeamName()}
-              placeholder={t('settings.team.name.createPlaceholder')}
+              placeholder="My Team"
               class="settings-input w-full"
               aria-invalid={!!teamNameError()}
             />
@@ -730,7 +682,7 @@ function CreateTeamDialog(props: { open: boolean; onClose: () => void }) {
           </div>
           <div class="flex flex-col gap-1">
             <label class="text-sm text-ink-muted">
-              {t('settings.team.create.inviteMembersOptional')}
+              Invite members (optional)
             </label>
             <InviteEmailsInput
               invites={invites()}
@@ -746,7 +698,7 @@ function CreateTeamDialog(props: { open: boolean; onClose: () => void }) {
               disabled={createTeamMutation.isPending}
               onClick={props.onClose}
             >
-              {t('common.cancel')}
+              Cancel
             </Button>
             <Button
               variant="accent"
@@ -758,10 +710,7 @@ function CreateTeamDialog(props: { open: boolean; onClose: () => void }) {
               }
               onClick={handleCreate}
             >
-              <Show
-                when={createTeamMutation.isPending}
-                fallback={t('settings.team.create.action')}
-              >
+              <Show when={createTeamMutation.isPending} fallback="Create Team">
                 <SpinnerIcon class="size-4 animate-spin" />
               </Show>
             </Button>
@@ -776,18 +725,17 @@ function EmptyTeamState() {
   const [showCreateModal, setShowCreateModal] = createSignal(false);
 
   return (
-    <SettingsPage title={t('settings.team.title')}>
+    <SettingsPage title="Team">
       <SettingsSection>
         <SettingsCard>
           <div class="flex flex-col items-center justify-center py-12 text-center px-6">
             <div class="size-12 rounded-full bg-accent/10 flex items-center justify-center mb-4">
               <UsersIcon class="size-6 text-accent" />
             </div>
-            <h3 class="text-sm font-medium text-ink mb-1">
-              {t('settings.team.empty.title')}
-            </h3>
+            <h3 class="text-sm font-medium text-ink mb-1">No team yet</h3>
             <p class="text-xs text-ink-muted max-w-xs mb-4">
-              {t('settings.team.empty.description')}
+              Create a team to collaborate with others and manage access
+              together.
             </p>
             <Button
               variant="accent"
@@ -795,7 +743,7 @@ function EmptyTeamState() {
               onClick={() => setShowCreateModal(true)}
             >
               <PlusIcon class="size-4" />
-              {t('settings.team.create.action')}
+              Create Team
             </Button>
           </div>
         </SettingsCard>
@@ -841,7 +789,7 @@ function SaveCancelButtons(props: {
 }) {
   return (
     <div class="flex items-center gap-1 shrink-0">
-      <Tooltip label={t('common.save')}>
+      <Tooltip label="Save">
         <Button
           variant="accent"
           size="icon-sm"
@@ -854,7 +802,7 @@ function SaveCancelButtons(props: {
           </Show>
         </Button>
       </Tooltip>
-      <Tooltip label={t('common.cancel')}>
+      <Tooltip label="Cancel">
         <Button
           variant="ghost"
           size="icon-sm"
@@ -924,8 +872,7 @@ function TeamManagement(props: {
     return !hasError;
   };
 
-  const deleteConfirmationPhrase = () =>
-    t('settings.team.delete.confirmPhrase', { name: props.teamName });
+  const deleteConfirmationPhrase = () => `Delete ${props.teamName}`;
   const canDeleteTeam = () =>
     deleteConfirmation() === deleteConfirmationPhrase();
 
@@ -1028,8 +975,8 @@ function TeamManagement(props: {
   const autoJoinDescription = () => {
     const domain = autoJoinDomain();
     return domain
-      ? t('settings.team.autoJoin.enabledDescription', { domain })
-      : t('settings.team.autoJoin.disabledDescription');
+      ? `New sign-ups with an @${domain} email automatically join this team.`
+      : "Automatically add new sign-ups whose email matches the team owner's domain.";
   };
 
   const handleToggleAutoJoin = () => {
@@ -1067,7 +1014,7 @@ function TeamManagement(props: {
 
     // Validate against the same schema as the create flow (e.g. max length)
     // so rename can't push a name the create path would reject.
-    const parsed = createTeamNameSchema().safeParse(newName);
+    const parsed = teamNameSchema.safeParse(newName);
     if (!parsed.success) return;
 
     patchTeamMutation.mutate(
@@ -1081,7 +1028,7 @@ function TeamManagement(props: {
   };
 
   const validateTeamSlug = (slug: string) => {
-    const error = localizedTeamSlugError(slug);
+    const error = getTeamSlugError(slug);
     setTeamSlugError(error);
     return error === undefined;
   };
@@ -1124,10 +1071,10 @@ function TeamManagement(props: {
     );
     try {
       await navigator.clipboard.writeText(targetUrl);
-      toast.success(t('settings.team.githubAutolink.toast.copied'));
+      toast.success('GitHub autolink URL copied');
     } catch (error) {
       console.error('Failed to copy GitHub autolink URL', error);
-      toast.failure(t('settings.team.githubAutolink.toast.copyFailed'));
+      toast.failure('Failed to copy GitHub autolink URL');
     }
   };
 
@@ -1207,7 +1154,7 @@ function TeamManagement(props: {
   return (
     <>
       <SettingsPage
-        title={t('settings.team.title')}
+        title="Team"
         actions={
           <Show when={isOwner()}>
             <Button
@@ -1217,16 +1164,16 @@ function TeamManagement(props: {
               onClick={() => setShowDeleteTeamModal(true)}
             >
               <TrashIcon class="size-4" />
-              {t('settings.team.delete.action')}
+              Delete Team
             </Button>
           </Show>
         }
       >
-        <SettingsSection title={t('settings.team.general.title')}>
+        <SettingsSection title="General">
           <SettingsCard>
             <SettingsRow
-              label={t('settings.team.name.label')}
-              description={t('settings.team.name.description')}
+              label="Name"
+              description="What your team is called — shown in invitations and billing."
               hideDescriptionOnMobile
             >
               <Show
@@ -1234,7 +1181,7 @@ function TeamManagement(props: {
                 fallback={
                   <ReadOnlyField
                     value={props.teamName}
-                    tooltip={t('settings.team.name.ownerOnly')}
+                    tooltip="Only the team owner can change the team name."
                   />
                 }
               >
@@ -1253,7 +1200,7 @@ function TeamManagement(props: {
                         e.currentTarget.blur();
                       }
                     }}
-                    placeholder={t('settings.team.name.editPlaceholder')}
+                    placeholder="Enter team name"
                     class={TEAM_FIELD_CLASS}
                   />
                   <Show when={hasTeamNameChanged()}>
@@ -1272,8 +1219,8 @@ function TeamManagement(props: {
             </SettingsRow>
 
             <SettingsRow
-              label={t('settings.team.slug.label')}
-              description={t('settings.team.slug.description')}
+              label="Slug"
+              description="Short code in task references like ENG-42 (GitHub, branch names)."
               hideDescriptionOnMobile
             >
               <Show
@@ -1281,7 +1228,7 @@ function TeamManagement(props: {
                 fallback={
                   <ReadOnlyField
                     value={props.teamSlug}
-                    tooltip={t('settings.team.slug.ownerOnly')}
+                    tooltip="Only the team owner can change the team slug."
                   />
                 }
               >
@@ -1301,7 +1248,7 @@ function TeamManagement(props: {
                           e.currentTarget.blur();
                         }
                       }}
-                      placeholder={t('settings.team.slug.placeholder')}
+                      placeholder="Enter team slug"
                       class={TEAM_FIELD_CLASS}
                       aria-invalid={!!teamSlugError()}
                     />
@@ -1312,9 +1259,7 @@ function TeamManagement(props: {
                     </Show>
                     <Show when={normalizedTeamSlugPreview()}>
                       <p class="text-xs text-ink-muted text-right">
-                        {t('settings.team.slug.normalizedPreview', {
-                          slug: normalizedTeamSlugPreview() ?? '',
-                        })}
+                        Will save as {normalizedTeamSlugPreview()}
                       </p>
                     </Show>
                   </div>
@@ -1331,12 +1276,11 @@ function TeamManagement(props: {
             </SettingsRow>
 
             <SettingsRow
-              label={t('settings.team.githubAutolink.label')}
+              label="GitHub autolink"
               description={
                 <>
-                  {t('settings.team.githubAutolink.descriptionPrefix')}{' '}
-                  <code>{props.teamSlug}-</code>{' '}
-                  {t('settings.team.githubAutolink.descriptionSuffix')}
+                  Use <code>{props.teamSlug}-</code> as the reference prefix in
+                  GitHub, then paste this target URL.
                 </>
               }
               hideDescriptionOnMobile
@@ -1348,13 +1292,13 @@ function TeamManagement(props: {
                 onClick={handleCopyGithubAutolinkUrl}
               >
                 <CopyIcon class="size-4" />
-                {t('settings.team.githubAutolink.copyTargetUrl')}
+                Copy target URL
               </Button>
             </SettingsRow>
 
             <Show when={isAdminOrOwner()}>
               <SettingsRow
-                label={t('settings.team.autoJoin.label')}
+                label="Auto-join on domain"
                 description={autoJoinDescription()}
                 hideDescriptionOnMobile
               >
@@ -1369,8 +1313,8 @@ function TeamManagement(props: {
               </SettingsRow>
 
               <SettingsRow
-                label={t('settings.team.memberInvites.label')}
-                description={t('settings.team.memberInvites.description')}
+                label="Members can invite"
+                description="Let every team member invite people. When off, only admins and the owner can send invites."
                 hideDescriptionOnMobile
               >
                 <ToggleSwitch
@@ -1385,19 +1329,16 @@ function TeamManagement(props: {
               </SettingsRow>
 
               <SettingsRow
-                label={t('settings.team.linkSharing.label')}
-                description={t('settings.team.linkSharing.description')}
+                label="Default link sharing"
+                description="The link-sharing scope newly shared items start with. None means link sharing starts off."
                 hideDescriptionOnMobile
               >
                 <SegmentedControl
-                  aria-label={t('settings.team.linkSharing.ariaLabel')}
+                  aria-label="Default link sharing scope"
                   size="sm"
                   value={defaultLinkShare()}
                   options={LINK_SHARE_SCOPE_OPTIONS.map((option) => ({
                     ...option,
-                    label: t(
-                      `settings.team.linkSharing.scope.${option.value.toLowerCase()}`
-                    ),
                     disabled:
                       patchTeamMutation.isPending || teamQuery.isLoading,
                   }))}
@@ -1408,12 +1349,12 @@ function TeamManagement(props: {
           </SettingsCard>
         </SettingsSection>
 
-        <SettingsSection title={t('settings.team.connections.title')}>
+        <SettingsSection title="Connections">
           <SettingsCard>
             <IntegrationRow
               icon={<GithubIcon />}
-              title={t('settings.team.githubApp.title')}
-              description={t('settings.team.githubApp.description')}
+              title="GitHub App"
+              description="Connect your team's repositories for pull request sync."
             >
               {/* The install callback rejects users without a linked GitHub
                   account, so don't offer the flow until they've connected one
@@ -1423,8 +1364,8 @@ function TeamManagement(props: {
                 fallback={
                   <span class="text-xs text-ink-muted">
                     {githubLink.isLoading
-                      ? t('common.loading')
-                      : t('settings.team.githubApp.connectFirst')}
+                      ? 'Loading…'
+                      : 'Connect your GitHub account first'}
                   </span>
                 }
               >
@@ -1434,7 +1375,7 @@ function TeamManagement(props: {
                   rel="noopener noreferrer"
                   class="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-ink-muted outline-none transition-colors hover:bg-ink/4 hover:text-ink focus-visible:bg-ink/6"
                 >
-                  {t('settings.team.githubApp.configure')}
+                  Configure app
                   <ArrowUpRightIcon class="size-3.5 opacity-70" />
                 </a>
               </Show>
@@ -1443,7 +1384,7 @@ function TeamManagement(props: {
         </SettingsSection>
 
         <SettingsSection
-          title={t('settings.team.members.title')}
+          title="Members"
           actions={
             // Members can invite unless the team has restricted inviting
             // to admins; removals stay admin-only.
@@ -1455,7 +1396,7 @@ function TeamManagement(props: {
                 onClick={() => setShowInviteModal(true)}
               >
                 <PlusIcon class="size-4" />
-                {t('settings.team.invites.invite')}
+                Invite
               </Button>
             </Show>
           }
@@ -1467,14 +1408,14 @@ function TeamManagement(props: {
                 type="text"
                 value={memberQuery()}
                 onInput={(e) => setMemberQuery(e.currentTarget.value)}
-                placeholder={t('settings.team.members.filterPlaceholder')}
+                placeholder="Filter members"
                 class="flex-1 min-w-0 bg-transparent text-sm text-ink outline-none placeholder:text-ink-placeholder"
               />
               <Show when={memberQuery()}>
                 <button
                   type="button"
                   class="shrink-0 text-ink-muted hover:text-ink"
-                  aria-label={t('settings.team.members.clearFilter')}
+                  aria-label="Clear filter"
                   onClick={() => setMemberQuery('')}
                 >
                   <XIcon class="size-4" />
@@ -1496,9 +1437,7 @@ function TeamManagement(props: {
               fallback={
                 <SettingsCard>
                   <div class="px-6 py-8 text-center text-sm text-ink-muted">
-                    {t('settings.team.members.noMatches', {
-                      query: memberQuery(),
-                    })}
+                    No members match “{memberQuery()}”
                   </div>
                 </SettingsCard>
               }
@@ -1545,7 +1484,7 @@ function TeamManagement(props: {
             (invitesQuery.data?.invites?.length ?? 0) > 0
           }
         >
-          <SettingsSection title={t('settings.team.invites.pendingTitle')}>
+          <SettingsSection title="Pending invites">
             <SettingsCard>
               <For each={invitesQuery.data?.invites ?? []}>
                 {(invite) => (
@@ -1571,17 +1510,21 @@ function TeamManagement(props: {
               <XIcon />
             </Dialog.CloseButton>
             <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-              {t('settings.team.delete.title')}
+              Delete Team
             </Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-3 flex flex-col gap-3">
             <p>
-              {t('settings.team.delete.description', { name: props.teamName })}
+              Are you sure you want to delete{' '}
+              <span class="font-medium">{props.teamName}</span>? This action
+              cannot be undone and all team members will lose access.
             </p>
             <p class="text-sm text-ink-muted">
-              {t('settings.team.delete.confirmPrompt', {
-                phrase: deleteConfirmationPhrase(),
-              })}
+              Type{' '}
+              <span class="font-medium text-ink">
+                {deleteConfirmationPhrase()}
+              </span>{' '}
+              to confirm.
             </p>
             <input
               type="text"
@@ -1597,7 +1540,7 @@ function TeamManagement(props: {
                 disabled={deleteTeamMutation.isPending}
                 onClick={() => handleDeleteTeamModalClose(false)}
               >
-                {t('common.cancel')}
+                Cancel
               </Button>
               <Button
                 variant="danger"
@@ -1607,7 +1550,7 @@ function TeamManagement(props: {
               >
                 <Show
                   when={deleteTeamMutation.isPending}
-                  fallback={t('settings.team.delete.action')}
+                  fallback="Delete Team"
                 >
                   <SpinnerIcon class="size-4 animate-spin" />
                 </Show>
@@ -1617,101 +1560,40 @@ function TeamManagement(props: {
         </Panel>
       </Dialog>
 
-      <Dialog
+      <ConfirmDialog
         open={!!showRemoveModal()}
-        onOpenChange={() => setShowRemoveModal(null)}
-      >
-        <Panel depth={2} class="max-h-[75vh] text-ink rounded-xl">
-          <Panel.Header class="px-2 gap-1">
-            <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
-              <XIcon />
-            </Dialog.CloseButton>
-            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-              {t('settings.team.members.removeDialog.title')}
-            </Dialog.Title>
-          </Panel.Header>
-          <Panel.Body class="p-3 flex flex-col gap-3">
+        onOpenChange={(open) => !open && setShowRemoveModal(null)}
+        title="Remove Member"
+        tone="danger"
+        confirmLabel="Remove"
+        pending={removeUserMutation.isPending}
+        onConfirm={handleRemoveMember}
+        body={
+          <>
+            Are you sure you want to remove{' '}
             <Show when={showRemoveModal()}>
-              {(member) => (
-                <p>
-                  {t('settings.team.members.removeDialog.description', {
-                    name: getDisplayName(tryMacroId(member().user_id)),
-                  })}
-                </p>
-              )}
-            </Show>
-            <div class="flex justify-end gap-1 pt-2">
-              <Button
-                variant="ghost"
-                class="rounded-xs"
-                disabled={removeUserMutation.isPending}
-                onClick={() => setShowRemoveModal(null)}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                variant="danger"
-                class="rounded-xs"
-                disabled={removeUserMutation.isPending}
-                onClick={handleRemoveMember}
-              >
-                <Show
-                  when={removeUserMutation.isPending}
-                  fallback={t('common.remove')}
-                >
-                  <SpinnerIcon class="size-4 animate-spin" />
-                </Show>
-              </Button>
-            </div>
-          </Panel.Body>
-        </Panel>
-      </Dialog>
-
-      <Dialog
+              {(member) => <MemberName memberId={member().user_id} />}
+            </Show>{' '}
+            from the team?
+          </>
+        }
+      />
+      <ConfirmDialog
         open={!!showCancelInviteModal()}
-        onOpenChange={() => setShowCancelInviteModal(null)}
-      >
-        <Panel depth={2} class="max-h-[75vh] text-ink rounded-xl">
-          <Panel.Header class="px-2 gap-1">
-            <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
-              <XIcon />
-            </Dialog.CloseButton>
-            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-              {t('settings.team.invites.cancelDialog.title')}
-            </Dialog.Title>
-          </Panel.Header>
-          <Panel.Body class="p-3 flex flex-col gap-3">
-            <p>
-              {t('settings.team.invites.cancelDialog.description', {
-                email: showCancelInviteModal()?.email ?? '',
-              })}
-            </p>
-            <div class="flex justify-end gap-1 pt-2">
-              <Button
-                variant="ghost"
-                class="rounded-xs"
-                disabled={deleteInviteMutation.isPending}
-                onClick={() => setShowCancelInviteModal(null)}
-              >
-                {t('settings.team.invites.keep')}
-              </Button>
-              <Button
-                variant="danger"
-                class="rounded-xs"
-                disabled={deleteInviteMutation.isPending}
-                onClick={handleCancelInvite}
-              >
-                <Show
-                  when={deleteInviteMutation.isPending}
-                  fallback={t('settings.team.invites.cancelAction')}
-                >
-                  <SpinnerIcon class="size-4 animate-spin" />
-                </Show>
-              </Button>
-            </div>
-          </Panel.Body>
-        </Panel>
-      </Dialog>
+        onOpenChange={(open) => !open && setShowCancelInviteModal(null)}
+        title="Cancel Invitation"
+        tone="danger"
+        confirmLabel="Cancel Invite"
+        cancelLabel="Keep"
+        pending={deleteInviteMutation.isPending}
+        onConfirm={handleCancelInvite}
+        body={
+          <>
+            Are you sure you want to cancel the invitation for{' '}
+            <span class="font-medium">{showCancelInviteModal()?.email}</span>?
+          </>
+        }
+      />
 
       <Dialog open={showInviteModal()} onOpenChange={handleInviteModalClose}>
         <Panel depth={2} class="max-h-[75vh] text-ink rounded-xl">
@@ -1720,7 +1602,7 @@ function TeamManagement(props: {
               <XIcon />
             </Dialog.CloseButton>
             <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-              {t('settings.team.invites.dialogTitle')}
+              Invite to Team
             </Dialog.Title>
           </Panel.Header>
 
@@ -1738,7 +1620,7 @@ function TeamManagement(props: {
                 disabled={inviteToTeamMutation.isPending}
                 onClick={() => handleInviteModalClose(false)}
               >
-                {t('common.cancel')}
+                Cancel
               </Button>
               <Button
                 variant={hasValidInvites() ? 'accent' : 'ghost'}
@@ -1748,10 +1630,11 @@ function TeamManagement(props: {
               >
                 <Show
                   when={inviteToTeamMutation.isPending}
-                  fallback={t('settings.team.invites.send', {
-                    count: invites().filter((invite) => invite.email.trim())
-                      .length,
-                  })}
+                  fallback={
+                    invites().length > 1
+                      ? `Send ${invites().length} Invites`
+                      : 'Send Invite'
+                  }
                 >
                   <SpinnerIcon class="size-4 animate-spin" />
                 </Show>

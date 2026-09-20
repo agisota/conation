@@ -196,3 +196,4 @@ new UserLinkCleanupHandler('user-link-cleanup-handler', {
 });
 
 export const authenticationServiceUrl = pulumi.interpolate`${service.domain}`;
+export const codexOauthKmsKeyArn = service.codexOauthKmsKeyArn;

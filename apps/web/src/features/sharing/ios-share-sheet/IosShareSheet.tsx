@@ -1,4 +1,3 @@
-import { t } from '@app/lib/i18n';
 import {
   applyInlineFormat,
   applyNodeFormat,
@@ -19,11 +18,6 @@ import { buildPostMessageRequest } from '@channel/Input/message-payload';
 import { getAttachmentKindFromFile } from '@channel/Input/utils/file-helpers';
 import { hasSendableInputContent } from '@channel/Input/utils/sendable-content';
 import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
-import type {
-  PendingShareFile,
-  UploadPendingShareFileArgs,
-} from '@conation/tauri';
-import { useShareTarget, useTauri } from '@conation/tauri';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
 import { RecipientSelector } from '@core/component/RecipientSelector';
 import { toast } from '@core/component/Toast/Toast';
@@ -39,13 +33,18 @@ import {
   handleFileFolderDrop,
   uploadFile,
 } from '@core/util/upload';
+import type {
+  PendingShareFile,
+  UploadPendingShareFileArgs,
+} from '@macro/tauri';
+import { useShareTarget, useTauri } from '@macro/tauri';
 import { invalidateListChannels } from '@queries/channel/channels';
 import {
   useGetOrCreateDirectMessageMutation,
   useGetOrCreatePrivateChannelMutation,
 } from '@queries/channel/get-or-create-dm';
+import { useSendMessageMutation } from '@queries/messages/mutations';
 import { staticFileClient } from '@service-static-files/client';
-import { storageServiceClient } from '@service-storage/client';
 import { isIOS } from '@solid-primitives/platform';
 import { Button } from '@ui';
 import {
@@ -126,9 +125,7 @@ async function uploadPendingShareAttachment(options: {
   // The iOS share extension only hands the app images and videos today, and
   // this upload path only creates static-file attachments for those media types.
   if (kind === 'document') {
-    toast.failure(
-      t('sharing.ios.unsupportedFile', { filename: options.file.name })
-    );
+    toast.failure(`Can't share ${options.file.name} from iOS yet`);
     return;
   }
 
@@ -170,9 +167,7 @@ async function uploadPendingShareAttachment(options: {
       file: options.file,
       error,
     });
-    toast.failure(
-      t('sharing.ios.uploadFailed', { filename: options.file.name })
-    );
+    toast.failure(`Failed to upload ${options.file.name}`);
   }
 }
 
@@ -189,7 +184,7 @@ function ShareSheetHeaderActions(props: {
         onClick={props.handleCancel}
         class="pl-0"
       >
-        {t('common.cancel')}
+        Cancel
       </Button>
       <Button
         variant="ghost"
@@ -201,7 +196,7 @@ function ShareSheetHeaderActions(props: {
           props.handleSend();
         }}
       >
-        {t('sharing.ios.send')}
+        Send
       </Button>
     </div>
   );
@@ -210,8 +205,10 @@ function ShareSheetHeaderActions(props: {
 function ShareSheetComposerError(_props: { error: unknown }) {
   return (
     <div class="macro-message-width flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-[5px] border border-edge-muted bg-surface px-4 py-6 text-center">
-      <p class="text-sm text-ink">{t('sharing.ios.composerLoadFailed')}</p>
-      <p class="text-xs text-ink-muted">{t('sharing.ios.tryAgain')}</p>
+      <p class="text-sm text-ink">Couldn&apos;t load the composer.</p>
+      <p class="text-xs text-ink-muted">
+        Close the sheet and try sharing again.
+      </p>
     </div>
   );
 }
@@ -222,6 +219,7 @@ function IosShareSheetComposer(props: {
 }) {
   const shareTarget = useShareTarget();
   const userId = useUserId();
+  const sendMessage = useSendMessageMutation();
   const { all: destinationOptions } = useCombinedRecipients();
   const attachmentTracker = createInputAttachmentTracker();
   const composerId = crypto.randomUUID();
@@ -273,7 +271,7 @@ function IosShareSheetComposer(props: {
     const options = selectedOptions();
 
     if (options.length === 0) {
-      toast.failure(t('sharing.ios.selectRecipient'));
+      toast.failure('Select a recipient');
       throw new Error('No recipient selected for iOS share sheet');
     }
 
@@ -284,7 +282,7 @@ function IosShareSheetComposer(props: {
     }
 
     if (destination.users.length === 0) {
-      toast.failure(t('sharing.ios.selectValidRecipient'));
+      toast.failure('Select a valid recipient');
       throw new Error('No valid recipients selected for iOS share sheet');
     }
 
@@ -299,7 +297,7 @@ function IosShareSheetComposer(props: {
             });
       return result.channel_id;
     } catch {
-      toast.failure(t('sharing.ios.openChannelFailed'));
+      toast.failure('Failed to open channel');
       throw new Error('Failed to resolve share destination channel');
     }
   };
@@ -307,22 +305,19 @@ function IosShareSheetComposer(props: {
   const handleSend = async (snapshot: InputSnapshot) => {
     const senderId = userId();
     if (!senderId) {
-      toast.failure(t('sharing.ios.sendFailed'));
+      toast.failure('Failed to send message');
       throw new Error('Missing sender id for iOS share sheet send');
     }
 
     const channelId = await resolveDestinationChannelId();
     const message = buildPostMessageRequest({ snapshot });
 
-    const result = await storageServiceClient.postMessage({
-      channel_id: channelId,
+    await sendMessage.mutateAsync({
+      parent: { type: 'channel', id: channelId },
       message,
+      senderId,
+      optimisticId: crypto.randomUUID(),
     });
-
-    if (result.isErr()) {
-      toast.failure(t('sharing.ios.sendFailed'));
-      throw new Error('Failed to post shared message');
-    }
 
     invalidateListChannels();
     invalidateContacts();
@@ -334,7 +329,7 @@ function IosShareSheetComposer(props: {
     initialInput: {
       mode: 'channel',
       id: `ios-share-input-${composerId}`,
-      placeholder: t('sharing.ios.messagePlaceholder'),
+      placeholder: 'Add a message',
       value: pendingShareInitialText(shareTarget?.pendingShareFiles() ?? []),
     },
     mentions: mentionsTracker.mentions,
@@ -409,11 +404,11 @@ function IosShareSheetComposer(props: {
           handleCancel={props.handleCancel}
           handleSend={handleHeaderSend}
         />
-        <MobileDrawer.Label>{t('sharing.ios.recipients')}</MobileDrawer.Label>
+        <MobileDrawer.Label>Recipients</MobileDrawer.Label>
         <MobileDrawer.Section>
           <div class="shrink-0 p-2">
             <RecipientSelector<'user' | 'contact' | 'channel'>
-              placeholder={t('sharing.ios.recipientPlaceholder')}
+              placeholder="To: Email or group"
               setSelectedOptions={setSelectedOptions}
               selectedOptions={selectedOptions()}
               options={destinationOptions}
@@ -437,47 +432,45 @@ function IosShareSheetComposer(props: {
                 onDragEnd={() => inputState.setIsDraggedOver(false)}
               >
                 <Input.Layout>
-                  <Input.DropOverlay />
-                  <Input.FormatRibbon>
-                    <FormatButtons
-                      selectionState={() => markdownEditor.selection}
-                      onInlineFormat={(format) =>
-                        applyInlineFormat(markdownEditor.lexical, format)
-                      }
-                      onNodeFormat={(format) =>
-                        applyNodeFormat(markdownEditor.lexical, format)
-                      }
-                    />
-                  </Input.FormatRibbon>
-                  <Input.EditorShell
-                    ref={setScrollContainer}
-                    onClick={(event) => {
-                      if (!isMobile()) {
-                        event.stopPropagation();
-                        markdownEditor.controls.focus();
-                      }
-                    }}
-                  >
-                    <Input.Editor>
-                      <MarkdownShell
-                        config={markdownEditor}
-                        placeholder={inputState.view().placeholder}
-                        initialValue={inputState.view().value}
-                        autofocus={false}
-                        class="text-sm"
+                  <Input.Layout.Body>
+                    <Input.DropOverlay />
+                    <Input.FormatRibbon>
+                      <FormatButtons
+                        selectionState={() => markdownEditor.selection}
+                        onInlineFormat={(format) =>
+                          applyInlineFormat(markdownEditor.lexical, format)
+                        }
+                        onNodeFormat={(format) =>
+                          applyNodeFormat(markdownEditor.lexical, format)
+                        }
                       />
-                    </Input.Editor>
-                  </Input.EditorShell>
-                  <Input.Attachments kind="media" />
-                  <Input.Attachments kind="document" />
-                  <Input.Footer>
-                    <Input.Actions>
-                      <Input.Actions.Left>
-                        <Input.AttachNativeMediaAction />
-                        <Input.ToggleFormatAction />
-                      </Input.Actions.Left>
-                    </Input.Actions>
-                  </Input.Footer>
+                    </Input.FormatRibbon>
+                    <Input.Layout.Editor
+                      ref={setScrollContainer}
+                      onClick={(event) => {
+                        if (!isMobile()) {
+                          event.stopPropagation();
+                          markdownEditor.controls.focus();
+                        }
+                      }}
+                    >
+                      <Input.Editor>
+                        <MarkdownShell
+                          config={markdownEditor}
+                          placeholder={inputState.view().placeholder}
+                          initialValue={inputState.view().value}
+                          autofocus={false}
+                          class="text-sm"
+                        />
+                      </Input.Editor>
+                    </Input.Layout.Editor>
+                    <Input.Attachments kind="media" />
+                    <Input.Attachments kind="document" />
+                  </Input.Layout.Body>
+                  <Input.Layout.ActionsLeft>
+                    <Input.AttachNativeMediaAction />
+                    <Input.ToggleFormatAction />
+                  </Input.Layout.ActionsLeft>
                 </Input.Layout>
               </Input.DropZone>
             </ChannelInputContainer>
@@ -546,11 +539,8 @@ export function IosShareSheet() {
         }}
       >
         <MobileDrawer.Portal>
-          <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay" />
-          <MobileDrawer.Content
-            aria-label={t('sharing.ios.ariaLabel')}
-            targetHeight={80}
-          >
+          <MobileDrawer.Overlay />
+          <MobileDrawer.Content aria-label="Share to Macro" targetHeight={80}>
             <MobileDrawer.Handle />
             <Show when={isOpen() ? shareBatchKey() : undefined} keyed>
               {(batchKey) => (

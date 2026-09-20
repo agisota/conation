@@ -1,12 +1,12 @@
 use std::sync::LazyLock;
 
 use anyhow::Context;
-use conation_auth::InternalApiKey;
-pub use conation_env::Environment;
-use conation_env_var::{env_vars, maybe_env_vars};
+use authentication_service::service::signup_policy::SignupPolicy;
 use database_env_vars::{DatabaseUrl, RedisUri};
-use roles_and_permissions::domain::access_policy::CONATION_ACCESS_POLICY;
-use url::Url;
+use gtm_invite::domain::models::{GtmInviteConfig, PromoCode};
+use macro_auth::InternalApiKey;
+pub use macro_env::Environment;
+use macro_env_var::{env_vars, maybe_env_vars};
 
 // BASE_URL config value. This is validated when creating the config in main.rs
 pub static BASE_URL: LazyLock<String> = LazyLock::new(|| {
@@ -23,10 +23,14 @@ env_vars! {
     pub struct FusionAuthClientSecretKey;
     pub struct FusionAuthBaseUrl;
     pub struct FusionAuthOauthRedirectUri;
+    pub struct GoogleClientId;
+    pub struct GoogleClientSecretKey;
+    pub struct StripeSecretKey;
     pub struct ServiceInternalAuthKey;
     pub struct GithubClientId;
     pub struct GithubClientSecret;
     pub struct GithubIdpId;
+    pub struct StripePriceId;
     /// Comma-separated Kafka bootstrap servers for the macro event broker.
     pub struct KafkaBrokers;
 }
@@ -34,23 +38,6 @@ env_vars! {
 maybe_env_vars! {
     /// Browser-reachable FusionAuth origin used for OAuth authorization redirects.
     pub struct FusionAuthPublicUrl;
-    /// Transactional sender used for authentication and account-merge mail.
-    pub struct AuthSenderEmail;
-    /// Operator-owned support mailbox rendered into transactional mail.
-    pub struct SupportEmail;
-    /// Google OAuth is enabled only when both credentials are configured.
-    pub struct GoogleClientId;
-    pub struct GoogleClientSecretKey;
-    /// Legacy Stripe credential retained for configuration compatibility.
-    ///
-    /// Conation's free-access policy keeps hosted billing disabled even when
-    /// this value is present.
-    pub struct StripeSecretKey;
-    /// Legacy Stripe price retained for configuration compatibility.
-    ///
-    /// Conation's free-access policy keeps hosted billing disabled even when
-    /// this value is present.
-    pub struct StripePriceId;
     pub struct MicrosoftClientId;
     pub struct MicrosoftClientSecret;
     pub struct MicrosoftTenantId;
@@ -67,6 +54,8 @@ maybe_env_vars! {
     /// process environment because `MacroConfig` does not fall back to it
     /// when `APP_SECRETS_JSON` is present.
     pub struct CursorApiKeyKmsKeyId;
+    /// Dedicated CMK for encrypted Codex OAuth envelopes, injected by infrastructure.
+    pub struct CodexOauthKmsKeyId;
     pub struct GaMeasurementId;
     pub struct GaApiSecret;
     pub struct MetaPixelId;
@@ -75,6 +64,12 @@ maybe_env_vars! {
     pub struct PosthogApiKey;
     pub struct PosthogHost;
     pub struct LoopsApiKey;
+    /// JSON array of exact email addresses allowed to sign up in Develop.
+    pub struct DevelopmentSignupAllowlistJson;
+    /// Stripe promotion code GTM invite links grant at checkout. Defaults to `1MF`.
+    pub struct GtmInvitePromoCode;
+    /// Hours a GTM invite link stays openable after creation. Defaults to 48.
+    pub struct GtmInviteLinkTtlHours;
 }
 
 /// The configuration parameters for the application.
@@ -84,8 +79,8 @@ maybe_env_vars! {
 /// populate the Docker container
 ///
 /// See `.env.sample` in document-storage-service root for details.
-#[derive(conation_config::MacroConfig)]
-// #[conation_config::from_ref_all]
+#[derive(macro_config::MacroConfig)]
+// #[macro_config::from_ref_all]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     #[allow(dead_code)]
@@ -106,10 +101,6 @@ pub struct Config {
     pub fusionauth_public_url: FusionAuthPublicUrl,
     /// FusionAuth oauth redirect uri
     pub fusionauth_oauth_redirect_uri: FusionAuthOauthRedirectUri,
-    /// Optional override for the authentication mail sender.
-    pub auth_sender_email: AuthSenderEmail,
-    /// Optional override for the support mailbox shown in mail content.
-    pub support_email: SupportEmail,
     /// Google client id
     pub google_client_id: GoogleClientId,
     /// Google client secret key
@@ -126,13 +117,15 @@ pub struct Config {
     /// read through [`Config::cursor_api_key_kms_key_id`], which refuses an
     /// absent or blank value at startup.
     pub cursor_api_key_kms_key_id: CursorApiKeyKmsKeyId,
+    /// Dedicated Codex envelope encryption CMK; absent deployments return 503 for Codex.
+    pub codex_oauth_kms_key_id: CodexOauthKmsKeyId,
     /// Stripe secret key
     pub stripe_secret_key: StripeSecretKey,
     /// The port to listen for HTTP requests on.
-    #[conation_config_default(8080)]
+    #[macro_config_default(8080)]
     pub port: usize,
     /// The environment we are in
-    #[conation_config_default(Environment::new_or_prod())]
+    #[macro_config_default(Environment::new_or_prod())]
     pub environment: Environment,
     /// The internal auth key used by other services
     pub service_internal_auth_key: ServiceInternalAuthKey,
@@ -159,6 +152,15 @@ pub struct Config {
     /// Loops API key (optional). When set, Macro sign-ups are added to our
     /// Loops audience.
     pub loops_api_key: LoopsApiKey,
+    /// JSON array of exact non-Macro email addresses allowed to sign up in Develop.
+    ///
+    /// All `@macro.com` email addresses are allowed by the Develop policy automatically.
+    pub development_signup_allowlist_json: DevelopmentSignupAllowlistJson,
+    /// Stripe promotion code applied at checkout for accounts that signed up
+    /// through a GTM invite link (optional, defaults to `1MF`).
+    pub gtm_invite_promo_code: GtmInvitePromoCode,
+    /// Hours a GTM invite link can be opened and redeemed (optional, defaults to 48).
+    pub gtm_invite_link_ttl_hours: GtmInviteLinkTtlHours,
     /// The stripe price id
     pub stripe_price_id: StripePriceId,
     /// The internal api key
@@ -168,7 +170,7 @@ pub struct Config {
     /// Whether Gmail link consent requests the Google Calendar scope. Off by
     /// default so deployed environments don't ask users for a scope the
     /// calendar feature isn't using yet.
-    #[conation_config_default(false)]
+    #[macro_config_default(false)]
     pub calendar_scope_enabled: bool,
 }
 
@@ -180,44 +182,10 @@ pub(crate) struct MicrosoftCredentials {
     pub(crate) token_kms_key_id: String,
 }
 
-/// Complete Google OAuth credentials used to enable Gmail account linking.
-pub(crate) struct GoogleCredentials {
-    pub(crate) client_id: String,
-    pub(crate) client_secret: String,
-}
-
-/// Complete legacy Stripe credentials.
-///
-/// They remain parseable for a future payment-required policy, but free
-/// Conation deployments deliberately do not read or validate them.
-pub(crate) struct StripeCredentials {
-    pub(crate) secret_key: String,
-    pub(crate) price_id: String,
-}
-
-const DEFAULT_AUTH_SENDER_EMAIL: &str = "auth@conation.dev";
-const DEFAULT_SUPPORT_EMAIL: &str = "pythia@conation.dev";
-// Keep this in parity with local FusionAuth kickstart: a no-Doppler value can
-// name a secret but is not itself a Google OAuth client secret.
-const GOOGLE_WEB_CLIENT_SECRET_PREFIX: &str = "GOCSPX-";
-
-/// Validated operator-owned identities used by outbound authentication mail.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub(crate) struct MailIdentity {
-    pub(crate) auth_sender_email: String,
-    pub(crate) support_email: String,
-}
-
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        let config = conation_config::ConfigLoader::load::<Config>()
-            .context("failed to load authentication service config")?;
-        validate_public_url_config(
-            config.base_url.as_ref(),
-            config.fusionauth_oauth_redirect_uri.as_ref(),
-            config.fusionauth_public_url.value(),
-        )?;
-        Ok(config)
+        macro_config::ConfigLoader::load::<Config>()
+            .context("failed to load authentication service config")
     }
 
     /// The KMS key that encrypts Cursor API keys.
@@ -240,6 +208,19 @@ impl Config {
         )
     }
 
+    /// Resolve the dedicated CMK, including Pulumi-injected process environment.
+    pub(crate) fn codex_oauth_kms_key_id(&self) -> Option<String> {
+        let process = CodexOauthKmsKeyId::new();
+        nonblank_value(self.codex_oauth_kms_key_id.value())
+            .or_else(|| {
+                process
+                    .as_ref()
+                    .and_then(CodexOauthKmsKeyId::value)
+                    .and_then(|value| nonblank_value(Some(value)))
+            })
+            .map(str::to_owned)
+    }
+
     /// Resolves Microsoft credentials, enforcing that all values are configured together.
     pub(crate) fn microsoft_credentials(&self) -> anyhow::Result<Option<MicrosoftCredentials>> {
         resolve_microsoft_credentials(
@@ -250,99 +231,23 @@ impl Config {
         )
     }
 
-    /// Resolves Google OAuth credentials, enforcing that both values are configured together.
-    pub(crate) fn google_credentials(&self) -> anyhow::Result<Option<GoogleCredentials>> {
-        resolve_google_credentials(
-            self.google_client_id.value(),
-            self.google_client_secret_key.value(),
-        )
+    /// Resolves the signup policy for the configured environment.
+    pub(crate) fn signup_policy(&self) -> anyhow::Result<SignupPolicy> {
+        self.signup_policy_for_environment(self.environment)
     }
 
-    /// Resolves legacy Stripe credentials when hosted billing is permitted by policy.
-    ///
-    /// Free Conation deployments ignore the values entirely, including an
-    /// incomplete legacy pair. A future payment-required policy retains the
-    /// pair validation before it can enable a checkout surface.
-    pub(crate) fn stripe_credentials(&self) -> anyhow::Result<Option<StripeCredentials>> {
-        resolve_stripe_billing_credentials(
-            self.environment,
-            self.stripe_secret_key.value(),
-            self.stripe_price_id.value(),
-        )
+    /// Resolves the signup policy for an explicit environment.
+    pub(crate) fn signup_policy_for_environment(
+        &self,
+        environment: Environment,
+    ) -> anyhow::Result<SignupPolicy> {
+        resolve_signup_policy(environment, &self.development_signup_allowlist_json)
     }
 
-    /// Resolves and validates the sender and support mailboxes.
-    pub(crate) fn mail_identity(&self) -> anyhow::Result<MailIdentity> {
-        resolve_mail_identity(self.auth_sender_email.value(), self.support_email.value())
+    /// Resolves the offer GTM invite links carry.
+    pub(crate) fn gtm_invite_config(&self) -> anyhow::Result<GtmInviteConfig> {
+        resolve_gtm_invite_config(&self.gtm_invite_promo_code, &self.gtm_invite_link_ttl_hours)
     }
-}
-
-fn resolve_mail_identity(
-    auth_sender_email: Option<&str>,
-    support_email: Option<&str>,
-) -> anyhow::Result<MailIdentity> {
-    Ok(MailIdentity {
-        auth_sender_email: resolve_mailbox(
-            "AUTH_SENDER_EMAIL",
-            auth_sender_email,
-            DEFAULT_AUTH_SENDER_EMAIL,
-        )?,
-        support_email: resolve_mailbox("SUPPORT_EMAIL", support_email, DEFAULT_SUPPORT_EMAIL)?,
-    })
-}
-
-fn resolve_mailbox(name: &str, configured: Option<&str>, default: &str) -> anyhow::Result<String> {
-    let value = match configured {
-        Some(value) if !value.trim().is_empty() => value.trim(),
-        Some(_) => anyhow::bail!("{name} must not be blank"),
-        None => default,
-    };
-
-    if !email_validator::is_valid_email(value) {
-        anyhow::bail!("{name} must be a valid email address");
-    }
-
-    Ok(value.to_ascii_lowercase())
-}
-
-fn parse_public_http_url(name: &str, value: &str) -> anyhow::Result<Url> {
-    let url = Url::parse(value).with_context(|| format!("{name} must be an absolute URL"))?;
-    if !matches!(url.scheme(), "http" | "https")
-        || url.host_str().is_none()
-        || !url.username().is_empty()
-        || url.password().is_some()
-        || url.query().is_some()
-        || url.fragment().is_some()
-    {
-        anyhow::bail!(
-            "{name} must contain an http(s) scheme, host, optional port, and optional path only"
-        );
-    }
-    Ok(url)
-}
-
-fn validate_public_url_config(
-    base_url: &str,
-    fusionauth_oauth_redirect_uri: &str,
-    fusionauth_public_url: Option<&str>,
-) -> anyhow::Result<()> {
-    let base_url = parse_public_http_url("BASE_URL", base_url)?;
-    let redirect_url = parse_public_http_url(
-        "FUSIONAUTH_OAUTH_REDIRECT_URI",
-        fusionauth_oauth_redirect_uri,
-    )?;
-    let expected_redirect = format!("{}/oauth/redirect", base_url.as_str().trim_end_matches('/'));
-    if redirect_url.as_str() != expected_redirect {
-        anyhow::bail!(
-            "FUSIONAUTH_OAUTH_REDIRECT_URI must equal BASE_URL + /oauth/redirect (expected {expected_redirect})"
-        );
-    }
-
-    if let Some(public_url) = nonblank_value(fusionauth_public_url) {
-        parse_public_http_url("FUSIONAUTH_PUBLIC_URL", public_url)?;
-    }
-
-    Ok(())
 }
 
 fn resolve_microsoft_credentials(
@@ -375,92 +280,52 @@ fn resolve_microsoft_credentials(
     }
 }
 
-fn resolve_google_credentials(
-    client_id: Option<&str>,
-    client_secret: Option<&str>,
-) -> anyhow::Result<Option<GoogleCredentials>> {
-    resolve_credentials_pair(
-        "GOOGLE_CLIENT_ID",
-        client_id,
-        "GOOGLE_CLIENT_SECRET_KEY",
-        client_secret,
-    )
-    .map(|credentials| {
-        credentials.and_then(|(client_id, client_secret)| {
-            client_secret
-                .starts_with(GOOGLE_WEB_CLIENT_SECRET_PREFIX)
-                .then(|| GoogleCredentials {
-                    client_id: client_id.to_owned(),
-                    client_secret: client_secret.to_owned(),
-                })
-        })
-    })
-}
-
-fn resolve_stripe_credentials(
-    secret_key: Option<&str>,
-    price_id: Option<&str>,
-) -> anyhow::Result<Option<StripeCredentials>> {
-    resolve_credentials_pair("STRIPE_SECRET_KEY", secret_key, "STRIPE_PRICE_ID", price_id).map(
-        |credentials| {
-            credentials.map(|(secret_key, price_id)| StripeCredentials {
-                secret_key: secret_key.to_owned(),
-                price_id: price_id.to_owned(),
-            })
-        },
-    )
-}
-
-fn resolve_stripe_billing_credentials(
+fn resolve_signup_policy(
     environment: Environment,
-    secret_key: Option<&str>,
-    price_id: Option<&str>,
-) -> anyhow::Result<Option<StripeCredentials>> {
-    if !CONATION_ACCESS_POLICY.requires_payment_for_features() {
-        return Ok(None);
-    }
-
-    let credentials = resolve_stripe_credentials(secret_key, price_id)?;
-    Ok(credentials
-        .filter(|credentials| stripe_billing_is_enabled_for_environment(environment, credentials)))
-}
-
-fn stripe_billing_is_enabled_for_environment(
-    environment: Environment,
-    credentials: &StripeCredentials,
-) -> bool {
-    CONATION_ACCESS_POLICY.requires_payment_for_features()
-        && stripe_credentials_are_usable_for_environment(environment, credentials)
-}
-
-fn stripe_credentials_are_usable_for_environment(
-    environment: Environment,
-    credentials: &StripeCredentials,
-) -> bool {
+    development_signup_allowlist_json: &DevelopmentSignupAllowlistJson,
+) -> anyhow::Result<SignupPolicy> {
     match environment {
-        // `run_local --no-doppler` provides a non-secret placeholder so the
-        // process can start. Only genuine Stripe API keys would be usable
-        // locally if a future product policy deliberately enabled billing.
-        Environment::Local => {
-            credentials.secret_key.starts_with("sk_") || credentials.secret_key.starts_with("rk_")
+        Environment::Production | Environment::Local => Ok(SignupPolicy::allow_all()),
+        Environment::Develop => {
+            let raw_allowlist = nonblank_value(development_signup_allowlist_json.value())
+                .context("DEVELOPMENT_SIGNUP_ALLOWLIST_JSON is required in Develop")?;
+            SignupPolicy::from_allowlist_json(raw_allowlist)
+                .context("DEVELOPMENT_SIGNUP_ALLOWLIST_JSON is invalid")
         }
-        Environment::Production | Environment::Develop => true,
     }
 }
 
-fn resolve_credentials_pair<'a>(
-    first_name: &str,
-    first: Option<&'a str>,
-    second_name: &str,
-    second: Option<&'a str>,
-) -> anyhow::Result<Option<(&'a str, &'a str)>> {
-    match (nonblank_value(first), nonblank_value(second)) {
-        (None, None) => Ok(None),
-        (Some(first), Some(second)) => Ok(Some((first, second))),
-        _ => anyhow::bail!(
-            "{first_name} and {second_name} must both be set to nonblank values or both be unset"
-        ),
+/// The promotion code applied when `GTM_INVITE_PROMO_CODE` is unset: 100% off
+/// the first month, created in Stripe for exactly this program.
+const DEFAULT_GTM_INVITE_PROMO_CODE: &str = "1MF";
+/// How long an invite link stays usable when `GTM_INVITE_LINK_TTL_HOURS` is unset.
+const DEFAULT_GTM_INVITE_LINK_TTL_HOURS: i64 = 48;
+/// Free months the default promotion grants, for user-facing copy.
+const GTM_INVITE_FREE_MONTHS: u8 = 1;
+
+fn resolve_gtm_invite_config(
+    promo_code: &GtmInvitePromoCode,
+    link_ttl_hours: &GtmInviteLinkTtlHours,
+) -> anyhow::Result<GtmInviteConfig> {
+    let promo_code: PromoCode = nonblank_value(promo_code.value())
+        .unwrap_or(DEFAULT_GTM_INVITE_PROMO_CODE)
+        .parse()
+        .context("GTM_INVITE_PROMO_CODE is invalid")?;
+    let link_ttl_hours: i64 = match nonblank_value(link_ttl_hours.value()) {
+        Some(hours) => hours
+            .trim()
+            .parse()
+            .context("GTM_INVITE_LINK_TTL_HOURS must be a whole number of hours")?,
+        None => DEFAULT_GTM_INVITE_LINK_TTL_HOURS,
+    };
+    if link_ttl_hours <= 0 {
+        anyhow::bail!("GTM_INVITE_LINK_TTL_HOURS must be positive");
     }
+    Ok(GtmInviteConfig {
+        promo_code,
+        link_ttl: chrono::Duration::hours(link_ttl_hours),
+        free_months: GTM_INVITE_FREE_MONTHS,
+    })
 }
 
 fn nonblank_value(value: Option<&str>) -> Option<&str> {

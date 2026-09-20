@@ -1,5 +1,6 @@
-import { t } from '@app/lib/i18n';
-import type { PeerIdValidator } from '@conation/lexical-core';
+import { enableSnippets, isFeatureEnabled } from '@core/constant/featureFlags';
+import { $dfsIterator, mergeRegister } from '@lexical/utils';
+import type { PeerIdValidator } from '@macro-inc/lexical-core';
 import {
   $collapseInlineSearch,
   $createAwaitNode,
@@ -13,9 +14,7 @@ import {
   InlineSearchNode,
   InlineSearchNodesType,
   validTriggerPosition,
-} from '@conation/lexical-core';
-import { ENABLE_SNIPPETS } from '@core/constant/featureFlags';
-import { $dfsIterator, mergeRegister } from '@lexical/utils';
+} from '@macro-inc/lexical-core';
 import {
   $getNodeByKey,
   $insertNodes,
@@ -207,7 +206,7 @@ function registerSnippetsPlugin(
       insertionNode.remove();
       const awaitNode = $createAwaitNode({
         awaitId,
-        text: t('editor.snippets.inserting'),
+        text: 'Inserting snippet...',
         inline: true,
       });
       const awaitNodeKey = awaitNode.getKey();
@@ -219,7 +218,7 @@ function registerSnippetsPlugin(
   function typeSymbolCommand() {
     // Checked per keystroke so the PostHog flag applies without a reload;
     // when disabled the `;` falls through as regular text.
-    if (!ENABLE_SNIPPETS()) return false;
+    if (!isFeatureEnabled(enableSnippets)) return false;
     const shouldTrigger = validTriggerPosition(editor);
     if (shouldTrigger) {
       editor.update(() => {

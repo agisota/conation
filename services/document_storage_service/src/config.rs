@@ -62,7 +62,7 @@ maybe_env_vars! {
     pub struct LivekitTranscriptionAgentName;
     /// Shared secret for internal call endpoints (e.g. transcript ingestion from the agent).
     pub struct InternalCallSecret;
-    /// Public base URL of this service (e.g. `https://cloud-storage.macro.com`),
+    /// Public base URL of this service (e.g. `https://gateway.macro.com/dss`),
     /// used to build the ring-status URL included in VoIP push payloads.
     /// When unset, payloads omit the URL and native ring-status polling is off.
     pub struct CallRingStatusBaseUrl;
@@ -156,6 +156,14 @@ pub struct Config {
     /// synced reminder schedules produce no notifications until enabled.
     #[conation_config_default(false)]
     pub calendar_reminder_dispatch_enabled: bool,
+
+    /// Master switch for the legacy document comment writers: comment create,
+    /// edit and delete, and anchor delete, which also deletes the thread.
+    /// Set to `false` for the final pass of the legacy comment importer, before
+    /// the new document discussion UI is enabled; those handlers then answer
+    /// 503 and the importer works from a frozen source.
+    #[macro_config_default(true)]
+    pub legacy_comment_writes_enabled: bool,
 
     /// The number of seconds a signed document or call recording URL is valid for.
     #[conation_config_default(DEFAULT_PRESIGNED_URL_EXPIRY_SECONDS)]
