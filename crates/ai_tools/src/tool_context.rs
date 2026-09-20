@@ -279,7 +279,7 @@ pub fn build_channel_tool_context_with_side_effects(
         NotificationChannelSender::new(notification_ingress),
         ContactsChannelDispatcher::new(contacts_ingress),
     )
-    .with_conation_event_broker(clients.macro_event_broker.clone());
+    .with_macro_event_broker(clients.macro_event_broker.clone());
     let dispatcher: ToolChannelEventDispatcher =
         Arc::new(SpawnedChannelEventDispatcher::new(side_effects));
     let access = entity_access::domain::service::EntityAccessServiceImpl::new(

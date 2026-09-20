@@ -968,7 +968,7 @@ async fn run() -> anyhow::Result<()> {
         NotificationChannelSender::new(notification_ingress_service.clone()),
         ContactsChannelDispatcher::new(contacts_ingress.clone()),
     )
-    .with_conation_event_broker(macro_event_broker.clone());
+    .with_macro_event_broker(macro_event_broker.clone());
 
     let channels_service = Arc::new(
         ChannelServiceImpl::with_dependencies(

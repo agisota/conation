@@ -792,7 +792,7 @@ async fn run() -> anyhow::Result<()> {
         NotificationChannelSender::new(Arc::clone(&notifications)),
         ContactsChannelDispatcher::new(contacts_ingress),
     )
-    .with_conation_event_broker(broker.clone());
+    .with_macro_event_broker(broker.clone());
     let lexical = LexicalClient::new(
         config.internal_api_key.clone(),
         LexicalServiceUrl::new()?.to_string(),

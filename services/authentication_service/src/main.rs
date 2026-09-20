@@ -395,7 +395,7 @@ async fn main() -> anyhow::Result<()> {
         NotificationChannelSender::new(notification_ingress_service.clone()),
         ContactsChannelDispatcher::new(contacts_ingress),
     )
-    .with_conation_event_broker(macro_event_broker.clone());
+    .with_macro_event_broker(macro_event_broker.clone());
     let channel_event_dispatcher = SpawnedChannelEventDispatcher::new(channel_side_effects);
     let channel_service = ChannelServiceImpl::with_dependencies(
         PgChannelsRepo::new(db.clone()),
