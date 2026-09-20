@@ -1770,57 +1770,6 @@ export const AppSidebar = (props: AppSidebarProps) => {
         <Show keyed when={isExpandedView() ? firstTeamInvite() : undefined}>
           {(invite) => <TeamInviteSidebarPromo invite={invite} />}
         </Show>
-        <Show
-          when={
-            __omp_shell("hasPaidAccess() &&")
-            isExpandedView() &&
-            __omp_shell("userInvitesQuery.isLoading &&")
-            __omp_shell("firstTeamInvite() &&")
-            __omp_shell("premiumCardDismissed() &&")
-            newPricingFF().enabled
-          }
-        >
-          <SidebarPromoCard
-            label="Upgrade to Premium"
-            description="Unlock MCP integrations, better AI models, and team collaboration."
-            onDismiss={() => {
-              setPremiumCardDismissed(true);
-              setPremiumHintVisible(true);
-            }}
-            primaryAction={{
-              label: 'Upgrade',
-              onClick: () => openSettingsTab('Billing'),
-            }}
-            secondaryAction={{
-              label: 'Later',
-              onClick: () => {
-                setPremiumCardDismissed(true);
-                setPremiumHintVisible(true);
-              },
-            }}
-          />
-        </Show>
-        <Show
-          when={
-            __omp_shell("hasPaidAccess() &&")
-            isExpandedView() &&
-            __omp_shell("userInvitesQuery.isLoading() &&")
-            __omp_shell("firstTeamInvite() &&")
-            premiumHintVisible() &&
-            premiumCardDismissed() &&
-            newPricingFF().enabled
-          }
-        >
-          <SidebarPromoHint
-            title="Maybe later"
-            message="You can upgrade anytime from Account settings."
-            onDone={() => setPremiumHintVisible(false)}
-            secondaryAction={{
-              label: 'Take me there',
-              onClick: () => openSettingsTab('Account'),
-            }}
-          />
-        </Show>
         <Show when={isExpandedView() && tryItems().length > 0}>
           <TryCard items={tryItems()} onDismiss={dismissTrySection} />
         </Show>
