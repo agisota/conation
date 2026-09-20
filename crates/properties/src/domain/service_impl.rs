@@ -40,11 +40,11 @@ use super::events::{
 };
 use super::metadata;
 use super::model::{
-    EditReceipt, EntityOptionUpdateOutcome, EntityPropertyInfo, EntityPropertyOptionSelection,
-    EntityPropertyOptionUpdate, PropertyAccessReceiptExt, PropertyDefinitionOwner,
-    PropertyOptionReplaceOutcome, PropertyOptionReplacePlan, PropertyTargetKey,
-    ResolvedPropertySubject, TagPromotionOutcome, TagRemapOutcome, TagScope, TagSet,
-    UpdatePropertyOptionOutcome, ViewReceipt,
+    CreatePropertyDefinitionOutcome, EditReceipt, EntityOptionUpdateOutcome, EntityPropertyInfo,
+    EntityPropertyOptionSelection, EntityPropertyOptionUpdate, PropertyAccessReceiptExt,
+    PropertyDefinitionOwner, PropertyOptionReplaceOutcome, PropertyOptionReplacePlan,
+    PropertyTargetKey, ResolvedPropertySubject, TagPromotionOutcome, TagRemapOutcome, TagScope,
+    TagSet, UpdatePropertyOptionOutcome, ViewReceipt,
 };
 use super::ports::{NotificationService, PermissionService, PropertiesRepo};
 use super::service::{PropertiesService, TeamReceipt, team_id_from_receipt};
@@ -1086,7 +1086,7 @@ where
         user_id: &MacroUserIdStr<'_>,
         team: Option<&TeamReceipt>,
         request: &CreatePropertyDefinitionRequest,
-    ) -> Result<PropertyDefinition, PropertiesErr> {
+    ) -> Result<PropertyDefinitionWithOptions, PropertiesErr> {
         // Derive the owner from the authenticated caller - clients never supply owner ids.
         let owner = match request.scope {
             CreatePropertyScope::User => PropertyDefinitionOwner::User(user_id),
@@ -1118,7 +1118,7 @@ where
             _ => Vec::new(),
         };
 
-        let property = self
+        let outcome = self
             .repository
             .create_property_definition(
                 owner,
@@ -1131,15 +1131,22 @@ where
             .await
             .map_err(anyhow::Error::from)?;
 
+        let created = match outcome {
+            CreatePropertyDefinitionOutcome::Created(created) => created,
+            CreatePropertyDefinitionOutcome::DuplicateDisplayName => {
+                return Err(PropertiesErr::DuplicatePropertyName);
+            }
+        };
+
         tracing::info!(
-            property_id = %property.id,
-            data_type = ?property.data_type,
+            property_id = %created.definition.id,
+            data_type = ?created.definition.data_type,
             "successfully created property definition"
         );
 
-        self.publish_property_event(Self::property_created_event(&property, user_id));
+        self.publish_property_event(Self::property_created_event(&created.definition, user_id));
 
-        Ok(property)
+        Ok(created)
     }
 
     #[tracing::instrument(skip(self, team), err)]

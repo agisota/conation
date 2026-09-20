@@ -13,6 +13,7 @@ use models_properties::service::property_definition::PropertyDefinition;
 use models_properties::service::property_option::{PropertyOption, PropertyOptionValue};
 use models_properties::service::property_value::PropertyValue;
 use models_properties::{DataType, EntityReference, EntityType, PropertyOwner};
+use models_properties::service::property_definition_with_options::PropertyDefinitionWithOptions;
 use uuid::Uuid;
 
 pub use system_properties::CRM_TEAM_STAGE_DEFINITION_NAME;
@@ -377,6 +378,15 @@ pub enum UpdatePropertyOptionOutcome {
     NotFound,
     /// Another option on the same property already has the requested value.
     DuplicateValue,
+}
+
+/// Outcome of creating a property definition.
+#[derive(Debug, Clone)]
+pub enum CreatePropertyDefinitionOutcome {
+    /// The definition (and any select options) were persisted.
+    Created(PropertyDefinitionWithOptions),
+    /// The owner already has a property with that display name.
+    DuplicateDisplayName,
 }
 
 /// A task-assignment notification expressed in domain terms.

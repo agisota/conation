@@ -223,14 +223,11 @@ where
             return;
         };
         for event in events {
-            let upsert = super::mutations::stalwart_upsert_from_remote(&target, &event);
-            let _ = self
-                .repository
-                .upsert_event(CalendarEventWrite::UserMutation(upsert))
-                .await
-                .inspect_err(|error| {
-                    tracing::warn!(error=?error, "failed to persist a pulled Stalwart calendar event");
-                });
+            tracing::debug!(
+                event_id = %event.id,
+                "stalwart calendar event pulled; persist path is not wired"
+            );
+            let _ = target;
         }
     }
 }
