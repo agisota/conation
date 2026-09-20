@@ -9,7 +9,7 @@ askama = { workspace = true }
 chrono = { workspace = true }
 hmac = { workspace = true }
 conation_service_urls = { path = "../conation_service_urls" }
-conation_user_id = { path = "../conation_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 model_notifications = { path = "../model_notifications" }
 notification = { path = "../notification" }
 rootcause = { workspace = true }

@@ -91,7 +91,7 @@ fn file_association(s: &str) -> IResult<&str, FileAssociation> {
 }
 
 fn expand_file_association(association: FileAssociation) -> impl Iterator<Item = FileType> {
-    FileType::iter().filter(move |ty| ty.macro_app_path().eq(&association))
+    FileType::iter().filter(move |ty| ty.conation_app_path().eq(&association))
 }
 
 /// other is defined as
@@ -107,7 +107,7 @@ fn other(s: &str) -> IResult<&str, impl Iterator<Item = FileType>> {
     tag("other")
         .map(|_| {
             FileType::iter().filter(|ty| {
-                let association = ty.macro_app_path();
+                let association = ty.conation_app_path();
                 *ty != FileType::Spreadsheet
                     && !matches!(
                         association,

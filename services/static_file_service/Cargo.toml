@@ -18,7 +18,7 @@ path = "src/doppler_config.rs"
 
 [features]
 dynamodb_client_test = []
-local_auth = ["conation_authorization/local_auth"]
+local_auth = ["macro_authorization/local_auth"]
 tree_trace = []
 
 [dependencies]
@@ -31,7 +31,7 @@ axum = { workspace = true, features = ["tower-log", "ws"] }
 chrono = { workspace = true }
 doppler-config = { workspace = true }
 conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { package = "macro_authorization", path = "../../crates/conation_authorization" }
+macro_authorization = { path = "../../crates/conation_authorization" }
 conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
 conation_config = { path = "../../crates/conation_config" }
 conation_cors = { path = "../../crates/conation_cors" }

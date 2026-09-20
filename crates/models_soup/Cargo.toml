@@ -18,7 +18,7 @@ document_sub_type = { path = "../document_sub_type" }
 doppleganger = { workspace = true, features = ["chrono", "uuid"] }
 email = { path = "../email" }
 item_filters = { path = "../item_filters" }
-conation_user_id = { path = "../conation_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 model = { path = "../model" }
 model-entity = { path = "../model-entity" }
 models_pagination = { path = "../models_pagination" }

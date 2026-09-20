@@ -29,11 +29,11 @@ graphql_notification = { path = "../graphql_notification" }
 graphql_permission = { path = "../graphql_permission" }
 graphql_properties = { path = "../graphql_properties" }
 graphql_soup = { path = "../graphql_soup" }
-conation_authorization = { package = "macro_authorization", path = "../conation_authorization", features = [
+macro_authorization = { path = "../conation_authorization", features = [
   "axum",
   "outbound",
 ] }
-conation_user_id = { path = "../conation_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 model-entity = { path = "../model-entity" }
 model_notifications = { path = "../model_notifications" }
 notification = { path = "../notification" }

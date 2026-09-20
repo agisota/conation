@@ -69,7 +69,7 @@ conation_authorization = { package = "macro_authorization", path = "../conation_
 conation_event_broker = { path = "../conation_event_broker", default-features = false }
 conation_event_topics = { path = "../conation_event_topics" }
 entity_mutation = { path = "../entity_mutation" }
-conation_user_id = { path = "../conation_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 conation_uuid = { path = "../conation_uuid" }
 model-entity = { path = "../model-entity" }
 non_empty = { path = "../non_empty", optional = true }

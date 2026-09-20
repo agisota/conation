@@ -44,7 +44,7 @@ futures = { workspace = true, optional = true }
 kafka_util = { path = "../kafka_util", optional = true }
 conation_event_broker = { path = "../conation_event_broker", default-features = false }
 conation_event_topics = { path = "../conation_event_topics" }
-conation_user_id = { path = "../conation_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 model-entity = { path = "../model-entity" }
 models_properties = { path = "../models_properties", optional = true }
 projects = { path = "../projects", default-features = false, features = ["service"], optional = true }

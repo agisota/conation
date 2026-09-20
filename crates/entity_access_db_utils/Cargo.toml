@@ -7,12 +7,12 @@ version = "0.1.0"
 [dependencies]
 # Core
 anyhow = { workspace = true }
-conation_uuid = { path = "../conation_uuid" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid" }
 serde = { workspace = true }
 sqlx = { workspace = true }
 tracing = { workspace = true }
 
-conation_user_id = { path = "../conation_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 model-entity = { path = "../model-entity" }
 model_owner = { path = "../model_owner" }
 models_entity_access_management = { path = "../models_entity_access_management", features = [
