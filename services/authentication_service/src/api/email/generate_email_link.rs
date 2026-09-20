@@ -159,7 +159,7 @@ pub async fn handler(
         .to_string();
 
     let (minute, daily) = ctx
-        .conation_cache_client
+        .macro_cache_client
         .get_resend_verify_email_rate_limits(&req.email)
         .await
         .map_err(|e| {
@@ -286,7 +286,7 @@ pub async fn handler(
         &BASE_URL,
         link_id,
         locale,
-        &ctx.mail_identity.support_email,
+        "pythia@conation.dev",
     )
     .map_err(|e| {
         tracing::error!(error=?e, "failed to render verification email");
@@ -300,7 +300,7 @@ pub async fn handler(
     // Send email
     ctx.ses_client
         .send_email(
-            &ctx.mail_identity.auth_sender_email,
+            "auth@conation.dev",
             &req.email,
             email.subject(),
             email.html(),

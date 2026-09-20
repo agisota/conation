@@ -11,6 +11,7 @@ use utoipa::ToSchema;
 
 use crate::{
     api::context::{ApiContext, AuthorizationService},
+    config::BASE_URL,
     rate_limit_config::RATE_LIMIT_CONFIG,
 };
 
@@ -163,14 +164,14 @@ pub async fn handler(
     let content = render_merge_request_email(
         &user_profile.email,
         &code,
-        ctx.app_base_url.as_str(),
-        &ctx.mail_identity.support_email,
+        BASE_URL.as_str(),
+        "pythia@conation.dev",
     );
 
     if let Err(e) = ctx
         .ses_client
         .send_email(
-            &ctx.mail_identity.auth_sender_email,
+            "auth@conation.dev",
             &req.email,
             MERGE_REQUEST_SUBJECT,
             &content,

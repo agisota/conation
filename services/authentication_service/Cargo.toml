@@ -39,6 +39,7 @@ aes-gcm = { workspace = true }
 calendar_events = { path = "../../crates/calendar_events" }
 analytics_client = { path = "../../crates/analytics_client" }
 anyhow = { workspace = true }
+backend_i18n = { path = "../../crates/backend_i18n" }
 async-trait = { workspace = true }
 async-stripe = { workspace = true, default-features = false, features = [
   "billing",
@@ -81,6 +82,7 @@ github = { path = "../../crates/github", default-features = false, features = [
   "outbound",
 ] }
 http-body-util = { workspace = true }
+hmac = { workspace = true }
 jsonwebtoken = { workspace = true }
 last_online_tracker = { path = "../../crates/last_online_tracker" }
 loops_client = { path = "../../crates/loops_client" }
@@ -143,6 +145,7 @@ serde_json = { workspace = true }
 serde_utils = { path = "../../crates/serde_utils", features = ["urlencode"] }
 ses_client = { path = "../../crates/ses_client" }
 sha1 = "0.10.6"
+sha2 = { workspace = true }
 sqlx = { workspace = true }
 sqs_client = { path = "../../crates/sqs_client", default-features = false, features = [
   "email",

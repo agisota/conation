@@ -1,4 +1,4 @@
-use crate::api::context::{AuthorizationService, ConationApiTokenContext};
+use crate::api::context::{AuthorizationService, MacroApiTokenContext};
 use axum::{
     Json,
     extract::{Query, State},
@@ -45,7 +45,7 @@ pub struct ConationApiTokenQuery {
 #[tracing::instrument(skip(db, conation_api_token_context, authorization))]
 pub async fn handler(
     State(db): State<PgPool>,
-    State(conation_api_token_context): State<ConationApiTokenContext>,
+    State(conation_api_token_context): State<MacroApiTokenContext>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
     Query(query): Query<ConationApiTokenQuery>,
 ) -> Result<Response, Response> {
