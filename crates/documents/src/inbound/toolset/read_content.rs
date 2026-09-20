@@ -183,7 +183,7 @@ where
                 internal_error: e.into(),
             })?)
         } else {
-            match file_type.macro_app_path() {
+            match file_type.conation_app_path() {
                 FileAssociation::Pdf(_) | FileAssociation::Write(_) => Content::Text(
                     service_context
                         .service

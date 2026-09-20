@@ -1,7 +1,7 @@
 //! Outbound adapter for the AI editing worker.
 
 use crate::domain::ports::editing::{EditMode, EditResult, EditUsage, EditingWorkerService};
-use macro_sync_service_jwt::DocumentPermissionToken;
+use conation_sync_service_jwt::DocumentPermissionToken;
 use reqwest::Client;
 use std::sync::Arc;
 

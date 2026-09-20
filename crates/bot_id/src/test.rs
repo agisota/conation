@@ -39,11 +39,11 @@ fn bot_id_str_from_bot_id_creates_storage_string() {
 #[test]
 fn system_bot_id_is_stable_and_distinct_from_ai_personas() {
     assert_eq!(
-        CONATION_SYSTEM_BOT_ID.into_storage_id().as_ref(),
+        MACRO_SYSTEM_BOT_ID.into_storage_id().as_ref(),
         "bot|00000000-0000-0000-0000-000000005759"
     );
-    assert_ne!(CONATION_SYSTEM_BOT_ID, CONATION_AI_BOT_ID);
-    assert_ne!(CONATION_SYSTEM_BOT_ID, CONATION_CODER_BOT_ID);
+    assert_ne!(MACRO_SYSTEM_BOT_ID, CONATION_AI_BOT_ID);
+    assert_ne!(MACRO_SYSTEM_BOT_ID, CONATION_CODER_BOT_ID);
 }
 
 #[test]
@@ -72,7 +72,7 @@ fn system_bot_display_names_and_handles_use_conation() {
     );
     assert_eq!(system_bot(CONATION_CODER_BOT_ID).unwrap().handle, "coder");
     assert_eq!(
-        system_bot(CONATION_SYSTEM_BOT_ID).unwrap().handle,
+        system_bot(MACRO_SYSTEM_BOT_ID).unwrap().handle,
         "conation-system"
     );
 }

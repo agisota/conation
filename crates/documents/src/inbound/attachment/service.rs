@@ -209,7 +209,7 @@ impl<DSvc: DocumentService, ESvc: EntityAccessService> DocumentAttachmentService
             });
         }
 
-        let content = match file_type.macro_app_path() {
+        let content = match file_type.conation_app_path() {
             FileAssociation::Pdf(_) | FileAssociation::Write(_) => {
                 let text = self
                     .document_service

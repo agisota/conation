@@ -19,7 +19,7 @@ use entity_access::domain::models::{
     MemberTeamRole, OwnerAccessLevel, RequiredPermission, TeamRole, UserTeamInfo, ViewAccessLevel,
 };
 use lexical_client::LexicalClient;
-use macro_sync_service_jwt::DocumentPermissionToken;
+use conation_sync_service_jwt::DocumentPermissionToken;
 use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use model::{document::DocumentBasic, sync_service::SyncServiceVersionID};
 use model_entity::Entity;

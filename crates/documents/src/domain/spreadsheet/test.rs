@@ -58,7 +58,7 @@ async fn reads_mint_only_view_access_and_preserve_delegated_actor() {
             assert_eq!(id, DOCUMENT);
             assert!(matches!(request, SpreadsheetRequest::Read { .. }));
             let claims: serde_json::Value =
-                macro_sync_service_jwt::decode(token.as_str(), SECRET).unwrap();
+                conation_sync_service_jwt::decode(token.as_str(), SECRET).unwrap();
             assert_eq!(claims["document_id"], DOCUMENT);
             assert_eq!(claims["access_level"], "view");
             assert_eq!(claims["user_id"], "macro|sheets@macro.com");
@@ -85,7 +85,7 @@ async fn reads_mint_only_view_access_and_preserve_delegated_actor() {
 async fn edits_forward_exact_revision_with_edit_token() {
     let mut worker = MockEditingWorkerService::new();
     worker.expect_spreadsheet().times(1).returning(|_, token, request| {
-        let claims: serde_json::Value = macro_sync_service_jwt::decode(token.as_str(), SECRET).unwrap();
+        let claims: serde_json::Value = conation_sync_service_jwt::decode(token.as_str(), SECRET).unwrap();
         assert_eq!(claims["access_level"], "edit");
         assert!(matches!(request, SpreadsheetRequest::Edit { expected_revision, operations } if expected_revision == "seen" && operations.len() == 1));
         Box::pin(async { Ok(response()) })

@@ -9,6 +9,7 @@ use macro_user_id::user_id::MacroUserIdStr;
 use crate::domain::content::DocumentContent;
 use crate::domain::models::{CreateDocumentRepoArgs, CreateTaskRequest, DocumentError};
 use crate::domain::response::CreateDocumentResponseData;
+use model::document::FileType;
 
 /// Uploaded document bytes and metadata for a presigned object-storage URL.
 pub struct DocumentBytesUpload {
@@ -65,6 +66,20 @@ pub trait DocumentCreationService: Send + Sync {
 
     /// Clean up a document that failed after its database row was created.
     fn cleanup_created_document(&self, document_id: &str) -> impl Future<Output = ()> + Send;
+
+    /// Overwrite a document's object-storage bytes with UTF-8 text.
+    fn overwrite_plain_text(
+        &self,
+        document_id: &str,
+        file_type: FileType,
+        text: String,
+    ) -> impl Future<Output = Result<(), DocumentError>> + Send;
+
+    /// Read a document's object-storage bytes as UTF-8 text.
+    fn read_plain_text(
+        &self,
+        document_id: &str,
+    ) -> impl Future<Output = Result<Option<String>, DocumentError>> + Send;
 }
 
 impl<T> DocumentCreationService for Arc<T>
@@ -106,5 +121,23 @@ where
 
     async fn cleanup_created_document(&self, document_id: &str) {
         (**self).cleanup_created_document(document_id).await
+    }
+
+    async fn overwrite_plain_text(
+        &self,
+        document_id: &str,
+        file_type: FileType,
+        text: String,
+    ) -> Result<(), DocumentError> {
+        (**self)
+            .overwrite_plain_text(document_id, file_type, text)
+            .await
+    }
+
+    async fn read_plain_text(
+        &self,
+        document_id: &str,
+    ) -> Result<Option<String>, DocumentError> {
+        (**self).read_plain_text(document_id).await
     }
 }

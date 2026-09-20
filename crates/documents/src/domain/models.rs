@@ -376,7 +376,7 @@ impl ImportEmailAttachmentRepoArgs {
     /// is unchanged.
     pub fn resolved_attribution(&self) -> Attribution {
         self.create.attribution.clone().unwrap_or_else(|| {
-            Attribution::direct(Actor::new_from_bot(bot_id::CONATION_SYSTEM_BOT_ID))
+            Attribution::direct(Actor::new_from_bot(bot_id::MACRO_SYSTEM_BOT_ID))
         })
     }
 }

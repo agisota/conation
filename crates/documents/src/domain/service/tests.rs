@@ -2529,7 +2529,7 @@ async fn create_document_publishes_resolved_attribution() {
     );
     assert_eq!(
         published[0].payload["metadata"]["actor"],
-        bot_id::CONATION_SYSTEM_BOT_ID.into_storage_id().as_ref()
+        bot_id::MACRO_SYSTEM_BOT_ID.into_storage_id().as_ref()
     );
     assert!(
         published[0].payload["metadata"]

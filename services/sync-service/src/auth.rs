@@ -148,7 +148,7 @@ pub fn spreadsheet_access(
     let token = header
         .strip_prefix("Bearer ")
         .ok_or(SpreadsheetError::Unauthorized)?;
-    let claims = macro_sync_service_jwt::decode::<AuthToken>(
+    let claims = conation_sync_service_jwt::decode::<AuthToken>(
         token,
         &Secrets::from(env).document_permissions_secret,
     )

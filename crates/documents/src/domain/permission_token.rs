@@ -2,7 +2,7 @@
 //! sync service to authorize document access.
 
 use crate::domain::models::DocumentError;
-use macro_sync_service_jwt::{DocumentPermissionToken, ISSUER, TOKEN_TTL_SECS};
+use conation_sync_service_jwt::{DocumentPermissionToken, ISSUER, TOKEN_TTL_SECS};
 use macro_user_id::user_id::MacroUserIdStr;
 use models_permissions::share_permission::access_level::AccessLevel;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -39,7 +39,7 @@ pub fn encode_permission_token(
         .unwrap()
         .as_secs() as usize;
 
-    Ok(macro_sync_service_jwt::encode(
+    Ok(conation_sync_service_jwt::encode(
         &PermissionTokenClaims {
             user_id,
             document_id,
@@ -58,5 +58,5 @@ pub(crate) fn decode_permission_token(
     token: &DocumentPermissionToken,
     jwt_secret: &str,
 ) -> Result<PermissionTokenClaims, DocumentError> {
-    Ok(macro_sync_service_jwt::decode(token.as_str(), jwt_secret)?)
+    Ok(conation_sync_service_jwt::decode(token.as_str(), jwt_secret)?)
 }

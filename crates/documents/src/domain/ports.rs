@@ -340,6 +340,20 @@ pub trait PresignedUploadUrlPort: Send + Sync + 'static {
         document_id: &str,
         bytes: Vec<u8>,
     ) -> impl Future<Output = anyhow::Result<()>> + Send;
+
+    /// Overwrite object-storage bytes at `key`.
+    fn put_document_storage_object(
+        &self,
+        key: &str,
+        content_type: ContentType,
+        bytes: Vec<u8>,
+    ) -> impl Future<Output = anyhow::Result<()>> + Send;
+
+    /// Read object-storage bytes at `key`.
+    fn get_document_storage_object(
+        &self,
+        key: &str,
+    ) -> impl Future<Output = anyhow::Result<Option<Vec<u8>>>> + Send;
 }
 
 /// Port for attaching task system properties.

@@ -55,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
     let db = PgPoolOptions::new()
         .min_connections(min_connections)
         .max_connections(max_connections)
-        .connect(&config.macro_db_url)
+        .connect(&config.conation_db_url)
         .await
         .context("could not connect to db")?;
 

@@ -6,7 +6,7 @@ fn native_spreadsheet_extension_and_content_type_round_trip() {
     assert_eq!(file_type, FileType::Spreadsheet);
     assert_eq!(file_type.as_str(), "spreadsheet");
     assert_eq!(file_type.mime_type(), "application/x-macro-spreadsheet");
-    assert_eq!(file_type.macro_app_path().to_string(), "document");
+    assert_eq!(file_type.conation_app_path().to_string(), "document");
     assert_eq!(
         ContentType::from_str(file_type.mime_type()).unwrap(),
         ContentType::Spreadsheet
