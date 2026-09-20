@@ -12,7 +12,7 @@
 use std::{borrow::Cow, fmt, ops::Deref};
 
 #[doc(hidden)]
-pub use macro_env;
+pub use conation_env;
 #[doc(hidden)]
 pub use paste;
 use thiserror::Error;
@@ -278,7 +278,7 @@ macro_rules! service_url {
                         return Ok(Self($crate::ServiceUrl::owned(value)));
                     }
 
-                    Ok(Self::default_for_environment($crate::macro_env::Environment::new_or_prod()))
+                    Ok(Self::default_for_environment($crate::conation_env::Environment::new_or_prod()))
                 }
 
                 #[doc = "Create a new instance of [`Self`], panicking if the override env var is set but cannot be read."]
@@ -289,7 +289,7 @@ macro_rules! service_url {
 
                 #[doc = "Create a new instance of [`Self`] for a specific environment, using the override env var if set."]
                 #[allow(dead_code)]
-                $v fn new_for_environment(environment: $crate::macro_env::Environment) -> Result<Self, $crate::ServiceUrlVarErr> {
+                $v fn new_for_environment(environment: $crate::conation_env::Environment) -> Result<Self, $crate::ServiceUrlVarErr> {
                     if let Some(value) = $crate::read_override_env(Self::OVERRIDE_ENV_VAR_NAME)? {
                         return Ok(Self($crate::ServiceUrl::owned(value)));
                     }
@@ -299,11 +299,11 @@ macro_rules! service_url {
 
                 #[doc = "Create a new instance of [`Self`] for a specific environment without checking the override env var."]
                 #[allow(dead_code)]
-                $v const fn default_for_environment(environment: $crate::macro_env::Environment) -> Self {
+                $v const fn default_for_environment(environment: $crate::conation_env::Environment) -> Self {
                     match environment {
-                        $crate::macro_env::Environment::Local => Self::from_static(Self::LOCAL),
-                        $crate::macro_env::Environment::Develop => Self::from_static(Self::DEV),
-                        $crate::macro_env::Environment::Production => Self::from_static(Self::PROD),
+                        $crate::conation_env::Environment::Local => Self::from_static(Self::LOCAL),
+                        $crate::conation_env::Environment::Develop => Self::from_static(Self::DEV),
+                        $crate::conation_env::Environment::Production => Self::from_static(Self::PROD),
                     }
                 }
 
@@ -457,7 +457,7 @@ macro_rules! service_url {
                 #[doc = "Create a new instance of [`Self`] with all service URLs resolved for the current macro environment."]
                 #[allow(dead_code)]
                 $v fn new() -> Result<Self, $crate::ServiceUrlVarErr> {
-                    let environment = $crate::macro_env::Environment::new_or_prod();
+                    let environment = $crate::conation_env::Environment::new_or_prod();
                     Self::new_for_environment(environment)
                 }
 
@@ -469,7 +469,7 @@ macro_rules! service_url {
 
                 #[doc = "Create a new instance of [`Self`] with all service URLs resolved for a specific environment."]
                 #[allow(dead_code)]
-                $v fn new_for_environment(environment: $crate::macro_env::Environment) -> Result<Self, $crate::ServiceUrlVarErr> {
+                $v fn new_for_environment(environment: $crate::conation_env::Environment) -> Result<Self, $crate::ServiceUrlVarErr> {
                     Ok(Self {
                         $(
                             [<$field_name:snake>]: $field_name::new_for_environment(environment)?,
@@ -479,7 +479,7 @@ macro_rules! service_url {
 
                 #[doc = "Create a new instance of [`Self`] with all service URLs set to environment defaults without checking overrides."]
                 #[allow(dead_code)]
-                $v const fn default_for_environment(environment: $crate::macro_env::Environment) -> Self {
+                $v const fn default_for_environment(environment: $crate::conation_env::Environment) -> Self {
                     Self {
                         $(
                             [<$field_name:snake>]: $field_name::default_for_environment(environment),

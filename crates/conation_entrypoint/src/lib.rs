@@ -10,7 +10,7 @@ mod test;
 
 pub use shutdown::shutdown_signal;
 
-use conation_env::Environment;
+use macro_env::Environment;
 use macro_env_var::{env_vars, maybe_env_vars};
 use opentelemetry::trace::TracerProvider as _;
 use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
