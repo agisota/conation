@@ -296,7 +296,7 @@ pub async fn upsert_message(
                 sent_at: event_sent_at.unwrap_or_else(chrono::Utc::now),
             }),
         };
-        publish_email_event(&ctx.macro_event_broker, &event);
+        publish_email_event(&ctx.conation_event_broker, &event);
     }
 
     handle_attachment_upload(ctx, link, payload, &message.attachments).await?;
