@@ -13,7 +13,20 @@ const create = vi.hoisted(() => ({
   reject: undefined as (() => void) | undefined,
   control: vi.fn(),
 }));
+const send = vi.hoisted(() => {
+  const make = () => ({
+    adopt: vi.fn(),
+    created: vi.fn(),
+    prompted: vi.fn(),
+    end: vi.fn(),
+    run: <T>(operation: () => T) => operation(),
+  });
+  return { startSend: vi.fn(() => make()) };
+});
 
+vi.mock('@core/agent-session/send-telemetry', () => ({
+  startSend: send.startSend,
+}));
 vi.mock('@service-agent-harness/client', () => ({
   agentHarnessServiceClient: {
     create: vi.fn(
@@ -57,7 +70,10 @@ const { resolveSessionId } = await import('./resolve-session-id');
 /** Let the mocked create's `.then` run. */
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-beforeEach(() => create.control.mockReset());
+beforeEach(() => {
+  create.control.mockReset();
+  send.startSend.mockClear();
+});
 
 describe('a block id that is already a session', () => {
   it('resolves to itself, never pending', () => {
@@ -142,20 +158,34 @@ describe('an id whose create is in flight', () => {
     });
     await createRoot(async (dispose) => {
       const resolved = resolveSessionId(() => placeholder);
-      create.resolve?.();
+      create.resolve?.('session-10');
       await flush();
       await flush();
 
       expect(create.control.mock.calls).toEqual([
-        [placeholder, { type: 'prompt', prompt: 'Fix the tests' }],
+        ['session-10', { type: 'prompt', prompt: 'Fix the tests' }],
       ]);
-      expect(resolved.sessionId()).toBe(placeholder);
+      expect(resolved.sessionId()).toBe('session-10');
+      expect(send.startSend).toHaveBeenCalledWith(
+        placeholder,
+        expect.objectContaining({
+          surface: 'new_chat',
+          promptChars: 'Fix the tests'.length,
+        })
+      );
+      const trace = send.startSend.mock.results.at(-1)?.value as {
+        adopt: ReturnType<typeof vi.fn>;
+        created: ReturnType<typeof vi.fn>;
+        prompted: ReturnType<typeof vi.fn>;
+      };
+      expect(trace.adopt).toHaveBeenCalledWith('session-10');
+      expect(trace.created).toHaveBeenCalledOnce();
+      expect(trace.prompted).toHaveBeenCalledWith('action-1');
       dispose();
     });
   });
 
-  // The prompt shows as sent from the block's own speculation the moment the
-  // session exists; the block must not wait for the harness to accept it.
+  // The block must not wait for the harness to accept the prompt.
   it('has the session as soon as the create lands, prompt still on the wire', async () => {
     let deliver: ((result: unknown) => void) | undefined;
     create.control.mockReturnValue(
@@ -194,6 +224,13 @@ describe('an id whose create is in flight', () => {
       await flush();
       expect(resolved.error()).toBe('Runtime is disconnected.');
       expect(resolved.pending()).toBe(false);
+      const trace = send.startSend.mock.results.at(-1)?.value as {
+        end: ReturnType<typeof vi.fn>;
+      };
+      expect(trace.end).toHaveBeenCalledWith(
+        'failed',
+        'Runtime is disconnected.'
+      );
       dispose();
     });
   });

@@ -35,6 +35,7 @@ import type {
 } from '@service-agent-harness/generated/schemas';
 import { v7 as uuidv7 } from 'uuid';
 import { SessionLoadTrace, traceAcquire } from './load-telemetry';
+import { observeSend, sendTraceFor } from './send-telemetry';
 import { publishSessionTurn } from './session-turn';
 
 export type AgentSessionListener = (events: FoldedStreamEvent[]) => void;
@@ -163,7 +164,7 @@ export class AgentSession {
     this.unsubscribeSocket = subscribeSocketSessionStarted(() => {
       void this.resync();
     });
-    this.trace = new SessionLoadTrace(id);
+    this.trace = new SessionLoadTrace(id, sendTraceFor(id));
     this.loading = this.startLoad();
   }
 
@@ -175,7 +176,7 @@ export class AgentSession {
   load(): Promise<AgentSessionRecord> {
     if (this.loadFailed) {
       this.loadFailed = false;
-      this.trace = new SessionLoadTrace(this.id);
+      this.trace = new SessionLoadTrace(this.id, sendTraceFor(this.id));
       this.loading = this.startLoad();
     }
     return this.loading;
@@ -201,6 +202,8 @@ export class AgentSession {
     options: { userId?: string } = {}
   ): Promise<IssueResult> {
     const actionId = uuidv7();
+    const sendTrace = sendTraceFor(this.id);
+    sendTrace?.registerAction(actionId);
     const speculated = this.reaches(action);
     if (speculated) {
       // A prompt we just folded opens a turn, so the next one belongs in the
@@ -224,6 +227,7 @@ export class AgentSession {
 
     if (!speculated) return result;
     if (result.isErr()) {
+      sendTrace?.forgetAction(actionId);
       void this.enqueue({ kind: 'retracted', actionId });
       return result;
     }
@@ -231,12 +235,14 @@ export class AgentSession {
     // harness logs the row only when the queue dispatches it, so holding the
     // speculation would show an open turn for the whole wait.
     if (result.value.status === 'queued') {
+      sendTrace?.forgetAction(actionId);
       void this.enqueue({ kind: 'retracted', actionId });
       return result;
     }
     // A stop is a notification and carries no id on the wire, so the log
     // confirms it by content whatever id the harness accepted it under.
     const accepted = result.value.actionId;
+    sendTrace?.registerAction(accepted);
     if (accepted !== actionId && action.type !== 'stop') {
       void this.apply([
         { kind: 'retracted', actionId },
@@ -347,20 +353,22 @@ export class AgentSession {
   }
 
   private startLoad(): Promise<AgentSessionRecord> {
-    return this.fetchAndFold().then(
-      (record) => {
-        this.trace.end('loaded');
-        return record;
-      },
-      (error: unknown) => {
-        this.loadFailed = true;
-        this.trace.end(
-          error instanceof AgentSessionReleased ? 'released' : 'failed',
-          error
-        );
-        throw error;
-      }
-    );
+    return this.trace
+      .wrap(() => this.fetchAndFold())
+      .then(
+        (record) => {
+          this.trace.end('loaded');
+          return record;
+        },
+        (error: unknown) => {
+          this.loadFailed = true;
+          this.trace.end(
+            error instanceof AgentSessionReleased ? 'released' : 'failed',
+            error
+          );
+          throw error;
+        }
+      );
   }
 
   private async fetchAndFold(): Promise<AgentSessionRecord> {
@@ -428,6 +436,7 @@ export class AgentSession {
       if (this.closed || events.length === 0) return;
       const metadata = events.findLast((event) => event.kind === 'metadata');
       if (metadata) this.setTurn(metadata.metadata.turn);
+      observeSend(this.id, events);
       for (const listener of this.listeners) listener(events);
     });
     // A failed push must not poison the chain for every input after it.

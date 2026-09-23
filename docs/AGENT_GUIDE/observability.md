@@ -65,10 +65,15 @@ trace context — timestamps + service are the only join for those.
   inter-service client spans), so a trace tells you the route and latency but not why.
 - Log lines from events outside spans (startup, pollers) have no trace_id; in-span events do
   (structured metadata), so prefer erroring *handlers* as log entry points.
-- Frontend spans stop at the fetch: no spans for user interactions or the websocket-delivered
-  results, so async flows (AI edits applying, message fan-out) have no trace at all.
+- Frontend spans still stop at the fetch for most surfaces. Agent send is the
+  exception: `agent.send` starts at the composer click and stays open until the
+  first agent message of that turn is folded, so create, the first prompt, the
+  session load, and websocket-delivered replies share one trace. Other async
+  flows (AI edits applying, channel fan-out) still have no user-action parent.
 
 ## Agent sessions
+
+When diagnosing a send that appears to finish on an earlier reply, inspect the folded user message's `requestId` and compare it with the send's action ID; turn number alone is not sufficient correlation. Full-history `replace` events and reconnect/resync snapshots may contain earlier turns and must not satisfy a later send. A send with no matching action ID remains open until its matching prompt/reply arrives or it ends as failed, stalled, or superseded. Prompt contents and attachment contents are never telemetry; only prompt character count and attachment count are recorded.
 
 A session's lifetime is reconstructable from these spans. All of them carry
 `agent.session.id` — the Macro session UUID, and only ever that. The ACP-local
@@ -77,6 +82,9 @@ identifier spaces and must not be confused.
 
 | Span | Answers |
 | --- | --- |
+| `agent.send` | Browser: time from Send on New conversation / a session composer to the first agent message of that turn. `agent.send.surface` is `new_chat` or `session`; `agent.send.outcome` is `responded`, `failed`, `stalled`, or `superseded`. Phase timings (`create_ms`, `prompt_ms`, `user_message_ms`, `agent_message_ms`) and events (`session.created`, `prompt.accepted`, `user_message.visible`, `agent_message.visible`) mark the wait. Never carries prompt text — only `agent.send.prompt_chars` and `agent.send.attachment_count`. Fold visibility is correlated by the control action's `requestId`: speculative and accepted IDs are registered before/after issue, so historical `update` or `replace` snapshots cannot claim a send. HTTP create/control children nest when the send is the active context; `agent.session.load` is a child when the send is still open. Tracing wrappers invoke operations exactly once even when they return nullish values. |
+| `agent.session.load` | Browser: one attempt to open a session. `agent.session.load.outcome` is `loaded`, `released`, `failed`, or `stalled`. |
+| `agent.session.acquire` | Browser: a surface took a reference. `agent.session.acquire.created` is true when this opened a new instance. |
 | `agent.turn` | Did a Cursor turn run, and how did it end? `agent.turn.stop_reason` / `agent.turn.outcome`, plus `cursor.agent.id` / `cursor.run.id`. |
 | `cursor.run.poll` | Is a turn still alive? One per poll, at DEBUG. |
 | `agent.session.turn_ended` | The connection's live fold closed the turn on a logged frame; carries `agent.turn.id`, `agent.turn.stop_reason`, and `agent.action.id` when a local prompt opened it. |
