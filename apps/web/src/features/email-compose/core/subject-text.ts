@@ -27,10 +27,11 @@ export const getSubjectText = (
     if (subject && /^re:/i.test(subject)) {
       return subject;
     } else {
-      return `Re: ${subject}`;
+      return subject ? `Re: ${subject}` : 'Re:';
     }
   } else if (replyType === 'forward') {
-    return `Fwd: ${replyingTo.subject}`;
+    const subject = replyingTo.subject;
+    return subject ? `Fwd: ${subject}` : 'Fwd:';
   } else {
     return replyingTo.subject ?? '';
   }

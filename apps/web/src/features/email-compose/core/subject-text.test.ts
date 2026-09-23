@@ -53,4 +53,27 @@ describe('getSubjectText', () => {
       getSubjectText(messageWithSubject('Project Re: timeline'), 'reply')
     ).toBe('Re: Project Re: timeline');
   });
+
+  it.each([undefined, null, ''] as const)(
+    'uses bare prefixes for an absent subject (%s)',
+    (subject) => {
+      const message = { subject } as EmailMessage;
+      expect(getSubjectText(message, 'reply')).toBe('Re:');
+      expect(getSubjectText(message, 'reply-all')).toBe('Re:');
+      expect(getSubjectText(message, 'forward')).toBe('Fwd:');
+    }
+  );
+
+  it('preserves a populated subject and unsupported reply-type fallback', () => {
+    expect(getSubjectText(messageWithSubject('Review'), 'reply')).toBe(
+      'Re: Review'
+    );
+    expect(getSubjectText(messageWithSubject('Review'), 'forward')).toBe(
+      'Fwd: Review'
+    );
+    expect(getSubjectText(messageWithSubject('Review'), undefined)).toBe(
+      'Review'
+    );
+    expect(getSubjectText(undefined, 'reply')).toBe('');
+  });
 });
