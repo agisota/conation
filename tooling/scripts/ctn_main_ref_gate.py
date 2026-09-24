@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Reference-transaction gate for updates to refs/heads/main.
+"""Reference-transaction gate and pre-candidate reservation for main.
 
-Install as a reference-transaction hook; only the prepared phase may create a
-backup. Git, not this hook, performs the enclosing main-ref update and its CAS.
+Both entry points use the same durable, create-only backup writer. Git performs
+the enclosing main-ref update and its old-OID compare-and-swap.
 """
 
 import fcntl
@@ -63,11 +63,63 @@ def is_pack_refs_rewrite(old, new, common_dir):
     return old == loose == current == packed
 
 
+def retain_old(old, common_dir, new=None, reserved=None):
+    """Return a durable backup of the current old main under the shared lock."""
+    lock_path = common_dir / "ctn-main-ref-gate.lock"
+    flags = os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
+    lock_fd = os.open(lock_path, flags, 0o600)
+    try:
+        fcntl.flock(lock_fd, fcntl.LOCK_EX)
+        if git("rev-parse", "--verify", "refs/heads/main") != old:
+            raise ValueError("main no longer points at the expected old commit")
+        if git("cat-file", "-t", old) != "commit":
+            raise ValueError("old main object is not a commit")
+        if new is not None:
+            if git("cat-file", "-t", new) != "commit":
+                raise ValueError("new main object is not a commit")
+            try:
+                git("merge-base", "--is-ancestor", old, new)
+            except subprocess.CalledProcessError as exc:
+                raise ValueError("candidate must descend from old main") from exc
+
+        if reserved:
+            if not re.fullmatch(
+                r"refs/heads/backup/pre-merge-[0-9a-f]+-[0-9a-f]{24}",
+                reserved,
+            ):
+                raise ValueError("invalid reserved backup reference")
+            backup = reserved
+        else:
+            backup = (
+                "refs/heads/backup/pre-merge-"
+                f"{time.time_ns():x}-{secrets.token_hex(12)}"
+            )
+            # Git defaults to writeout-only on macOS; force reference fsync.
+            git(
+                "-c", "core.fsync=reference", "-c", "core.fsyncMethod=fsync",
+                "update-ref", backup, old, "0" * len(old),
+            )
+        if git("rev-parse", "--verify", backup) != old:
+            raise ValueError("backup readback differs from old main")
+        if git("rev-parse", "--verify", "refs/heads/main") != old:
+            raise ValueError("main changed after backup; retry from its new tip")
+        return backup
+    finally:
+        os.close(lock_fd)
+
+
 def gate():
+    if len(sys.argv) == 3 and sys.argv[1] == "reserve":
+        old = sys.argv[2]
+        if not OID.fullmatch(old.encode("ascii")):
+            raise ValueError("invalid old main object ID")
+        common_dir = Path(git("rev-parse", "--git-common-dir")).resolve()
+        print(retain_old(old, common_dir))
+        return
     if len(sys.argv) != 2 or sys.argv[1] not in (
         "preparing", "prepared", "committed", "aborted",
     ):
-        raise ValueError("expected a reference-transaction phase")
+        raise ValueError("expected reserve <old OID> or a reference-transaction phase")
     if sys.argv[1] != "prepared":
         return
 
@@ -94,40 +146,10 @@ def gate():
         if is_pack_refs_rewrite(old, new, common_dir):
             return
         raise ValueError("main creation or deletion is not permitted")
-    lock_path = common_dir / "ctn-main-ref-gate.lock"
-    flags = os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
-    lock_fd = os.open(lock_path, flags, 0o600)
-    try:
-        fcntl.flock(lock_fd, fcntl.LOCK_EX)
-        if git("rev-parse", "--verify", "refs/heads/main") != old:
-            raise ValueError("main no longer points at the expected old commit")
-        if git("cat-file", "-t", old) != "commit":
-            raise ValueError("old main object is not a commit")
-        if git("cat-file", "-t", new) != "commit":
-            raise ValueError("new main object is not a commit")
-
-        try:
-            git("merge-base", "--is-ancestor", old, new)
-        except subprocess.CalledProcessError as exc:
-            raise ValueError("candidate must descend from old main") from exc
-        backup = (
-            "refs/heads/backup/pre-merge-"
-            f"{time.time_ns():x}-{secrets.token_hex(12)}"
-        )
-        # A zero expected OID makes this a create-only update; never replace an
-        # existing backup. On macOS Git defaults to writeout-only; force an
-        # actual fsync before the enclosing main transaction can commit.
-        git(
-            "-c", "core.fsync=reference", "-c", "core.fsyncMethod=fsync",
-            "update-ref", backup, old,
-            "0" * len(old),
-        )
-        if git("rev-parse", "--verify", backup) != old:
-            raise ValueError("backup readback differs from old main")
-        if git("rev-parse", "--verify", "refs/heads/main") != old:
-            raise ValueError("main changed after backup; retry from its new tip")
-    finally:
-        os.close(lock_fd)
+    retain_old(
+        old, common_dir, new=new,
+        reserved=os.environ.get("CTN_MAIN_RESERVATION_REF"),
+    )
 
 
 if __name__ == "__main__":

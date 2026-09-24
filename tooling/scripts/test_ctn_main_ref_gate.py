@@ -1,3 +1,4 @@
+import os
 import shlex
 import subprocess
 import sys
@@ -30,7 +31,7 @@ class MainRefGateTest(unittest.TestCase):
         )
         hook.chmod(0o755)
 
-    def git(self, *args, check=True, input=None):
+    def git(self, *args, check=True, input=None, env=None):
         return subprocess.run(
             ["git", *args],
             cwd=self.repo,
@@ -38,6 +39,7 @@ class MainRefGateTest(unittest.TestCase):
             text=True,
             capture_output=True,
             check=check,
+            env={**os.environ, **env} if env else None,
         )
 
     def oid(self, ref):
@@ -126,6 +128,56 @@ class MainRefGateTest(unittest.TestCase):
             sorted(line.split()[1] for line in backups),
             sorted((self.original, new)),
         )
+
+    def test_reservation_precedes_candidate_and_prevents_second_backup(self):
+        reserved = subprocess.run(
+            [sys.executable, str(SCRIPT), "reserve", self.original],
+            cwd=self.repo, capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        self.assertTrue(reserved.startswith("refs/heads/backup/pre-merge-"))
+        self.assertEqual(self.oid(reserved), self.original)
+        self.assertEqual(self.oid("refs/heads/main"), self.original)
+        self.assertEqual(len(self.backups()), 1)
+        new = self.next_commit()
+        self.git(
+            "update-ref", "refs/heads/main", new, self.original,
+            env={"CTN_MAIN_RESERVATION_REF": reserved},
+        )
+        self.assertEqual(self.oid("refs/heads/main"), new)
+        self.assertEqual(self.backups(), [f"{reserved} {self.original}"])
+
+    def test_reserved_backup_mismatch_refuses_main_without_fallback(self):
+        reserved = subprocess.run(
+            [sys.executable, str(SCRIPT), "reserve", self.original],
+            cwd=self.repo, capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        new = self.next_commit()
+        denied = self.git(
+            "update-ref", "refs/heads/main", new, self.original, check=False,
+            env={"CTN_MAIN_RESERVATION_REF": "refs/heads/feature"},
+        )
+        self.assertNotEqual(denied.returncode, 0)
+        self.assertEqual(self.oid("refs/heads/main"), self.original)
+        self.assertEqual(self.backups(), [f"{reserved} {self.original}"])
+
+    def test_stale_reservation_cannot_cover_a_new_main_old(self):
+        reserved = subprocess.run(
+            [sys.executable, str(SCRIPT), "reserve", self.original],
+            cwd=self.repo, capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        new = self.next_commit()
+        self.git("update-ref", "refs/heads/main", new, self.original)
+        self.git("checkout", "-q", "feature")
+        self.git("commit", "--allow-empty", "-qm", "second")
+        second = self.oid("HEAD")
+        self.git("checkout", "-q", "main")
+        denied = self.git(
+            "update-ref", "refs/heads/main", second, new, check=False,
+            env={"CTN_MAIN_RESERVATION_REF": reserved},
+        )
+        self.assertNotEqual(denied.returncode, 0)
+        self.assertEqual(self.oid("refs/heads/main"), new)
+        self.assertEqual([line.split()[1] for line in self.backups()], [self.original, self.original])
 
 
     def test_non_descendant_candidate_denied_with_original_main_intact(self):
