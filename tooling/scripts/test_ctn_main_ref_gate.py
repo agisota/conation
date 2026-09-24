@@ -145,6 +145,23 @@ class MainRefGateTest(unittest.TestCase):
         self.assertEqual(self.oid("refs/heads/topic"), new)
         self.assertEqual(self.backups(), [])
 
+    def test_pack_refs_preserves_main_without_creating_backup(self):
+        self.git("pack-refs", "--all")
+        self.assertEqual(self.oid("refs/heads/main"), self.original)
+        self.assertEqual(self.backups(), [])
+
+        self.git("commit", "--allow-empty", "-qm", "after packing")
+        self.assertEqual([line.split()[1] for line in self.backups()], [self.original])
+
+    def test_deleting_packed_main_is_still_denied(self):
+        self.git("pack-refs", "--all")
+        denied = self.git(
+            "update-ref", "-d", "refs/heads/main", self.original, check=False,
+        )
+        self.assertNotEqual(denied.returncode, 0)
+        self.assertEqual(self.oid("refs/heads/main"), self.original)
+        self.assertEqual(self.backups(), [])
+
     def test_backup_creation_failure_denies_git_transaction(self):
         new = self.next_commit()
         self.git("update-ref", "refs/heads/backup", self.original)

@@ -7,6 +7,7 @@ backup. Git, not this hook, performs the enclosing main-ref update and its CAS.
 
 import fcntl
 import os
+import shlex
 import re
 import secrets
 import subprocess
@@ -23,6 +24,43 @@ def git(*args):
     return subprocess.run(
         ("git", *args), check=True, capture_output=True, text=True,
     ).stdout.strip()
+
+
+def is_pack_refs_rewrite(old, new, common_dir):
+    """Accept Git's physical loose/packed rewrite only when main stays intact."""
+    command = subprocess.run(
+        ("ps", "-p", str(os.getppid()), "-o", "args="),
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+    argv = shlex.split(command)
+    if len(argv) < 2 or Path(argv[0]).name != "git" or argv[1] != "pack-refs":
+        return False
+
+    loose_ref = common_dir / "refs" / "heads" / "main"
+    if not loose_ref.is_file():
+        return False
+    loose = loose_ref.read_text().strip()
+    current = git("rev-parse", "--verify", "refs/heads/main")
+    if not OID.fullmatch(loose.encode("ascii")) or len(loose) != len(old):
+        return False
+
+    zero = "0" * len(old)
+    if old == zero:
+        return new == loose == current
+
+    if new != zero:
+        return False
+    try:
+        packed_lines = (common_dir / "packed-refs").read_text().splitlines()
+    except FileNotFoundError:
+        return False
+    packed = next(
+        (oid for line in packed_lines
+         for oid, separator, ref in [line.partition(" ")]
+         if separator and ref == "refs/heads/main"),
+        None,
+    )
+    return old == loose == current == packed
 
 
 def gate():
@@ -45,8 +83,6 @@ def gate():
             raise ValueError("multiple main updates in one transaction")
         if not OID.fullmatch(old) or not OID.fullmatch(new) or len(old) != len(new):
             raise ValueError("invalid main object ID")
-        if old == b"0" * len(old) or new == b"0" * len(new):
-            raise ValueError("main creation or deletion is not permitted")
         main_update = (old.decode("ascii"), new.decode("ascii"))
 
     if main_update is None:
@@ -54,6 +90,10 @@ def gate():
 
     old, new = main_update
     common_dir = Path(git("rev-parse", "--git-common-dir")).resolve()
+    if old == "0" * len(old) or new == "0" * len(new):
+        if is_pack_refs_rewrite(old, new, common_dir):
+            return
+        raise ValueError("main creation or deletion is not permitted")
     lock_path = common_dir / "ctn-main-ref-gate.lock"
     flags = os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0)
     lock_fd = os.open(lock_path, flags, 0o600)
