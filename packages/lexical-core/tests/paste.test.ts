@@ -6,6 +6,7 @@ import {
   $createParagraphNode,
   $createTextNode,
   $getRoot,
+  $isParagraphNode,
   createEditor,
 } from 'lexical';
 import { describe, expect, it } from 'vitest';
@@ -16,6 +17,7 @@ import {
   $insertReferencedPaste,
   $isPasteNode,
 } from '../nodes/PasteNode';
+import { $isUnknownMentionNode } from '../nodes/UnknownMentionNode';
 import { EXTERNAL_TRANSFORMERS, INTERNAL_TRANSFORMERS } from '../transformers';
 
 function makeEditor() {
@@ -134,6 +136,44 @@ describe('PasteNode - internal transformer round-trip', () => {
       expect(node?.getContent()).toBe('legacy paste');
       expect(node?.getOrigin()).toBe('pasted');
     });
+  });
+
+  it.each(['{"content":123}', '{"content":null}', 'null', '{}'])(
+    'falls back safely for malformed payload %s',
+    async (payload) => {
+      const editor = makeEditor();
+      await new Promise<void>((resolve) => {
+        editor.update(
+          () => {
+            $getRoot().clear();
+            $convertFromMarkdownString(
+              `<m-paste>${payload}</m-paste>`,
+              INTERNAL_TRANSFORMERS
+            );
+          },
+          { onUpdate: () => resolve() }
+        );
+      });
+
+      editor.getEditorState().read(() => {
+        const root = $getRoot();
+        expect(root.getChildren().some($isPasteNode)).toBe(false);
+        const fallback = root
+          .getChildren()
+          .flatMap((child) =>
+            $isParagraphNode(child) ? child.getChildren() : [child]
+          )
+          .find($isUnknownMentionNode);
+        expect(fallback?.getName()).toBe('Unknown Paste');
+        expect(() => root.getTextContent()).not.toThrow();
+      });
+    }
+  );
+
+  it('rejects non-string content at the node factory', () => {
+    expect(() =>
+      $createPasteNode({ content: 123 as unknown as string })
+    ).toThrow(TypeError);
   });
 
   it('keeps XML-like content intact through a round-trip', async () => {

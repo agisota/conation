@@ -1,5 +1,16 @@
 # Documents
 
+## Large plain-text pastes
+
+In the Markdown editor, a plain-text paste longer than 1,500 characters becomes a
+compact pasted-text preview only when the editor has a registered paste node and
+the selection is a collapsed text range. At 1,500 characters or less, with a
+non-collapsed range, a node/table selection, or a rich HTML/Lexical clipboard, the
+large-paste handler leaves the event untouched for the normal paste handlers.
+Focus the preview and press Enter or Space, or click/tap it, to open the full
+passage. Escape or clicking outside dismisses the viewer. Use the separate preview
+actions menu to copy, convert the passage back to document text, or delete it.
+
 ## Markdown find and replace
 
 In the Markdown editor, use Cmd/Ctrl+F to find text within formatted text and

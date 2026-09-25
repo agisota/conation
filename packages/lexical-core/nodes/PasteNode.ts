@@ -205,6 +205,9 @@ export class PasteNode extends DecoratorBlockNode<
 }
 
 export function $createPasteNode(params: PasteNodeData): PasteNode {
+  if (typeof params?.content !== 'string') {
+    throw new TypeError('PasteNode content must be a string');
+  }
   const node = new PasteNode(
     params.content,
     normalizePasteOrigin(params.origin)

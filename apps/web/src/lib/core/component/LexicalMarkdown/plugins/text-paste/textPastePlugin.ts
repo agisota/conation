@@ -158,21 +158,21 @@ function registerTextPastePlugin(editor: LexicalEditor) {
               clipboard?.getData('application/x-lexical-editor') ||
                 clipboard?.getData('text/html')
             );
+            const selection = $getSelection();
             if (
               !isRichClipboard &&
               editor.hasNode(PasteNode) &&
-              pastedText.length > LARGE_PASTE_CHAR_THRESHOLD
+              pastedText.length > LARGE_PASTE_CHAR_THRESHOLD &&
+              $isRangeSelection(selection) &&
+              selection.isCollapsed()
             ) {
-              const selection = $getSelection();
-              if ($isRangeSelection(selection) && !selection.isCollapsed()) {
-                return false;
-              }
               event.preventDefault();
               $insertNodesAndSplitList([
                 $createPasteNode({ content: pastedText }),
               ]);
               return true;
             }
+
             return false;
           }
 
