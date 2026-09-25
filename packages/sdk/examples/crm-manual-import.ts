@@ -1,3 +1,4 @@
+import type { Company } from '../src/entities/crm/company';
 import { Macro } from '../src/macro';
 
 type CompanyInput = {
@@ -24,24 +25,98 @@ type Input = {
   contacts?: ContactInput[];
   documents?: DocumentInput[];
 };
-const GENERIC_EMAIL_DOMAINS = new Set([
-  'aol.com',
-  'gmail.com',
-  'googlemail.com',
-  'gmx.com',
-  'hotmail.com',
-  'icloud.com',
-  'live.com',
-  'mail.com',
-  'me.com',
-  'msn.com',
-  'outlook.com',
-  'proton.me',
-  'protonmail.com',
-  'yahoo.com',
-  'yandex.com',
-]);
+const CRM_DOMAIN_LISTS = [
+  'CONSUMER_EMAIL_DOMAINS',
+  'DISPOSABLE_EMAIL_DOMAINS',
+  'ALIAS_FORWARDER_DOMAINS',
+  'SAAS_VENDOR_DOMAINS',
+  'CONSUMER_BRAND_DOMAINS',
+  'BULK_SENDER_DOMAINS',
+] as const;
 
+const RESERVED_DOMAIN_SUFFIXES = [
+  '.localhost',
+  '.local',
+  '.internal',
+  '.invalid',
+  '.test',
+  '.example',
+];
+
+function normalizedDomain(domain: string): string {
+  return domain.trim().toLowerCase();
+}
+
+async function loadBlockedDomains(): Promise<Record<string, true>> {
+  const sourcePath = new URL(
+    '../../../crates/crm/src/domain/generic_email_domains.rs',
+    import.meta.url,
+  );
+  const source = await Bun.file(sourcePath)
+    .text()
+    .catch((error: unknown) => {
+      throw new Error(
+        `Unable to read CRM domain policy at ${sourcePath.pathname}: ${String(error)}`,
+      );
+    });
+  const blockedDomains = Object.create(null) as Record<string, true>;
+  const declaredLists = [
+    ...source.matchAll(/const ([A-Z_]+_DOMAINS):\s*&\[&str\]\s*=\s*&\[/g),
+  ].map((declaration) => declaration[1]);
+  if (
+    declaredLists.length !== CRM_DOMAIN_LISTS.length ||
+    CRM_DOMAIN_LISTS.some(
+      (listName) =>
+        declaredLists.filter((declared) => declared === listName).length !== 1,
+    )
+  ) {
+    throw new Error('CRM domain policy list names or count have changed');
+  }
+
+  for (const listName of CRM_DOMAIN_LISTS) {
+    const declarations = [
+      ...source.matchAll(
+        new RegExp(
+          `const ${listName}:\\s*&\\[&str\\]\\s*=\\s*&\\[([\\s\\S]*?)\\];`,
+          'g',
+        ),
+      ),
+    ];
+    if (declarations.length !== 1) {
+      throw new Error(`CRM domain policy must define ${listName} exactly once`);
+    }
+    const body = declarations[0]?.[1];
+    if (!body) throw new Error(`CRM domain policy ${listName} is empty`);
+
+    let entries = 0;
+    for (const line of body.split('\n')) {
+      const entry = line.replace(/\/\/.*$/, '').trim();
+      if (!entry) continue;
+      const domain = /^"([^"]+)",$/.exec(entry)?.[1];
+      if (!domain) {
+        throw new Error(`Unrecognized entry in CRM domain policy ${listName}`);
+      }
+      blockedDomains[domain.toLowerCase()] = true;
+      entries++;
+    }
+    if (entries === 0)
+      throw new Error(`CRM domain policy ${listName} is empty`);
+  }
+
+  return blockedDomains;
+}
+
+function isBlockedDomain(
+  domain: string,
+  blockedDomains: Record<string, true>,
+): boolean {
+  const normalized = normalizedDomain(domain).replace(/^www\./, '');
+  return (
+    Object.hasOwn(blockedDomains, normalized) ||
+    RESERVED_DOMAIN_SUFFIXES.some((suffix) => normalized.endsWith(suffix)) ||
+    ['localhost', 'invalid', 'localdomain'].includes(normalized)
+  );
+}
 function parseArgs(args: string[]) {
   const inputFlags = args.flatMap((arg, index) =>
     arg === '--input' ? [index] : [],
@@ -88,7 +163,10 @@ type ValidatedInput = {
   operations: string[];
 };
 
-function validate(input: Input): ValidatedInput {
+function validate(
+  input: Input,
+  blockedDomains: Record<string, true>,
+): ValidatedInput {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new Error('Input must be a JSON object');
   }
@@ -147,23 +225,20 @@ function validate(input: Input): ValidatedInput {
     }
     const name = company.name?.trim();
     const domain = company.domain?.trim();
-    if (
-      !name ||
-      !domain ||
-      /[\s/:@]/.test(domain) ||
-      !domain.includes('.') ||
-      GENERIC_EMAIL_DOMAINS.has(domain.toLowerCase())
-    ) {
+    const normalized = domain ? normalizedDomain(domain) : '';
+    if (!name || !domain || /[\s/:@]/.test(domain) || !domain.includes('.')) {
       throw new Error('Company creation requires a name and bare domain');
     }
-    const normalizedDomain = domain.toLowerCase();
-    addIdentity(`company-domain:${normalizedDomain}`);
-    operations.push(`Create company ${name} (${domain})`);
+    if (isBlockedDomain(domain, blockedDomains)) {
+      throw new Error('Company domain is blocked by CRM policy');
+    }
+    addIdentity(`company-domain:${normalized}`);
+    operations.push(`Create company ${name} (${normalized})`);
     companies.push({
       kind: 'create',
       name,
-      domain: normalizedDomain,
-      note: validatedNote(company.note, domain),
+      domain: normalized,
+      note: validatedNote(company.note, normalized),
     });
   }
 
@@ -202,14 +277,21 @@ function validate(input: Input): ValidatedInput {
         'Contact creation requires companyDomain, name, and email',
       );
     }
-    if (emailParts[1].toLowerCase() !== companyDomain.toLowerCase()) {
+    const normalizedCompanyDomain = normalizedDomain(companyDomain);
+    const normalizedEmailDomain = normalizedDomain(emailParts[1]);
+    if (normalizedEmailDomain !== normalizedCompanyDomain) {
       throw new Error('Contact email domain must match companyDomain');
     }
+    if (isBlockedDomain(normalizedCompanyDomain, blockedDomains)) {
+      throw new Error('Contact domain is blocked by CRM policy');
+    }
     addIdentity(`contact-email:${email.toLowerCase()}`);
-    operations.push(`Create contact ${email} under company ${companyDomain}`);
+    operations.push(
+      `Create contact ${email} under company ${normalizedCompanyDomain}`,
+    );
     contacts.push({
       kind: 'create',
-      companyDomain: companyDomain.toLowerCase(),
+      companyDomain: normalizedCompanyDomain,
       name,
       email,
       note: validatedNote(contact.note, email),
@@ -233,7 +315,11 @@ function validate(input: Input): ValidatedInput {
 
 export async function run(args = process.argv.slice(2)) {
   const { apply, inputPath } = parseArgs(args);
-  const input = validate(JSON.parse(await Bun.file(inputPath).text()) as Input);
+  const blockedDomains = await loadBlockedDomains();
+  const input = validate(
+    JSON.parse(await Bun.file(inputPath).text()) as Input,
+    blockedDomains,
+  );
   const hasAppendOnlyWrites =
     input.companies.some((item) => item.note !== undefined) ||
     input.contacts.some((item) => item.note !== undefined) ||
@@ -260,6 +346,7 @@ export async function run(args = process.argv.slice(2)) {
   }
 
   const macro = new Macro({});
+  const createdCompanies = new Map<string, Company>();
   const completed: string[] = [];
   try {
     for (const company of input.companies) {
@@ -276,6 +363,7 @@ export async function run(args = process.argv.slice(2)) {
           name: company.name,
           domain: company.domain,
         });
+        createdCompanies.set(company.domain, entity);
         completed.push(`created company ${company.domain}`);
         if (company.note !== undefined) {
           await entity.comment({ text: company.note });
@@ -296,33 +384,35 @@ export async function run(args = process.argv.slice(2)) {
         continue;
       }
 
-      let exactMatchFound = false;
-      for await (const match of macro.crm.searchCompanies(
-        contact.companyDomain,
-      )) {
-        const domains = await match.domains();
-        if (
-          !domains.some(
-            (domain) => domain.toLowerCase() === contact.companyDomain,
+      let entity = createdCompanies.get(contact.companyDomain);
+      if (!entity) {
+        for await (const match of macro.crm.searchCompanies(
+          contact.companyDomain,
+        )) {
+          const domains = await match.domains();
+          if (
+            !domains.some(
+              (domain) => normalizedDomain(domain) === contact.companyDomain,
+            )
           )
-        )
-          continue;
-        const entity = await match.createContact({
-          name: contact.name,
-          email: contact.email,
-        });
-        completed.push(`created contact ${contact.email.toLowerCase()}`);
-        if (contact.note !== undefined) {
-          await entity.comment({ text: contact.note });
-          completed.push(`contact note ${contact.email.toLowerCase()}`);
+            continue;
+          entity = match;
+          break;
         }
-        exactMatchFound = true;
-        break;
       }
-      if (!exactMatchFound) {
+      if (!entity) {
         throw new Error(
           `No exact company-domain match for ${contact.companyDomain}; create the company first`,
         );
+      }
+      const contactEntity = await entity.createContact({
+        name: contact.name,
+        email: contact.email,
+      });
+      completed.push(`created contact ${contact.email.toLowerCase()}`);
+      if (contact.note !== undefined) {
+        await contactEntity.comment({ text: contact.note });
+        completed.push(`contact note ${contact.email.toLowerCase()}`);
       }
     }
 

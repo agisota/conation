@@ -94,7 +94,7 @@ describe('manual CRM import example', () => {
     console.log = (message) => output.push(String(message));
     try {
       await withInput(
-        { companies: [{ name: 'Acme', domain: 'acme.test' }] },
+        { companies: [{ name: 'Acme', domain: 'acme.com' }] },
         async (inputPath) => {
           await run(['--input', inputPath]);
         },
@@ -103,14 +103,14 @@ describe('manual CRM import example', () => {
       console.log = log;
     }
     expect(requests).toHaveLength(0);
-    expect(output.join('\n')).toContain('Create company Acme (acme.test)');
+    expect(output.join('\n')).toContain('Create company Acme (acme.com)');
   });
 
   test('the documented bun run command accepts its --input file path', async () => {
     const scriptPath = new URL('./crm-manual-import.ts', import.meta.url)
       .pathname;
     const result = await withInput(
-      { companies: [{ name: 'Acme', domain: 'acme.test' }] },
+      { companies: [{ name: 'Acme', domain: 'acme.com' }] },
       async (inputPath) =>
         Bun.spawnSync({
           cmd: ['bun', 'run', scriptPath, '--input', inputPath],
@@ -121,36 +121,24 @@ describe('manual CRM import example', () => {
     );
     expect(result.exitCode).toBe(0);
     expect(result.stdout.toString()).toContain(
-      'DRY RUN: Create company Acme (acme.test)',
+      'DRY RUN: Create company Acme (acme.com)',
     );
   });
 
-  test('apply creates and renames CRM records through the facade using only the user-key header', async () => {
+  test('same-import contact creation reuses its company handle without search indexing', async () => {
     configureApply();
     const requests = recordTransport(async (request) => {
       const url = new URL(request.url);
       const body = request.method === 'GET' ? undefined : await request.json();
       if (request.method === 'POST' && url.pathname === '/dss/crm/companies') {
-        return jsonResponse(company('co_created', 'acme.test'));
-      }
-      if (request.method === 'POST' && url.pathname === '/dss/search') {
-        return jsonResponse({
-          results: [{ id: 'co_existing', type: 'company' }],
-          next_cursor: null,
-        });
-      }
-      if (
-        request.method === 'GET' &&
-        url.pathname === '/dss/crm/companies/co_existing'
-      ) {
-        return jsonResponse(company('co_existing', 'acme.test'));
+        return jsonResponse(company('co_created', 'acme.com'));
       }
       if (
         request.method === 'POST' &&
-        url.pathname === '/dss/crm/companies/co_existing/contacts'
+        url.pathname === '/dss/crm/companies/co_created/contacts'
       ) {
         return jsonResponse(
-          contact('ct_created', 'co_existing', 'jane@acme.test'),
+          contact('ct_created', 'co_created', 'jane@acme.com'),
         );
       }
       if (
@@ -200,14 +188,14 @@ describe('manual CRM import example', () => {
     });
     const input = {
       companies: [
-        { name: 'Acme', domain: 'acme.test', note: '# Import note' },
+        { name: 'Acme', domain: 'acme.com', note: '# Import note' },
         { id: 'co_rename', rename: 'Renamed Acme' },
       ],
       contacts: [
         {
-          companyDomain: 'acme.test',
+          companyDomain: 'acme.com',
           name: 'Jane Example',
-          email: 'jane@acme.test',
+          email: 'jane@acme.com',
         },
         { id: 'ct_rename', rename: 'Jane Renamed' },
       ],
@@ -238,29 +226,23 @@ describe('manual CRM import example', () => {
       'POST /dss/crm/companies',
       'POST /dss/crm/comments/crm_company/co_created',
       'PUT /dss/crm/companies/co_rename/name',
-      'POST /dss/search',
-      'GET /dss/crm/companies/co_existing',
-      'POST /dss/crm/companies/co_existing/contacts',
+      'POST /dss/crm/companies/co_created/contacts',
       'PUT /dss/crm/contacts/ct_rename/name',
       'POST /dss/documents/create_markdown',
     ]);
     expect(await requests[0]?.clone().json()).toEqual({
       name: 'Acme',
-      domain: 'acme.test',
+      domain: 'acme.com',
     });
     expect(await requests[1]?.clone().json()).toEqual({
       text: '# Import note',
     });
-    expect(await requests[3]?.clone().json()).toMatchObject({
-      query: 'acme.test',
-      include_crm: true,
-    });
-    expect(await requests[5]?.clone().json()).toEqual({
+    expect(await requests[3]?.clone().json()).toEqual({
       name: 'Jane Example',
-      email: 'jane@acme.test',
+      email: 'jane@acme.com',
     });
-    expect(await requests[6]?.clone().json()).toEqual({ name: 'Jane Renamed' });
-    expect(await requests[7]?.clone().json()).toEqual({
+    expect(await requests[4]?.clone().json()).toEqual({ name: 'Jane Renamed' });
+    expect(await requests[5]?.clone().json()).toEqual({
       documentName: 'Import report',
       markdown: '# Report',
       projectId: null,
@@ -279,7 +261,7 @@ describe('manual CRM import example', () => {
     delete process.env.MACRO_API_KEY;
     const requests = recordTransport(() => jsonResponse({}));
     await withInput(
-      { companies: [{ name: 'Acme', domain: 'acme.test' }] },
+      { companies: [{ name: 'Acme', domain: 'acme.com' }] },
       async (inputPath) => {
         await expect(run(['--input', inputPath, '--apply'])).rejects.toThrow(
           'MACRO_API_KEY',
@@ -303,7 +285,7 @@ describe('manual CRM import example', () => {
         request.method === 'GET' &&
         pathname === '/dss/crm/companies/co_wrong'
       ) {
-        return jsonResponse(company('co_wrong', 'different.test'));
+        return jsonResponse(company('co_wrong', 'different.org'));
       }
       throw new Error(`Unexpected request: ${request.method} ${pathname}`);
     });
@@ -315,9 +297,9 @@ describe('manual CRM import example', () => {
         {
           contacts: [
             {
-              companyDomain: 'acme.test',
+              companyDomain: 'acme.com',
               name: 'Jane',
-              email: 'jane@acme.test',
+              email: 'jane@acme.com',
             },
           ],
         },
@@ -341,14 +323,14 @@ describe('manual CRM import example', () => {
     await withInput(
       {
         companies: [
-          { name: 'Acme', domain: 'acme.test' },
-          { name: 'Other', domain: 'ACME.TEST' },
+          { name: 'Acme', domain: 'acme.com' },
+          { name: 'Other', domain: 'ACME.COM' },
         ],
         contacts: [
           {
-            companyDomain: 'acme.test',
+            companyDomain: 'acme.com',
             name: 'Jane',
-            email: 'jane@elsewhere.test',
+            email: 'jane@elsewhere.com',
           },
         ],
       },
@@ -362,9 +344,9 @@ describe('manual CRM import example', () => {
       {
         contacts: [
           {
-            companyDomain: 'acme.test',
+            companyDomain: 'acme.com',
             name: 'Jane',
-            email: 'jane@elsewhere.test',
+            email: 'jane@elsewhere.com',
           },
         ],
       },
@@ -377,14 +359,64 @@ describe('manual CRM import example', () => {
     expect(requests).toHaveLength(0);
   });
 
+  test('blocked backend domains are rejected across the batch before writes', async () => {
+    configureApply();
+    const requests = recordTransport(() => jsonResponse({}));
+    for (const domain of [
+      'outlook.co.uk',
+      'hotmail.co.uk',
+      'mailinator.com',
+      'github.com',
+      'www.github.com',
+      'maildrop.cc',
+      'service.example',
+      'service.invalid',
+      'service.localhost',
+      'service.local',
+      'service.internal',
+    ]) {
+      await withInput(
+        {
+          companies: [
+            { name: 'Blocked', domain },
+            { name: 'Valid', domain: 'acme.com' },
+          ],
+        },
+        async (inputPath) => {
+          await expect(run(['--input', inputPath, '--apply'])).rejects.toThrow(
+            'blocked by CRM policy',
+          );
+        },
+      );
+    }
+    await withInput(
+      {
+        companies: [{ name: 'Acme', domain: 'acme.com' }],
+        contacts: [
+          {
+            companyDomain: 'mailinator.com',
+            name: 'Disposable',
+            email: 'jane@mailinator.com',
+          },
+        ],
+      },
+      async (inputPath) => {
+        await expect(run(['--input', inputPath, '--apply'])).rejects.toThrow(
+          'blocked by CRM policy',
+        );
+      },
+    );
+    expect(requests).toHaveLength(0);
+  });
+
   test('append-only notes and documents require explicit confirmation before writes', async () => {
     configureApply();
     delete process.env.CONFIRM_APPEND_ONLY;
     const requests = recordTransport(() =>
-      jsonResponse(company('co_test', 'acme.test')),
+      jsonResponse(company('co_test', 'acme.com')),
     );
     await withInput(
-      { companies: [{ name: 'Acme', domain: 'acme.test', note: '# Note' }] },
+      { companies: [{ name: 'Acme', domain: 'acme.com', note: '# Note' }] },
       async (inputPath) => {
         await expect(run(['--input', inputPath, '--apply'])).rejects.toThrow(
           'CONFIRM_APPEND_ONLY=yes',
@@ -404,7 +436,7 @@ describe('manual CRM import example', () => {
     console.error = (message) => errors.push(String(message));
     try {
       const succeeded = await withInput(
-        { companies: [{ name: 'Acme', domain: 'acme.test' }] },
+        { companies: [{ name: 'Acme', domain: 'acme.com' }] },
         (inputPath) => run(['--input', inputPath, '--apply']),
       );
       expect(succeeded).toBe(false);
@@ -423,8 +455,8 @@ describe('manual CRM import example', () => {
       const pathname = new URL(request.url).pathname;
       if (request.method === 'POST' && pathname === '/dss/crm/companies') {
         const body = (await request.json()) as { domain?: string };
-        if (body.domain === 'acme.test')
-          return jsonResponse(company('co_created', 'acme.test'));
+        if (body.domain === 'acme.com')
+          return jsonResponse(company('co_created', 'acme.com'));
       }
       if (
         request.method === 'POST' &&
@@ -458,8 +490,8 @@ describe('manual CRM import example', () => {
       const succeeded = await withInput(
         {
           companies: [
-            { name: 'Acme', domain: 'acme.test', note: '# Import note' },
-            { name: 'Beta', domain: 'beta.test' },
+            { name: 'Acme', domain: 'acme.com', note: '# Import note' },
+            { name: 'Beta', domain: 'beta.org' },
           ],
         },
         (inputPath) => run(['--input', inputPath, '--apply']),
@@ -471,8 +503,8 @@ describe('manual CRM import example', () => {
     expect(errors).toHaveLength(1);
     expect(requests).toHaveLength(3);
     expect(errors.join('\n')).toContain('partial success (2 completed)');
-    expect(errors.join('\n')).toContain('created company acme.test');
-    expect(errors.join('\n')).toContain('company note acme.test');
+    expect(errors.join('\n')).toContain('created company acme.com');
+    expect(errors.join('\n')).toContain('company note acme.com');
   });
 
   test('malformed arguments and blank fields fail closed', async () => {
@@ -482,7 +514,7 @@ describe('manual CRM import example', () => {
       'Usage:',
     );
     await withInput(
-      { companies: [{ name: '  ', domain: 'acme.test' }] },
+      { companies: [{ name: '  ', domain: 'acme.com' }] },
       async (inputPath) => {
         await expect(run(['--input', inputPath, '--apply'])).rejects.toThrow(
           'name and bare domain',
@@ -493,7 +525,7 @@ describe('manual CRM import example', () => {
       { companies: [{ name: 'Gmail', domain: 'gmail.com' }] },
       async (inputPath) => {
         await expect(run(['--input', inputPath, '--apply'])).rejects.toThrow(
-          'bare domain',
+          'blocked by CRM policy',
         );
       },
     );

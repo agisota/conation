@@ -252,14 +252,14 @@ Save input such as this as `crm-import.json`:
 ```json
 {
   "companies": [
-    { "name": "Acme", "domain": "acme.example", "note": "# CRM note" },
+    { "name": "Acme", "domain": "acme.com", "note": "# CRM note" },
     { "id": "company_existing_id", "rename": "Acme, Inc." }
   ],
   "contacts": [
     {
-      "companyDomain": "acme.example",
+      "companyDomain": "acme.com",
       "name": "Jane Example",
-      "email": "jane@acme.example"
+      "email": "jane@acme.com"
     },
     { "id": "contact_existing_id", "rename": "Jane Example" }
   ],
@@ -274,7 +274,7 @@ bun run packages/sdk/examples/crm-manual-import.ts --input crm-import.json
 CONFIRM_APPEND_ONLY=yes bun run packages/sdk/examples/crm-manual-import.ts --input crm-import.json --apply
 ```
 
-Each update requires its existing record `id`; contact creation requires an exact match for a non-generic company domain and an email on that domain. Notes are CRM comments, while `documents` creates separate markdown documents. Both are append-only: reruns can duplicate content, and every applying invocation containing either requires `CONFIRM_APPEND_ONLY=yes`. A failed multi-write import stops at the first error and reports earlier successful operations; it does not retry or roll back. `--apply` requires a `mak_` user API key and team access with CRM enabled. It does not make writes atomic or idempotent.
+Each update requires its existing record `id`; contact creation requires an exact match for a non-generic company domain and an email on that domain. When the same import creates a company and contacts under it, the example reuses the returned company handle rather than relying on search indexing. Preflight reads all six blocked-domain lists from the checked-in CRM policy and rejects those domains and reserved suffixes before writes; it requires a full monorepo checkout and fails closed if the policy is unavailable or changes to an unrecognized format. Notes are CRM comments, while `documents` creates separate markdown documents. Both are append-only: reruns can duplicate content, and every applying invocation containing either requires `CONFIRM_APPEND_ONLY=yes`. A failed multi-write import stops at the first error and reports earlier successful operations; it does not retry or roll back. `--apply` requires a `mak_` user API key and team access with CRM enabled. It does not make writes atomic or idempotent.
 
 # Developing
 
