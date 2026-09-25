@@ -1,5 +1,4 @@
-import { classifyExternalDestination } from '@core/component/external-destinations';
-import { LinkHoverCard } from '@core/component/Link';
+import { ExternalDestinationAction, LinkHoverCard } from '@core/component/Link';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { useUnfurl } from '@core/signal/unfurl';
@@ -61,18 +60,10 @@ export function LinkWithPreview(props: LinkWithPreviewProps) {
       >
         {props.children}
       </a>
-      <Show when={classifyExternalDestination(props.url)}>
-        {(destination) => (
-          <button
-            type="button"
-            class="ml-1 inline text-xs text-link underline-offset-2 hover:underline focus-visible:underline"
-            aria-label={destination().actionLabel}
-            onClick={() => openExternalUrl(destination().url)}
-          >
-            {destination().actionLabel}
-          </button>
-        )}
-      </Show>
+      <ExternalDestinationAction
+        url={props.url}
+        class="ml-1 inline underline-offset-2"
+      />
       <Show when={previewOpen()}>
         <ScopedPortal>
           <div

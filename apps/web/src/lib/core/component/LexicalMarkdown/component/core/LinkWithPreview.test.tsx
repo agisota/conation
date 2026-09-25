@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@solidjs/testing-library';
+import userEvent from '@testing-library/user-event';
 import type { ParentProps } from 'solid-js';
 import { afterEach, expect, it, vi } from 'vitest';
 
@@ -61,3 +62,21 @@ it.each(['https://x.com.evil.test/user/status/123', 'javascript:alert(1)'])(
     expect(screen.queryByRole('button', { name: /open in/i })).toBeNull();
   }
 );
+
+it('keeps the destination action after pointer leave and activates it by keyboard', async () => {
+  const user = userEvent.setup();
+  const url = 'https://x.com/example/status/123';
+  render(() => <LinkWithPreview url={url}>source link</LinkWithPreview>);
+  fireEvent.mouseLeave(screen.getByRole('link', { name: 'source link' }));
+
+  await user.tab();
+  expect(screen.getByRole('link', { name: 'source link' })).toBe(
+    document.activeElement
+  );
+  await user.tab();
+  const action = screen.getByRole('button', { name: 'Open in X' });
+  expect(action).toBe(document.activeElement);
+  await user.keyboard('{Enter}');
+
+  expect(open).toHaveBeenCalledWith(url);
+});

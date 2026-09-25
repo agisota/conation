@@ -359,22 +359,23 @@ function EventLocationItem(props: { location: string }) {
       .replace(/[,\s]+$/, '');
     if (!physicalText) return;
     if (
-      /\b(?:zoom|teams|meet|webex|conference|dial[\s-]?in|call|meeting|passcode|password|pin|code|room|access|meeting id|conference id|join code)\b/i.test(
+      /\b(?:zoom|teams|meet|webex|conference|dial[\s-]?in|call|meeting|online|virtual|remote|passcode|password|pin|code|ext(?:ension)?|room|access|join code)\b/i.test(
         physicalText
       )
     )
       return;
     const words = physicalText.match(/[\p{L}\p{N}]+/gu) ?? [];
-    const hasLetters = /\p{L}/u.test(physicalText);
-    const hasPlaceShape =
-      (/\d/.test(physicalText) && hasLetters) ||
-      /\b(?:street|st|road|rd|avenue|ave|boulevard|blvd|lane|ln|drive|dr|way|square|sq)\b/i.test(
+    const hasStreetAddress =
+      /\b\d{1,6}\s+[\p{L}][\p{L}'’-]*(?:\s+[\p{L}][\p{L}'’-]*){0,3}\s+\b(?:street|st|road|rd|avenue|ave|boulevard|blvd|lane|ln|drive|dr|way|square|sq|highway|hwy|route|rte)\b/iu.test(
         physicalText
       );
     const isNamedPlace =
-      (words.length >= 2 && hasLetters) ||
-      /^[\p{Lu}][\p{L}'’-]{2,}$/u.test(physicalText);
-    return hasPlaceShape || isNamedPlace
+      /\b(?:park|museum|hotel|restaurant|cafe|café|airport|station|library|university|campus|hospital|stadium|arena|garden|plaza|center|centre|hall|theatre|theater|church|temple|beach|harbor|harbour|pier|monument|zoo|mall|market)\b/i.test(
+        physicalText
+      );
+    const isSingleNamedPlace =
+      words.length === 1 && /^[\p{Lu}][\p{L}'’-]{2,}$/u.test(physicalText);
+    return hasStreetAddress || isNamedPlace || isSingleNamedPlace
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(physicalText)}`
       : undefined;
   });

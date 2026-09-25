@@ -80,6 +80,11 @@ it.each([
   'https://meet.google.com/abc-defg-hij',
   'Room 123456, access code 998877',
   '2026-09-25',
+  'Online only',
+  'Project kickoff',
+  'ext 1234',
+  'Conference only',
+  'Dial-in ext 1234',
 ])('does not offer a misleading map for %s', (location) => {
   render(() => (
     <EventDetails event={eventWithLocation(location)} timeFormat="12-hour" />
@@ -87,3 +92,24 @@ it.each([
 
   expect(screen.queryByRole('button', { name: 'Open in Maps' })).toBeNull();
 });
+
+it.each([
+  [
+    'Central Park',
+    'https://www.google.com/maps/search/?api=1&query=Central%20Park',
+  ],
+  [
+    'https://www.openstreetmap.org/#map=12/40.7829/-73.9654',
+    'https://www.openstreetmap.org/#map=12/40.7829/-73.9654',
+  ],
+])(
+  'offers Maps for a named place or recognized map URL: %s',
+  (location, url) => {
+    render(() => (
+      <EventDetails event={eventWithLocation(location)} timeFormat="12-hour" />
+    ));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open in Maps' }));
+    expect(open).toHaveBeenCalledWith(url);
+  }
+);

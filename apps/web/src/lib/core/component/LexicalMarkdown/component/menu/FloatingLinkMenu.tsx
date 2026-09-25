@@ -1,4 +1,4 @@
-import { LinkHoverCard } from '@core/component/Link';
+import { ExternalDestinationAction, LinkHoverCard } from '@core/component/Link';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import { toast } from '@core/component/Toast/Toast';
 import clickOutside from '@core/directive/clickOutside';
@@ -397,10 +397,16 @@ export function FloatingLinkMenu(props: {
                         url: link().url ?? '',
                         title: link().linkText ?? '',
                       }}
+                      showDestinationAction={false}
                     />
                   }
                 >
-                  {(details) => <LinkHoverCard unfurled={details()} />}
+                  {(details) => (
+                    <LinkHoverCard
+                      unfurled={details()}
+                      showDestinationAction={false}
+                    />
+                  )}
                 </Show>
               </div>
             </ScopedPortal>
@@ -469,6 +475,14 @@ export function FloatingLinkMenu(props: {
               </div>
             </div>
           </div>
+          <Show when={pendingLinkInfo()?.url}>
+            {(url) => (
+              <div class="flex justify-end pt-1">
+                <ExternalDestinationAction url={url()} />
+              </div>
+            )}
+          </Show>
+
           <div
             class="flex overflow-hidden ease-in-out"
             classList={{

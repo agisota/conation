@@ -24,7 +24,37 @@ type UnfurlLinkProps = {
 
 type LinkHoverCardProps = {
   unfurled: GetUnfurlResponse;
+  showDestinationAction?: boolean;
 };
+
+type ExternalDestinationActionProps = {
+  url: string;
+  class?: string;
+};
+
+/** A keyboard- and touch-reachable action for a recognized external destination. */
+export function ExternalDestinationAction(
+  props: ExternalDestinationActionProps
+) {
+  const destination = () => classifyExternalDestination(props.url);
+  return (
+    <Show when={destination()}>
+      {(value) => (
+        <button
+          type="button"
+          class={cn(
+            'text-link text-xs hover:underline focus-visible:underline',
+            props.class
+          )}
+          aria-label={value().actionLabel}
+          onClick={() => openExternalUrl(value().url)}
+        >
+          {value().actionLabel}
+        </button>
+      )}
+    </Show>
+  );
+}
 
 /**
  * The shared card shown when hovering a link in rendered or editable Markdown.
@@ -65,13 +95,9 @@ export function LinkHoverCard(props: LinkHoverCardProps) {
           {(value) => (
             <>
               <div class="text-xs text-ink-muted">{value().kind}</div>
-              <button
-                type="button"
-                class="text-link text-xs hover:underline"
-                onClick={() => openExternalUrl(value().url)}
-              >
-                {value().actionLabel}
-              </button>
+              <Show when={props.showDestinationAction !== false}>
+                <ExternalDestinationAction url={props.unfurled.url} />
+              </Show>
             </>
           )}
         </Show>
