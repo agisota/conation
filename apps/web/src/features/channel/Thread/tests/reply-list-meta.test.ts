@@ -1,0 +1,44 @@
+import { senderFromStorageId } from '@queries/messages/message-sender';
+import type { Message as EntityMessage } from '@service-storage/messages';
+import { describe, expect, it } from 'vitest';
+import { buildThreadReplyListMeta } from '../reply-list-meta';
+
+function createReply(
+  id: string,
+  createdAt: string,
+  senderId = 'user-1'
+): EntityMessage {
+  return {
+    id,
+    parent: { type: 'channel', id: 'channel-1' },
+    mentions: [],
+    content: '',
+    created_at: createdAt,
+    updated_at: createdAt,
+    sender: senderFromStorageId(senderId),
+    sender_id: senderId,
+    attachments: [],
+    reactions: [],
+  };
+}
+
+describe('buildThreadReplyListMeta', () => {
+  it('builds reply list indices and grouping metadata in order', () => {
+    const replies = [
+      createReply('r1', '2026-02-20T09:00:00.000Z'),
+      createReply('r2', '2026-02-20T09:01:00.000Z'),
+      createReply('r3', '2026-02-20T09:02:00.000Z', 'user-2'),
+    ];
+
+    const meta = buildThreadReplyListMeta(replies);
+
+    expect(meta.r1).toEqual({
+      index: 0,
+      isNewMessage: false,
+      isFirstNewMessage: false,
+      isGroupedWithPrevious: false,
+    });
+    expect(meta.r2.isGroupedWithPrevious).toBe(true);
+    expect(meta.r3.isGroupedWithPrevious).toBe(false);
+  });
+});

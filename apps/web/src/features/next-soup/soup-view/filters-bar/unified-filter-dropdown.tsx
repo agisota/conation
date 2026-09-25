@@ -1,0 +1,953 @@
+import type { ListView } from '@app/constants/list-views';
+import { isListViewID, TAGGABLE_LIST_VIEWS } from '@app/constants/list-views';
+import {
+  type FilterContext,
+  NO_ASSIGNEE,
+  NO_STAGE,
+} from '@app/features/next-soup/filters/configs/';
+import {
+  buildDocumentTypeQuery,
+  getActiveDocumentTypeFilterIds,
+  isDocumentTypeFilterId,
+} from '@app/features/next-soup/filters/configs/document-type-query';
+import {
+  defineQueryFilters,
+  type PropertyFilter,
+  queryStateFrom,
+} from '@app/features/next-soup/filters/filter-store';
+import { mergeQuery } from '@app/features/next-soup/filters/filter-store/query-store';
+import { getViewPreset } from '@app/features/next-soup/sidebar/soup-filter-presets';
+import {
+  type ReadFilter,
+  useSoupView,
+} from '@app/features/next-soup/soup-view/soup-view-context';
+import { useDealStages } from '@companies/crm/deal-stages';
+import { CrmStageIcon } from '@companies/crm/StageIcon';
+import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
+import { EntityIcon } from '@core/component/EntityIcon';
+import { UserIcon } from '@core/component/UserIcon';
+import { useUserId } from '@core/context/user';
+import { registerHotkey } from '@core/hotkey/hotkeys';
+import { TOKENS } from '@core/hotkey/tokens';
+import { idToDisplayName } from '@core/user/util';
+import CircleDashedIcon from '@phosphor/circle-dashed.svg';
+import FilterIcon from '@phosphor/funnel-simple.svg';
+import { PropertyValueIcon } from '@property/component/propertyValue/PropertyValueIcon';
+import { PROPERTY_OPTION_IDS, SYSTEM_PROPERTY_IDS } from '@property/constants';
+import { useGithubLinkStatusQuery } from '@queries/auth';
+import { useContacts } from '@queries/contacts/contacts';
+import { useCurrentTeamQuery } from '@queries/team/teams';
+import { cn, Dropdown, Tooltip } from '@ui';
+import {
+  type Accessor,
+  batch,
+  createMemo,
+  createSignal,
+  For,
+  type JSX,
+  Match,
+  Show,
+  Switch,
+} from 'solid-js';
+import {
+  type FilterCategory,
+  filterInboxGithubPrOption,
+} from './filter-categories';
+import {
+  FilterOptionItem,
+  FilterSubmenu,
+  SearchableFilterSubmenu,
+} from './filter-menu';
+import type { SearchableOption } from './searchable-multi-select';
+
+import { useTagFilter } from './tag-filter';
+
+export type { FilterCategory, FilterOption } from './filter-categories';
+
+// Filter categories by view
+const INBOX_FILTER_CATEGORIES: FilterCategory[] = [
+  {
+    id: 'type',
+    label: 'Type',
+    labelPlural: 'Types',
+    options: [
+      {
+        id: 'document',
+        label: 'Docs',
+        icon: () => <EntityIcon targetType="md" size="xs" />,
+      },
+      {
+        id: 'agent',
+        label: 'Agents',
+        icon: () => <EntityIcon targetType="chat" size="xs" />,
+      },
+      {
+        id: 'people',
+        label: 'People',
+        icon: () => <EntityIcon targetType="direct_message" size="xs" />,
+      },
+      {
+        id: 'teams',
+        label: 'Teams',
+        icon: () => <EntityIcon targetType="channel" size="xs" />,
+      },
+      {
+        id: 'task',
+        label: 'Tasks',
+        icon: () => <EntityIcon targetType="task" size="xs" />,
+      },
+      {
+        id: 'email',
+        label: 'Mail',
+        icon: () => <EntityIcon targetType="email" size="xs" />,
+      },
+      {
+        id: 'file',
+        label: 'Files',
+        icon: () => <EntityIcon targetType="files" size="xs" />,
+      },
+      {
+        id: 'github-pr',
+        label: 'GitHub PRs',
+        icon: () => <EntityIcon targetType="githubPullRequest" size="xs" />,
+      },
+    ],
+    multiple: true,
+  },
+];
+
+const isInboxTypeFilterId = (id: string) => {
+  for (const category of INBOX_FILTER_CATEGORIES) {
+    if (category.options.find((o) => o.id === id)) return true;
+  }
+
+  return false;
+};
+
+const MAIL_FILTER_CATEGORIES: FilterCategory[] = [
+  {
+    id: 'status',
+    label: 'Status',
+    labelPlural: 'Statuses',
+    options: [
+      { id: 'unread', label: 'Unread' },
+      { id: 'read', label: 'Read' },
+      { id: 'not-done', label: 'Not Done' },
+      { id: 'done', label: 'Done' },
+    ],
+    multiple: true,
+  },
+  {
+    id: 'attachment',
+    label: 'Attachments',
+    labelPlural: 'Attachments',
+    options: [
+      {
+        id: 'attachment-pdf',
+        label: 'PDFs',
+        icon: () => <EntityIcon targetType="pdf" size="xs" />,
+      },
+      {
+        id: 'attachment-image',
+        label: 'Images',
+        icon: () => <EntityIcon targetType="image" size="xs" />,
+      },
+      {
+        id: 'attachment-document',
+        label: 'Documents',
+        icon: () => <EntityIcon targetType="files" size="xs" />,
+      },
+    ],
+    multiple: true,
+  },
+  {
+    id: 'calendar',
+    label: 'Calendar',
+    labelPlural: 'Calendar',
+    options: [{ id: 'has-calendar-invite', label: 'Has Calendar Invite' }],
+    multiple: false,
+  },
+];
+
+const TASKS_FILTER_CATEGORIES: FilterCategory[] = [
+  {
+    id: 'status',
+    label: 'Status',
+    labelPlural: 'Statuses',
+    options: [
+      {
+        id: 'task-not-started',
+        label: 'Not Started',
+        icon: () => (
+          <PropertyValueIcon
+            optionId={PROPERTY_OPTION_IDS.STATUS.NOT_STARTED}
+            class="size-3.5"
+          />
+        ),
+      },
+      {
+        id: 'task-in-progress',
+        label: 'In Progress',
+        icon: () => (
+          <PropertyValueIcon
+            optionId={PROPERTY_OPTION_IDS.STATUS.IN_PROGRESS}
+            class="size-3.5"
+          />
+        ),
+      },
+      {
+        id: 'task-in-review',
+        label: 'In Review',
+        icon: () => (
+          <PropertyValueIcon
+            optionId={PROPERTY_OPTION_IDS.STATUS.IN_REVIEW}
+            class="size-3.5"
+          />
+        ),
+      },
+      {
+        id: 'task-completed',
+        label: 'Completed',
+        icon: () => (
+          <PropertyValueIcon
+            optionId={PROPERTY_OPTION_IDS.STATUS.COMPLETED}
+            class="size-3.5"
+          />
+        ),
+      },
+      {
+        id: 'task-canceled',
+        label: 'Canceled',
+        icon: () => (
+          <PropertyValueIcon
+            optionId={PROPERTY_OPTION_IDS.STATUS.CANCELED}
+            class="size-3.5"
+          />
+        ),
+      },
+    ],
+    multiple: true,
+  },
+  {
+    id: 'priority',
+    label: 'Priority',
+    labelPlural: 'Priorities',
+    options: [
+      {
+        id: 'task-urgent',
+        label: 'Urgent',
+        icon: () => (
+          <PropertyValueIcon
+            optionId={PROPERTY_OPTION_IDS.PRIORITY.URGENT}
+            class="size-3.5"
+          />
+        ),
+      },
+      {
+        id: 'task-high-priority',
+        label: 'High Priority',
+        icon: () => (
+          <PropertyValueIcon
+            optionId={PROPERTY_OPTION_IDS.PRIORITY.HIGH}
+            class="size-3.5"
+          />
+        ),
+      },
+      {
+        id: 'task-medium-priority',
+        label: 'Medium Priority',
+        icon: () => (
+          <PropertyValueIcon
+            optionId={PROPERTY_OPTION_IDS.PRIORITY.MEDIUM}
+            class="size-3.5"
+          />
+        ),
+      },
+      {
+        id: 'task-low-priority',
+        label: 'Low Priority',
+        icon: () => (
+          <PropertyValueIcon
+            optionId={PROPERTY_OPTION_IDS.PRIORITY.LOW}
+            class="size-3.5"
+          />
+        ),
+      },
+      { id: 'task-no-priority', label: 'No Priority' },
+    ],
+    multiple: true,
+  },
+];
+
+// The Customers view's Stage filter is context-driven (team-customizable
+// stage set), rendered as a searchable submenu next to Owner — no static
+// categories here.
+const COMPANIES_FILTER_CATEGORIES: FilterCategory[] = [];
+
+const DOCUMENTS_FILTER_CATEGORIES: FilterCategory[] = [
+  {
+    id: 'type',
+    label: 'Type',
+    labelPlural: 'Types',
+    options: [
+      {
+        id: 'doc-markdown',
+        label: 'Markdown',
+        icon: () => <EntityIcon targetType="md" size="xs" />,
+      },
+      {
+        id: 'doc-canvas',
+        label: 'Canvas',
+        icon: () => <EntityIcon targetType="canvas" size="xs" />,
+      },
+      {
+        id: 'doc-spreadsheet',
+        label: 'Spreadsheet',
+        icon: () => <EntityIcon targetType="spreadsheet" size="xs" />,
+      },
+      {
+        id: 'file-code',
+        label: 'Code',
+        icon: () => <EntityIcon targetType="code" size="xs" />,
+      },
+      {
+        id: 'file-image',
+        label: 'Images',
+        icon: () => <EntityIcon targetType="image" size="xs" />,
+      },
+      {
+        id: 'file-pdf',
+        label: 'PDFs',
+        icon: () => <EntityIcon targetType="pdf" size="xs" />,
+      },
+      {
+        id: 'file-docx',
+        label: 'DOCX',
+        icon: () => <EntityIcon targetType="write" size="xs" />,
+      },
+      {
+        id: 'file-video',
+        label: 'Videos',
+        icon: () => <EntityIcon targetType="video" size="xs" />,
+      },
+      {
+        id: 'doc-snippet',
+        label: 'Snippets',
+        icon: () => <EntityIcon targetType="snippet" size="xs" />,
+      },
+      {
+        id: 'doc-skill',
+        label: 'Skills',
+        icon: () => <EntityIcon targetType="skill" size="xs" />,
+      },
+      {
+        id: 'file-other',
+        label: 'Other',
+        icon: () => <EntityIcon targetType="files" size="xs" />,
+      },
+    ],
+    multiple: true,
+  },
+];
+
+export function buildContactLabel(
+  contact: { id: string; name?: string | null },
+  currentUserId: string | undefined
+): string {
+  if (contact.id === currentUserId) {
+    return contact.name ? `${contact.name} (me)` : 'Me';
+  }
+  return contact.name || contact.id;
+}
+
+export const VIEW_FILTER_CATEGORIES: Record<ListView, FilterCategory[]> = {
+  inbox: INBOX_FILTER_CATEGORIES,
+  // No refinements yet: the touched-by-me query rejects channel/email
+  // filter trees, so the inbox categories can't be offered wholesale.
+  recent: [],
+  agents: [],
+  mail: MAIL_FILTER_CATEGORIES,
+  documents: DOCUMENTS_FILTER_CATEGORIES,
+  tasks: TASKS_FILTER_CATEGORIES,
+  companies: COMPANIES_FILTER_CATEGORIES,
+  channels: [],
+  calls: [],
+  folders: [],
+  // The two tabs already split reminders on the only axis they have; there is
+  // nothing further to refine by.
+  reminders: [],
+  search: [],
+};
+
+interface UnifiedFilterDropdownProps {
+  /** View-specific refinements alongside the shared filters. */
+  children?: JSX.Element;
+  /** Optional controlled open state */
+  open?: Accessor<boolean>;
+  onOpenChange?: (open: boolean) => void;
+  /** Optional custom trigger element. If not provided, uses default Filter button. */
+  customTrigger?: JSX.Element;
+  /** Hide the default trigger entirely (useful when controlling open state externally) */
+  hideTrigger?: boolean;
+  /** Hide the default trigger's text label while retaining its tooltip. */
+  hideLabel?: boolean;
+}
+
+const READ_FILTER_OPTIONS: { id: ReadFilter; label: string }[] = [
+  { id: 'unread', label: 'Unread' },
+  { id: 'read', label: 'Read' },
+  { id: 'all', label: 'All' },
+];
+
+/** Single-select read/unread/all submenu for the inbox. */
+const ReadStatusSubmenu = (props: {
+  value: ReadFilter;
+  onChange: (value: ReadFilter) => void;
+}) => {
+  return (
+    <FilterSubmenu
+      label="Status"
+      active={props.value !== 'all'}
+      options={READ_FILTER_OPTIONS}
+      isSelected={(id) => props.value === id}
+      onSelect={props.onChange}
+      closeOnSelect
+    />
+  );
+};
+
+export const UnifiedFilterDropdown = (
+  props: UnifiedFilterDropdownProps = {}
+) => {
+  const [internalOpen, setInternalOpen] = createSignal(false);
+  const open = () => props.open?.() ?? internalOpen();
+  const setOpen = (v: boolean) => {
+    setInternalOpen(v);
+    props.onOpenChange?.(v);
+  };
+  const panel = useSplitPanelOrThrow();
+  const {
+    soup,
+    queryFilters,
+    assigneeFilter,
+    setAssigneeFilter,
+    ownerFilter,
+    setOwnerFilter,
+    stageFilter,
+    setStageFilter,
+    activeTab,
+    readFilter,
+    setReadFilter,
+  } = useSoupView();
+  const contacts = useContacts();
+  const teamQuery = useCurrentTeamQuery();
+  const userId = useUserId();
+  const dealStages = useDealStages();
+
+  const currentView = createMemo((): ListView | undefined => {
+    const content = panel.handle.content();
+    if (content.type !== 'component' || !isListViewID(content.id))
+      return undefined;
+    return content.id;
+  });
+
+  const isInboxView = () => currentView() === 'inbox';
+  const githubLinkStatus = useGithubLinkStatusQuery({
+    enabled: () => currentView() === 'inbox',
+  });
+
+  const categories = createMemo(() => {
+    const view = currentView();
+    if (!view) return [];
+    const viewCategories = VIEW_FILTER_CATEGORIES[view] ?? [];
+
+    // The Folders tab only lists folders, so document-type refinements are
+    // inapplicable there.
+    if (view === 'documents' && activeTab() === 'folders') return [];
+
+    if (view !== 'inbox') return viewCategories;
+
+    return filterInboxGithubPrOption(
+      viewCategories,
+      githubLinkStatus.data?.status === 'linked'
+    );
+  });
+
+  const isOptionActive = (optionId: string) => {
+    return soup.predicates.isActive(optionId);
+  };
+
+  const toggleFilter = (optionId: string) => {
+    const wasActive = soup.predicates.isActive(optionId);
+    const previousDocumentTypeIds =
+      currentView() === 'documents' && isDocumentTypeFilterId(optionId)
+        ? getActiveDocumentTypeFilterIds(soup.predicates.isActive)
+        : undefined;
+
+    soup.predicates.toggle({ or: [optionId] });
+
+    if (previousDocumentTypeIds) {
+      const previousQuery = buildDocumentTypeQuery(previousDocumentTypeIds);
+      const nextQuery = buildDocumentTypeQuery(
+        getActiveDocumentTypeFilterIds(soup.predicates.isActive)
+      );
+      if (previousQuery) queryFilters.remove(previousQuery);
+      if (nextQuery) queryFilters.add(nextQuery);
+      return;
+    }
+
+    const filter = soup.predicates.getConfig(optionId);
+    if (!filter?.query) return;
+
+    const ctx: FilterContext = {
+      userId: userId(),
+      assignees: assigneeFilter(),
+    };
+    const query =
+      typeof filter.query === 'function' ? filter.query(ctx) : filter.query;
+
+    if (currentView() === 'inbox' && isInboxTypeFilterId(optionId)) {
+      const baseQuery = getViewPreset('inbox', activeTab())?.filters;
+
+      if (!baseQuery) {
+        return;
+      }
+
+      let nextQueryState = baseQuery;
+
+      if (!wasActive) {
+        nextQueryState = mergeQuery(
+          queryStateFrom(baseQuery),
+          defineQueryFilters({}, { skipTargetsFrom: query })
+        );
+      }
+
+      queryFilters.replace(nextQueryState);
+
+      return;
+    }
+
+    if (wasActive) {
+      queryFilters.remove(query);
+    } else {
+      queryFilters.add(query);
+    }
+  };
+
+  // Assignee options for tasks view
+  const assigneeOptions = createMemo((): SearchableOption[] => {
+    const currentUserId = userId();
+    const noAssigneeOption: SearchableOption = {
+      id: NO_ASSIGNEE,
+      label: 'Unassigned',
+      icon: () => <CircleDashedIcon class="size-3.5 text-ink-muted" />,
+    };
+    let meOption: SearchableOption | undefined;
+    const otherContactOptions: SearchableOption[] = [];
+    for (const contact of contacts()) {
+      const opt: SearchableOption = {
+        id: contact.id,
+        label: buildContactLabel(contact, currentUserId),
+        icon: () => (
+          <UserIcon
+            id={contact.id}
+            size="sm"
+            suppressClick
+            showTooltip={false}
+          />
+        ),
+      };
+      if (contact.id === currentUserId) {
+        meOption = opt;
+      } else {
+        otherContactOptions.push(opt);
+      }
+    }
+    return [
+      ...(meOption ? [meOption] : []),
+      noAssigneeOption,
+      ...otherContactOptions,
+    ];
+  });
+
+  const handleAssigneeChange = (ids: string[]) => {
+    const current = assigneeFilter();
+    const toAdd = ids.filter((id) => !current.includes(id));
+    const toRemove = current.filter((id) => !ids.includes(id));
+
+    // Exclude NO_ASSIGNEE from backend queries - it's handled client-side only
+    const toProps = (list: string[]): PropertyFilter[] =>
+      list
+        .filter((id) => id !== NO_ASSIGNEE)
+        .map((id) => ({
+          propertyId: SYSTEM_PROPERTY_IDS.ASSIGNEES,
+          type: 'entity',
+          value: id,
+        }));
+
+    batch(() => {
+      setAssigneeFilter(ids);
+
+      // Activate/deactivate the assignee predicate based on selection
+      const shouldBeActive = ids.length > 0;
+      if (shouldBeActive !== soup.predicates.isActive('assignee')) {
+        soup.predicates.toggle({ and: ['assignee'] });
+      }
+
+      const removeProps = toProps(toRemove);
+      const addProps = toProps(toAdd);
+      if (removeProps.length)
+        queryFilters.remove({ include: { properties: removeProps } });
+      if (addProps.length)
+        queryFilters.add({ include: { properties: addProps } });
+    });
+  };
+
+  // Owner options for the Customers view (team members, plus a "No owner"
+  // row) — company owners are always teammates, so the broader contacts
+  // list (anyone ever interacted with) would mostly be noise here.
+  const ownerOptions = createMemo((): SearchableOption[] => {
+    const currentUserId = userId();
+    const noOwnerOption: SearchableOption = {
+      id: NO_ASSIGNEE,
+      label: 'No owner',
+      icon: () => <CircleDashedIcon class="size-3.5 text-ink-muted" />,
+    };
+    let meOption: SearchableOption | undefined;
+    const memberOptions: SearchableOption[] = [];
+    for (const member of teamQuery.data?.members ?? []) {
+      const id = member.user_id;
+      const opt: SearchableOption = {
+        id,
+        label: buildContactLabel(
+          { id, name: idToDisplayName(id) },
+          currentUserId
+        ),
+        icon: () => (
+          <UserIcon id={id} size="sm" suppressClick showTooltip={false} />
+        ),
+      };
+      if (id === currentUserId) {
+        meOption = opt;
+      } else {
+        memberOptions.push(opt);
+      }
+    }
+    memberOptions.sort((a, b) => a.label.localeCompare(b.label));
+    return [...(meOption ? [meOption] : []), noOwnerOption, ...memberOptions];
+  });
+
+  // Owner filtering is a client-side predicate (companies come back from a
+  // dedicated capped CRM request), so no query filters to maintain here.
+  const handleOwnerChange = (ids: string[]) => {
+    batch(() => {
+      setOwnerFilter(ids);
+      const shouldBeActive = ids.length > 0;
+      if (shouldBeActive !== soup.predicates.isActive('company-owner')) {
+        soup.predicates.toggle({ and: ['company-owner'] });
+      }
+    });
+  };
+
+  // Stage options for the Customers view: the team's active deal-stage set
+  // (plus retired legacy stages on the default set) and a trailing
+  // "No stage" row.
+  const stageOptions = createMemo((): SearchableOption[] => [
+    ...dealStages.filterStages().map((stage, index) => ({
+      id: stage.id,
+      label: stage.label,
+      icon: () => (
+        <CrmStageIcon optionId={stage.id} index={index} class="size-3.5" />
+      ),
+    })),
+    {
+      id: NO_STAGE,
+      label: 'No stage',
+      icon: () => <CircleDashedIcon class="size-3.5 text-ink-muted" />,
+    },
+  ]);
+
+  // The stage set shown when no filter is active: the active deal stages
+  // plus "No stage" — retired legacy stages only display when filtered in.
+  const defaultStageIds = createMemo(
+    () => new Set([...dealStages.stages().map((stage) => stage.id), NO_STAGE])
+  );
+
+  // The stage submenu reflects what's on screen: an empty filter shows the
+  // default columns, so exactly those read as checked (legacy stages don't).
+  const effectiveStageFilter = () =>
+    stageFilter().length > 0 ? stageFilter() : [...defaultStageIds()];
+
+  // Stage filtering is a client-side predicate, mirroring the owner filter.
+  const handleStageChange = (ids: string[]) => {
+    // Checking exactly the default set is the same as no filter — store it
+    // as empty so the predicate deactivates.
+    const next =
+      ids.length === defaultStageIds().size &&
+      ids.every((id) => defaultStageIds().has(id))
+        ? []
+        : ids;
+    batch(() => {
+      setStageFilter(next);
+      const shouldBeActive = next.length > 0;
+      if (shouldBeActive !== soup.predicates.isActive('company-stage')) {
+        soup.predicates.toggle({ and: ['company-stage'] });
+      }
+    });
+  };
+
+  const isTasksView = () => currentView() === 'tasks';
+  const isDocumentsView = () => currentView() === 'documents';
+  const isCreatedByFilterView = () => {
+    const view = currentView();
+    return view === 'documents' || view === 'tasks';
+  };
+  const showCreatedByFilter = () =>
+    isCreatedByFilterView() && !(isDocumentsView() && activeTab() === 'owned');
+  const isCompaniesView = () => currentView() === 'companies';
+
+  // The Files "Owned" tab has a creator constraint as part of its base
+  // preset. Keep that constraint when a user clears an explicit Created by
+  // selection, rather than accidentally broadening the tab to every file.
+  const baseCreatedByIds = createMemo(() => {
+    const view = currentView();
+    if (view !== 'documents' && view !== 'tasks') return [];
+    return (
+      getViewPreset(view, activeTab(), {
+        userId: userId(),
+        isTeamAdmin: false,
+      })?.filters.include?.documentOwnerId ?? []
+    );
+  });
+  const createdByIds = createMemo(
+    () => queryFilters.state.include.documentOwnerId ?? []
+  );
+
+  const createdByOptions = createMemo((): SearchableOption[] => {
+    const currentUserId = userId();
+    let meOption: SearchableOption | undefined;
+    const otherContactOptions: SearchableOption[] = [];
+    for (const contact of contacts()) {
+      const opt: SearchableOption = {
+        id: contact.id,
+        label: buildContactLabel(contact, currentUserId),
+        icon: () => (
+          <UserIcon
+            id={contact.id}
+            size="sm"
+            suppressClick
+            showTooltip={false}
+          />
+        ),
+      };
+      if (contact.id === currentUserId) {
+        meOption = opt;
+      } else {
+        otherContactOptions.push(opt);
+      }
+    }
+    return [...(meOption ? [meOption] : []), ...otherContactOptions];
+  });
+
+  const handleCreatedByChange = (ids: string[]) => {
+    const nextIds = ids.length > 0 ? ids : baseCreatedByIds();
+    queryFilters.set({
+      include: {
+        documentOwnerId: nextIds.length > 0 ? nextIds : undefined,
+      },
+    });
+  };
+
+  const tagFilter = useTagFilter();
+  const showTagsFilter = () => {
+    const view = currentView();
+    return tagFilter.hasTags() && !!view && TAGGABLE_LIST_VIEWS.has(view);
+  };
+
+  registerHotkey({
+    hotkey: 'f',
+    scopeId: panel.splitHotkeyScope,
+    description: 'Open filter menu',
+    hotkeyToken: TOKENS.soup.filter,
+    keyDownHandler: () => {
+      setOpen(true);
+      return true;
+    },
+  });
+
+  // Capture anchor position when menu opens to prevent jumping when chips are added
+  const [anchorRect, setAnchorRect] = createSignal<DOMRect | null>(null);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
+      // Clear any stale anchor rect so it gets recaptured from trigger
+      setAnchorRect(null);
+    }
+    setOpen(isOpen);
+  };
+
+  const getAnchorRect = (anchor?: HTMLElement) => {
+    // If we have a captured rect, use it (prevents jumping)
+    const captured = anchorRect();
+    if (captured) return captured;
+
+    // Otherwise capture the current position
+    if (anchor) {
+      const rect = anchor.getBoundingClientRect();
+      setAnchorRect(rect);
+      return rect;
+    }
+    return undefined;
+  };
+
+  return (
+    <Show
+      when={
+        categories().length > 0 ||
+        isTasksView() ||
+        isCompaniesView() ||
+        isInboxView() ||
+        showTagsFilter()
+      }
+    >
+      <Dropdown
+        open={open()}
+        onOpenChange={handleOpenChange}
+        getAnchorRect={getAnchorRect}
+      >
+        <Show when={!props.hideTrigger}>
+          <Switch>
+            <Match when={props.customTrigger}>{props.customTrigger}</Match>
+            <Match when={true}>
+              <Tooltip label="Filter" hotkey={TOKENS.soup.filter}>
+                <Dropdown.Trigger
+                  depth={2}
+                  class="bg-surface"
+                  aria-label={props.hideLabel ? 'Filter' : undefined}
+                >
+                  <FilterIcon />
+                  <Show when={!props.hideLabel}>
+                    <span>Filter</span>
+                  </Show>
+                </Dropdown.Trigger>
+              </Tooltip>
+            </Match>
+          </Switch>
+        </Show>
+
+        <Dropdown.Content class={cn('min-w-32')}>
+          <Dropdown.Group>
+            <Show when={isInboxView()}>
+              <ReadStatusSubmenu
+                value={readFilter()}
+                onChange={setReadFilter}
+              />
+            </Show>
+            <Show
+              when={
+                categories().length === 1 &&
+                !isDocumentsView() &&
+                !isTasksView() &&
+                !isCompaniesView() &&
+                !isInboxView()
+              }
+              fallback={
+                <>
+                  <Show when={isDocumentsView() && showTagsFilter()}>
+                    <SearchableFilterSubmenu
+                      label="Tags"
+                      options={tagFilter.options}
+                      activeIds={tagFilter.activeIds}
+                      onChange={tagFilter.onChange}
+                      placeholder="Filter by tag..."
+                    />
+                  </Show>
+
+                  <For each={categories()}>
+                    {(category) => (
+                      <FilterSubmenu
+                        label={category.label}
+                        options={category.options}
+                        isSelected={isOptionActive}
+                        onSelect={toggleFilter}
+                        closeOnSelect={!category.multiple}
+                      />
+                    )}
+                  </For>
+
+                  {/* Assignee filter for tasks view */}
+                  <Show when={isTasksView()}>
+                    <SearchableFilterSubmenu
+                      label="Assignee"
+                      options={assigneeOptions}
+                      activeIds={assigneeFilter}
+                      onChange={handleAssigneeChange}
+                      placeholder="Search assignees..."
+                    />
+                  </Show>
+
+                  <Show when={showCreatedByFilter()}>
+                    <SearchableFilterSubmenu
+                      label="Created by"
+                      options={createdByOptions}
+                      activeIds={createdByIds}
+                      onChange={handleCreatedByChange}
+                      placeholder="Search creators..."
+                    />
+                  </Show>
+
+                  {/* Stage + Owner filters for the Customers view */}
+                  <Show when={isCompaniesView()}>
+                    <SearchableFilterSubmenu
+                      label="Stage"
+                      active={stageFilter().length > 0}
+                      options={stageOptions}
+                      activeIds={effectiveStageFilter}
+                      onChange={handleStageChange}
+                      placeholder="Filter stages..."
+                      preserveOrder
+                    />
+                    <SearchableFilterSubmenu
+                      label="Owner"
+                      options={ownerOptions}
+                      activeIds={ownerFilter}
+                      onChange={handleOwnerChange}
+                      placeholder="Search owners..."
+                    />
+                  </Show>
+                </>
+              }
+            >
+              {/* Single category: render options directly */}
+              <For each={categories()[0]!.options}>
+                {(option) => {
+                  const active = () => isOptionActive(option.id);
+                  return (
+                    <FilterOptionItem
+                      label={option.label}
+                      icon={option.icon}
+                      active={active()}
+                      onSelect={() => toggleFilter(option.id)}
+                      closeOnSelect={!categories()[0]!.multiple}
+                    />
+                  );
+                }}
+              </For>
+            </Show>
+
+            <Show when={!isDocumentsView() && showTagsFilter()}>
+              <SearchableFilterSubmenu
+                label="Tags"
+                options={tagFilter.options}
+                activeIds={tagFilter.activeIds}
+                onChange={tagFilter.onChange}
+                placeholder="Filter by tag..."
+              />
+            </Show>
+            {props.children}
+          </Dropdown.Group>
+        </Dropdown.Content>
+      </Dropdown>
+    </Show>
+  );
+};

@@ -1,0 +1,289 @@
+import { LoadingBlock } from '@core/component/LoadingBlock';
+import { getDisplayName, tryMacroId } from '@core/user';
+import LogoIcon from '@icon/macro-logo.svg';
+import EnvelopeIcon from '@phosphor/envelope.svg';
+import SpinnerIcon from '@phosphor/spinner.svg';
+import UsersThreeIcon from '@phosphor/users-three.svg';
+import { useUserInfo } from '@queries/auth';
+import {
+  useJoinTeamMutation,
+  useRejectInvitationMutation,
+  useUserInvitesQuery,
+} from '@queries/team/invitations';
+import { useCurrentTeamQuery, useTeamQuery } from '@queries/team/teams';
+import { useNavigate, useSearchParams } from '@solidjs/router';
+import { Button, Surface } from '@ui';
+import { createMemo, Match, Show, Switch } from 'solid-js';
+
+export function TeamInviteAcceptance() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const userInfo = useUserInfo();
+
+  const inviteId = () => searchParams.id as string | undefined;
+
+  const invitesQuery = useUserInvitesQuery();
+
+  const invite = createMemo(() => {
+    const id = inviteId();
+    if (!id || !invitesQuery.data?.invites) return undefined;
+    return invitesQuery.data.invites.find((inv) => inv.id === id);
+  });
+
+  const teamId = createMemo(() => invite()?.team_id ?? '');
+  const teamQuery = useTeamQuery(teamId);
+
+  const teamName = createMemo(() => teamQuery.data?.team.name);
+
+  // If the invite is gone but the user already belongs to a team (e.g. a
+  // domain auto-join consumed the invite between clicking the link and
+  // landing here), show that instead of "Invite Not Found". Only fetched
+  // once the invite lookup has settled without a match — a valid invite
+  // never waits on (or triggers) this request.
+  const currentTeamQuery = useCurrentTeamQuery(
+    () => !!userInfo()?.authenticated && invitesQuery.isSuccess && !invite()
+  );
+  const currentTeamName = createMemo(() => currentTeamQuery.data?.team.name);
+
+  const joinMutation = useJoinTeamMutation({
+    onSuccess: () => {
+      navigate('/', { replace: true });
+    },
+  });
+
+  const rejectMutation = useRejectInvitationMutation({
+    onSuccess: () => {
+      navigate('/', { replace: true });
+    },
+  });
+
+  const handleAccept = () => {
+    const id = inviteId();
+    if (!id) return;
+    joinMutation.mutate({ teamInviteId: id });
+  };
+
+  const handleDecline = () => {
+    const id = inviteId();
+    if (!id) return;
+    rejectMutation.mutate({ teamInviteId: id });
+  };
+
+  const handleLogin = () => {
+    const id = inviteId();
+    const returnUrl = id ? `/team-invite?id=${encodeURIComponent(id)}` : '/';
+    navigate(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+  };
+
+  const isLoading = createMemo(
+    () =>
+      invitesQuery.isLoading ||
+      teamQuery.isLoading ||
+      (!invite() && currentTeamQuery.isLoading)
+  );
+
+  return (
+    <div class="flex items-center justify-center size-full p-8 overflow-hidden relative">
+      <style>
+        {`
+          @keyframes invite-fade-up {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          .invite-card {
+            animation: invite-fade-up 300ms ease-out both;
+          }
+        `}
+      </style>
+      <div class="w-full max-w-105 invite-card">
+        <Surface>
+          <div class="flex flex-col gap-6 p-6">
+            <div class="flex justify-center">
+              <LogoIcon class="size-10 text-accent" />
+            </div>
+            <div class="flex flex-col items-center">
+              <Switch>
+                <Match when={!inviteId()}>
+                  <NoInviteId />
+                </Match>
+
+                <Match when={!userInfo()?.authenticated}>
+                  <UnauthenticatedView onLogin={handleLogin} />
+                </Match>
+
+                <Match when={isLoading()}>
+                  <LoadingBlock />
+                </Match>
+                <Match when={!invite() && currentTeamName()}>
+                  {(name) => <AlreadyOnTeam teamName={name()} />}
+                </Match>
+                <Match when={!invite()}>
+                  <InviteNotFound />
+                </Match>
+
+                <Match when={invite()}>
+                  <InviteDetails
+                    teamName={teamName()}
+                    role={invite()!.team_role}
+                    invitedBy={invite()!.invited_by}
+                    onAccept={handleAccept}
+                    onDecline={handleDecline}
+                    isJoining={joinMutation.isPending}
+                    isDeclining={rejectMutation.isPending}
+                  />
+                </Match>
+              </Switch>
+            </div>
+          </div>
+        </Surface>
+      </div>
+    </div>
+  );
+}
+
+function NoInviteId() {
+  const navigate = useNavigate();
+  return (
+    <div class="w-full flex flex-col items-center gap-4 text-center">
+      <h2 class="text-lg font-medium text-ink">Invalid Invite Link</h2>
+      <p class="text-sm text-ink-muted">
+        This invite link appears to be invalid or incomplete.
+      </p>
+      <Button
+        variant="outline"
+        size="md"
+        class="w-full rounded-xs"
+        onClick={() => navigate('/')}
+      >
+        Go to Home
+      </Button>
+    </div>
+  );
+}
+
+function UnauthenticatedView(props: { onLogin: () => void }) {
+  return (
+    <div class="w-full flex flex-col items-center gap-4 text-center">
+      <h2 class="flex items-center gap-2 text-lg font-medium text-ink">
+        <EnvelopeIcon class="size-5" />
+        You've Been Invited
+      </h2>
+      <p class="text-sm text-ink-muted">
+        Sign in or create an account to view and accept this team invitation.
+      </p>
+      <Button
+        variant="outline"
+        size="md"
+        class="w-full rounded-xs"
+        onClick={props.onLogin}
+      >
+        Sign In to Continue
+      </Button>
+    </div>
+  );
+}
+
+function AlreadyOnTeam(props: { teamName: string }) {
+  const navigate = useNavigate();
+  return (
+    <div class="w-full flex flex-col items-center gap-4 text-center">
+      <h2 class="flex items-center justify-center gap-2 text-lg font-medium text-ink">
+        <UsersThreeIcon class="size-5" />
+        Already on Team {props.teamName}
+      </h2>
+      <p class="text-sm text-ink-muted">
+        You're already a member of{' '}
+        <span class="text-ink">{props.teamName}</span>, so there's nothing more
+        to do here.
+      </p>
+      <Button
+        variant="outline"
+        size="md"
+        class="w-full rounded-xs"
+        onClick={() => navigate('/')}
+      >
+        Go to Home
+      </Button>
+    </div>
+  );
+}
+
+function InviteNotFound() {
+  const navigate = useNavigate();
+  return (
+    <div class="w-full flex flex-col items-center gap-4 text-center">
+      <h2 class="text-lg font-medium text-ink">Invite Not Found</h2>
+      <p class="text-sm text-ink-muted">
+        This invitation may have already been accepted, expired, or was sent to
+        a different email address.
+      </p>
+      <Button
+        variant="outline"
+        size="md"
+        class="w-full rounded-xs"
+        onClick={() => navigate('/')}
+      >
+        Go to Home
+      </Button>
+    </div>
+  );
+}
+
+function InviteDetails(props: {
+  teamName: string | undefined;
+  role: string;
+  invitedBy: string;
+  onAccept: () => void;
+  onDecline: () => void;
+  isJoining: boolean;
+  isDeclining: boolean;
+}) {
+  const displayTeamName = () => props.teamName ?? 'a team';
+  const roleDisplay = () => {
+    const role = props.role.toLowerCase();
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  };
+  const isDisabled = () => props.isJoining || props.isDeclining;
+
+  const invitedBy = () => getDisplayName(tryMacroId(props.invitedBy));
+
+  return (
+    <div class="flex flex-col items-center gap-6 text-center w-full">
+      <div class="flex flex-col gap-2">
+        <h2 class="flex items-center justify-center gap-2 text-lg font-medium text-ink">
+          <UsersThreeIcon class="size-5" />
+          Join {displayTeamName()}
+        </h2>
+        <p class="text-sm text-ink-muted">
+          <span class="text-ink">{invitedBy()}</span> has invited you to join as
+          a <span class="font-medium text-accent">{roleDisplay()}</span>.
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2 w-full">
+        <Button
+          variant="outline"
+          size="md"
+          class="w-full rounded-xs"
+          onClick={props.onAccept}
+          disabled={isDisabled()}
+        >
+          <Show when={props.isJoining} fallback="Accept Invitation">
+            <SpinnerIcon class="size-4 animate-spin" />
+          </Show>
+        </Button>
+        <Button
+          variant="ghost"
+          size="md"
+          class="w-full rounded-xs"
+          onClick={props.onDecline}
+          disabled={isDisabled()}
+        >
+          <Show when={props.isDeclining} fallback="Decline">
+            <SpinnerIcon class="size-4 animate-spin" />
+          </Show>
+        </Button>
+      </div>
+    </div>
+  );
+}

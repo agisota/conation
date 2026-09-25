@@ -1,0 +1,37 @@
+{
+	"compilerOptions": {
+		"module": "esnext",
+		"moduleResolution": "node",
+		"target": "ESNext",
+		"lib": [
+			"ESNext"
+		],
+		"strict": true,
+		"noImplicitAny": true,
+		"strictNullChecks": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noEmit": true,
+		"skipLibCheck": true,
+		"isolatedModules": true,
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"types": [
+			"node"
+		],
+		"baseUrl": "."
+	},
+	"include": [
+		"./stacks/**/*",
+		"./packages/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"**/*.test.ts",
+		".turbo",
+		"coverage",
+    "stacks/opensearch/helpers/**",
+    "stacks/web-app" // explicitly ignored since it is not part of the workspace at the moment
+	]
+}

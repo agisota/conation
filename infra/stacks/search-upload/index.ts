@@ -1,0 +1,43 @@
+import * as aws from '@pulumi/aws';
+import * as pulumi from '@pulumi/pulumi';
+import {
+  config,
+  getServiceUrl,
+  ServiceUrl,
+  stack,
+} from '../../packages/shared';
+import { SearchUploadHandler } from './search-upload-lambda';
+
+const tags = {
+  environment: stack,
+  tech_lead: 'hutch',
+  project: 'cloud-storage-search',
+};
+
+const DOCUMENT_STORAGE_SERVICE_AUTH_KEY = aws.secretsmanager
+  .getSecretVersionOutput({
+    secretId: config.require('document_storage_service_auth_key'),
+  })
+  .apply((secret) => secret.secretString);
+
+const BASE_NAME = 'search-upload';
+
+const searchUploadHandler = new SearchUploadHandler(
+  `${BASE_NAME}-handler-${stack}`,
+  {
+    envVars: {
+      ENVIRONMENT: pulumi.interpolate`${stack}`,
+      RUST_LOG: 'search_upload_handler=info,macro_http_request=info',
+      DOCUMENT_STORAGE_SERVICE_URL: getServiceUrl(
+        ServiceUrl.DOCUMENT_STORAGE_SERVICE_URL
+      ),
+      DOCUMENT_STORAGE_SERVICE_AUTH_KEY: pulumi.interpolate`${DOCUMENT_STORAGE_SERVICE_AUTH_KEY}`,
+    },
+    tags,
+  }
+);
+
+export const searchUploadHandlerLambdaRoleArn = searchUploadHandler.role.arn;
+export const searchUploadHandlerLambdaArn = searchUploadHandler.lambda.arn;
+export const searchUploadHandlerLambdaName = searchUploadHandler.lambda.name;
+export const searchUploadHandlerLambdaId = searchUploadHandler.lambda.id;

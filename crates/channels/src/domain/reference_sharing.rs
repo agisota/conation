@@ -1,0 +1,22 @@
+//! Reference sharing policy, independent of persistence and transport.
+
+use super::models::ReferencedShareItemType;
+use entity_access::domain::models::AccessLevel;
+
+/// Only owners may share session references, and automatic sharing grants view
+/// access. Sending a reference never grants control of an agent session.
+pub(crate) fn grant_level(
+    item_type: ReferencedShareItemType,
+    access: Option<AccessLevel>,
+) -> Option<AccessLevel> {
+    match (item_type, access) {
+        (ReferencedShareItemType::AgentSession, Some(AccessLevel::Owner)) => {
+            Some(AccessLevel::View)
+        }
+        (ReferencedShareItemType::AgentSession, _) | (_, None) => None,
+        (_, Some(_)) => Some(AccessLevel::View),
+    }
+}
+
+#[cfg(test)]
+mod test;

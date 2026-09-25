@@ -1,0 +1,276 @@
+use super::insert_bom_parts;
+use crate::history::upsert_user_history;
+use crate::share_permission::create::{create_document_permission, create_project_permission};
+use macro_user_id::cowlike::CowLike;
+use macro_user_id::user_id::MacroUserIdStr;
+use model::document::{BasicDocument, FileType};
+use model::document::{ID, SaveBomPart, VersionID};
+use model::project::Project;
+use model_entity::EntityType;
+use model_owner::Owner;
+use models_permissions::share_permission::SharePermissionV2;
+use models_permissions::share_permission::access_level::AccessLevel;
+use sqlx::{Postgres, Transaction};
+
+/// Creates a project under a transaction and does not commit the transaction
+#[tracing::instrument(skip(transaction))]
+pub async fn create_project_transaction(
+    transaction: &mut Transaction<'_, Postgres>,
+    user_id: MacroUserIdStr<'_>,
+    project_name: &str,
+    parent_id: Option<String>,
+    share_permission: &SharePermissionV2,
+) -> anyhow::Result<Project> {
+    let row = sqlx::query!(
+        r#"
+        INSERT INTO "Project" ("name", "userId", "parentId", "createdAt", "updatedAt")
+        VALUES ($1, $2, $3, NOW(), NOW())
+        RETURNING id, name, "userId"::text as user_id, "createdAt"::timestamptz as created_at, "deletedAt"::timestamptz as deleted_at,
+        "updatedAt"::timestamptz as updated_at, "parentId" as parent_id
+        "#,
+        project_name,
+        user_id.as_ref(),
+        parent_id,
+    )
+    .fetch_one(transaction.as_mut())
+    .await?;
+    let project = Project {
+        id: row.id,
+        name: row.name,
+        user_id: Owner::from_principal_str(&row.user_id)?,
+        parent_id: row.parent_id,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        deleted_at: row.deleted_at,
+    };
+
+    create_project_permission(transaction, &project.id, share_permission).await?;
+    upsert_user_history(transaction, user_id.copied(), &project.id, "project").await?;
+
+    let project_uuid = macro_uuid::string_to_uuid(&project.id).unwrap();
+    entity_access_db_utils::insert_entity_access_row(
+        transaction,
+        &project_uuid,
+        EntityType::Project,
+        user_id.as_ref(),
+        entity_access_db_utils::EntityAccessSourceType::User,
+        AccessLevel::Owner,
+    )
+    .await?;
+
+    entity_registry_db_utils::insert_entity(
+        transaction,
+        entity_registry_db_utils::NewEntityRecord::new(
+            project_uuid,
+            entity_registry_db_utils::RegisteredEntityType::Project,
+            model_owner::Owner::User(user_id.copied().into_owned()),
+        ),
+    )
+    .await?;
+
+    Ok(project)
+}
+
+/// Creates documents under a project
+/// This does not include creating the docx file as that requires special handling
+#[tracing::instrument(skip(transaction, document_names))]
+#[allow(clippy::disallowed_methods, reason = "legacy code. fix later")]
+pub async fn create_onboarding_documents(
+    transaction: &mut Transaction<'_, Postgres>,
+    user_id: MacroUserIdStr<'static>,
+    project_id: &str,
+    share_permission: &SharePermissionV2,
+    document_names: Vec<(String, String)>,
+) -> anyhow::Result<Vec<BasicDocument>> {
+    if document_names
+        .iter()
+        .any(|(_, file_type)| file_type == FileType::Docx.as_str())
+    {
+        anyhow::bail!("docx is not supported for onboarding documents");
+    }
+
+    let document_values = document_names
+        .iter()
+        .map(|(name, file_type)| {
+            format!(
+                "('{}', '{}', '{}', '{}')",
+                user_id, name, file_type, project_id
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let documents_query = format!(
+        r#"
+        INSERT INTO "Document" (owner, name, "fileType", "projectId")
+        VALUES {}
+        RETURNING id;
+        "#,
+        document_values
+    );
+
+    let query = sqlx::query_as::<_, ID>(&documents_query);
+    let document_records = query.fetch_all(transaction.as_mut()).await?;
+    let document_ids: Vec<String> = document_records.into_iter().map(|row| row.id).collect();
+    tracing::trace!(document_ids=?document_ids, "got document ids");
+
+    let document_values = document_ids
+        .iter()
+        .map(|id| format!("('{}', '{}')", id, "sha"))
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let document_versions_query = format!(
+        r#"
+        INSERT INTO "DocumentInstance" ("documentId", "sha")
+        VALUES {}
+        RETURNING id;
+        "#,
+        document_values
+    );
+
+    let query = sqlx::query_as::<_, VersionID>(&document_versions_query);
+    let document_versions = query.fetch_all(transaction.as_mut()).await?;
+
+    let document_versions: Vec<i64> = document_versions.into_iter().map(|row| row.id).collect();
+    tracing::trace!(document_versions=?document_versions, "got document versions");
+
+    let history_values = document_ids
+        .iter()
+        .map(|id| format!("('{}', '{}', '{}')", user_id, id, "document"))
+        .collect::<Vec<_>>()
+        .join(",");
+    let user_history = format!(
+        r#"
+        INSERT INTO "UserHistory" ("userId", "itemId", "itemType")
+        VALUES {}
+        RETURNING "itemId" as id;
+        "#,
+        history_values
+    );
+    let query = sqlx::query(&user_history);
+    query.execute(transaction.as_mut()).await?;
+
+    for document_id in &document_ids {
+        create_document_permission(transaction, document_id, share_permission).await?;
+        register_owned_document(transaction, document_id, user_id.copied()).await?;
+    }
+
+    let mut documents = Vec::new();
+
+    document_ids
+        .iter()
+        .zip(document_versions.iter())
+        .zip(document_names.iter())
+        .for_each(|((document_id, document_version_id), document_names)| {
+            documents.push(BasicDocument {
+                document_id: document_id.to_string(),
+                document_version_id: *document_version_id,
+                owner: Owner::User(user_id.clone()),
+                document_name: document_names.0.to_string(),
+                file_type: Some(document_names.1.to_string()),
+                sha: None,
+                project_id: Some(project_id.to_string()),
+                document_family_id: None,
+                branched_from_id: None,
+                branched_from_version_id: None,
+                created_at: None,
+                updated_at: None,
+                deleted_at: None,
+                sub_type: None,
+            });
+        });
+
+    Ok(documents)
+}
+
+/// Creates onboarding docx under a project
+#[tracing::instrument(skip(transaction))]
+pub async fn create_onboarding_docx(
+    transaction: &mut Transaction<'_, Postgres>,
+    user_id: MacroUserIdStr<'static>,
+    project_id: &str,
+    share_permission: &SharePermissionV2,
+    document_name: &str,
+    bom_parts: Vec<SaveBomPart>,
+) -> anyhow::Result<BasicDocument> {
+    let document = sqlx::query_as!(
+        ID,
+        r#"
+            INSERT INTO "Document" (owner, name, "fileType", "projectId")
+            VALUES ($1, $2, $3, $4)
+            RETURNING id;
+        "#,
+        user_id.as_ref(),
+        document_name,
+        "docx", // hard coded file type as it's create blank docx
+        project_id,
+    )
+    .fetch_one(transaction.as_mut())
+    .await?;
+
+    let document_bom = sqlx::query!(
+        r#"
+            INSERT INTO "DocumentBom" ("documentId")
+            VALUES ($1)
+            RETURNING id;
+            "#,
+        &document.id,
+    )
+    .fetch_one(transaction.as_mut())
+    .await?;
+
+    create_document_permission(transaction, &document.id, share_permission).await?;
+
+    insert_bom_parts(transaction, &document.id, document_bom.id, bom_parts).await?;
+
+    // Add item to user history for creator
+    upsert_user_history(transaction, user_id.copied(), &document.id, "document").await?;
+    register_owned_document(transaction, &document.id, user_id.copied()).await?;
+
+    Ok(BasicDocument {
+        document_id: document.id,
+        document_version_id: document_bom.id,
+        owner: Owner::User(user_id),
+        document_name: document_name.to_string(),
+        file_type: Some(FileType::Docx.as_str().to_string()),
+        sha: None,
+        project_id: Some(project_id.to_string()),
+        document_family_id: None,
+        branched_from_id: None,
+        branched_from_version_id: None,
+        created_at: None,
+        updated_at: None,
+        deleted_at: None,
+        sub_type: None,
+    })
+}
+
+async fn register_owned_document(
+    transaction: &mut Transaction<'_, Postgres>,
+    document_id: &str,
+    user_id: MacroUserIdStr<'_>,
+) -> anyhow::Result<()> {
+    let document_uuid = macro_uuid::string_to_uuid(document_id)?;
+    let owner = model_owner::Owner::User(user_id.copied().into_owned());
+    entity_registry_db_utils::insert_entity(
+        transaction,
+        entity_registry_db_utils::NewEntityRecord::new(
+            document_uuid,
+            entity_registry_db_utils::RegisteredEntityType::Document,
+            owner.clone(),
+        ),
+    )
+    .await?;
+    entity_access_db_utils::upsert_owner_grant(
+        transaction,
+        &document_uuid,
+        EntityType::Document,
+        &owner,
+    )
+    .await?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod test;

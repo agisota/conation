@@ -1,0 +1,245 @@
+import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
+import { TOKENS } from '@core/hotkey/tokens';
+import type { MessageListItem } from '@service-storage/messages';
+import type { Accessor } from 'solid-js';
+import type { MessageActions, MessageData } from '../Message';
+import { getMessageReplyPreviewTexts } from '../Message/browser-selection';
+import { isBotMessage } from '../Thread/utils/message-actions';
+import type { MessageSelection } from './create-message-selection';
+import type { ThreadListNavigation } from './ThreadList';
+
+type CreateChannelHotkeysOptions = {
+  selection: MessageSelection;
+  scrollToMessage: ThreadListNavigation['scrollToMessage'];
+  messageById: Accessor<Map<string, MessageListItem>>;
+  getMessageActions: (message: MessageData) => MessageActions | undefined;
+  userId: Accessor<string | undefined>;
+  isInputEmpty: Accessor<boolean>;
+  isEditing: Accessor<boolean>;
+  onOpenFindBar: () => void;
+  onGoToBottom: () => void;
+};
+
+export function canReplyToSelectedMessageFromHotkey(input: {
+  hasSelection: boolean;
+  isEditing: boolean;
+}) {
+  return input.hasSelection && !input.isEditing;
+}
+export function canEditSelectedMessageFromHotkey(input: {
+  hasSelection: boolean;
+  isEditing: boolean;
+  isOwnMessage: boolean;
+}) {
+  return canReplyToSelectedMessageFromHotkey(input) && input.isOwnMessage;
+}
+export function canDeleteSelectedMessageFromHotkey(input: {
+  hasSelection: boolean;
+  isEditing: boolean;
+  isOwnMessage: boolean;
+  isBotMessage: boolean;
+}) {
+  return (
+    canReplyToSelectedMessageFromHotkey(input) &&
+    (input.isOwnMessage || input.isBotMessage)
+  );
+}
+
+export function createChannelHotkeys(options: CreateChannelHotkeysOptions) {
+  const [attachMessageList, messageListScope] =
+    useHotkeyDOMScope('channel-messages');
+  const [attachInput, inputScope] = useHotkeyDOMScope('channel-input');
+
+  let messageListEl: HTMLElement | undefined;
+  let inputEl: HTMLElement | undefined;
+
+  const hasSelection = () => !!options.selection.selectedId();
+  const canRunSelectionActionHotkeys = () =>
+    canReplyToSelectedMessageFromHotkey({
+      hasSelection: hasSelection(),
+      isEditing: options.isEditing(),
+    });
+
+  const getSelectedMessage = () => {
+    const id = options.selection.selectedId();
+    if (!id) return undefined;
+    return options.messageById().get(id);
+  };
+
+  registerHotkey({
+    scopeId: messageListScope,
+    hotkey: 'arrowup',
+    hotkeyToken: TOKENS.channel.focusPreviousMessage,
+    description: 'Previous message',
+    keyDownHandler: () => {
+      const id = options.selection.selectPrevious();
+      if (id) {
+        options.scrollToMessage(id, { align: 'auto', userIntent: 'up' });
+      }
+      return true;
+    },
+  });
+
+  registerHotkey({
+    scopeId: messageListScope,
+    hotkey: 'arrowdown',
+    hotkeyToken: TOKENS.channel.focusNextMessage,
+    description: 'Next message',
+    keyDownHandler: () => {
+      const id = options.selection.selectNext();
+      if (id) {
+        options.scrollToMessage(id, { align: 'auto', userIntent: 'down' });
+      } else {
+        inputEl?.querySelector<HTMLElement>('[contenteditable]')?.focus();
+      }
+      return true;
+    },
+  });
+
+  registerHotkey({
+    scopeId: messageListScope,
+    hotkey: 'shift+g',
+    description: 'Go to latest message',
+    keyDownHandler: () => {
+      options.selection.clear();
+      options.onGoToBottom();
+      return true;
+    },
+  });
+
+  registerHotkey({
+    scopeId: messageListScope,
+    hotkey: 'enter',
+    hotkeyToken: TOKENS.channel.replyToMessage,
+    description: 'Reply to message',
+    condition: canRunSelectionActionHotkeys,
+    keyDownHandler: (event) => {
+      // Saving an inline edit returns focus to the selected message before
+      // Enter is released. Capture browser key-repeat events so that same
+      // physical press cannot immediately open the reply input.
+      if (event?.repeat) return true;
+      const msg = getSelectedMessage();
+      if (!msg) return false;
+      const actions = options.getMessageActions(msg);
+      actions?.onReply?.({
+        message: msg,
+        ...getMessageReplyPreviewTexts(msg.id),
+      });
+      return true;
+    },
+  });
+
+  registerHotkey({
+    scopeId: messageListScope,
+    hotkey: 'e',
+    hotkeyToken: TOKENS.channel.editMessage,
+    description: 'Edit message',
+    condition: () => {
+      if (!canRunSelectionActionHotkeys()) return false;
+      const msg = getSelectedMessage();
+      return canEditSelectedMessageFromHotkey({
+        hasSelection: true,
+        isEditing: options.isEditing(),
+        isOwnMessage: !!msg && msg.sender_id === options.userId(),
+      });
+    },
+    keyDownHandler: () => {
+      const msg = getSelectedMessage();
+      if (!msg) return false;
+      const actions = options.getMessageActions(msg);
+      actions?.onEdit?.({ message: msg });
+      return true;
+    },
+  });
+
+  registerHotkey({
+    scopeId: messageListScope,
+    hotkey: 'e',
+    description: 'Keep edit shortcut on selected message',
+    registrationType: 'add',
+    hide: true,
+    condition: canRunSelectionActionHotkeys,
+    // The real edit command runs first when available. A selected incoming
+    // message still owns E; otherwise it reaches Home's Mark done shortcut.
+    keyDownHandler: () => true,
+  });
+
+  registerHotkey({
+    scopeId: messageListScope,
+    hotkey: 'backspace',
+    hotkeyToken: TOKENS.channel.deleteMessage,
+    description: 'Delete message',
+    condition: () => {
+      if (!canRunSelectionActionHotkeys()) return false;
+      const msg = getSelectedMessage();
+      return canDeleteSelectedMessageFromHotkey({
+        hasSelection: true,
+        isEditing: options.isEditing(),
+        isOwnMessage: !!msg && msg.sender_id === options.userId(),
+        isBotMessage: !!msg && isBotMessage(msg),
+      });
+    },
+    keyDownHandler: () => {
+      const msg = getSelectedMessage();
+      if (!msg) return false;
+      const actions = options.getMessageActions(msg);
+      actions?.onDelete?.({ message: msg });
+      return true;
+    },
+  });
+
+  registerHotkey({
+    scopeId: messageListScope,
+    hotkey: 'escape',
+    hotkeyToken: TOKENS.channel.clearSelection,
+    description: 'Clear selection',
+    condition: hasSelection,
+    keyDownHandler: () => {
+      options.selection.clear();
+      return true;
+    },
+  });
+
+  registerHotkey({
+    scopeId: inputScope,
+    hotkey: 'arrowup',
+    hotkeyToken: TOKENS.channel.focusPreviousMessage,
+    description: 'Select last message',
+    runWithInputFocused: true,
+    condition: options.isInputEmpty,
+    keyDownHandler: () => {
+      const id = options.selection.selectPrevious();
+      if (id) {
+        options.scrollToMessage(id, { align: 'auto', userIntent: 'up' });
+        messageListEl?.focus();
+      }
+      return true;
+    },
+  });
+
+  for (const scopeId of [messageListScope, inputScope]) {
+    registerHotkey({
+      scopeId,
+      hotkey: 'cmd+f',
+      hotkeyToken: TOKENS.channel.findInChannel,
+      description: 'Find in channel',
+      runWithInputFocused: true,
+      keyDownHandler: () => {
+        options.onOpenFindBar();
+        return true;
+      },
+    });
+  }
+
+  return {
+    messageListScopeId: messageListScope,
+    attachMessageListRef: (el: HTMLElement) => {
+      messageListEl = el;
+      attachMessageList(el);
+    },
+    attachInputRef: (el: HTMLElement) => {
+      inputEl = el;
+      attachInput(el);
+    },
+  };
+}

@@ -1,0 +1,5 @@
+python-dotenv
+livekit-agents[silero]==1.5.7
+httpx
+resemblyzer==0.1.4
+setuptools==80.10.2  # resemblyzer's webrtcvad dependency imports pkg_resources

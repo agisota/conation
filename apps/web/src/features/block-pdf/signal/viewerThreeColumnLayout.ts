@@ -1,0 +1,18 @@
+export const THREAD_WIDTH = 293;
+export const MIN_THREAD_GAP = 16;
+export const THREAD_VERTICAL_GAP = 24;
+export const SHOW_MORE_BUTTON_HEIGHT = 32;
+
+export const GUTTER_PX = 6;
+export const GUTTER_MARGIN = GUTTER_PX * 3;
+export const MIN_LEFT_COLUMN_WIDTH = 170;
+export const MIN_RIGHT_COLUMN_WIDTH = 115;
+export const MAX_EDITOR_LEFT_HAND_WIDTH = 350;
+export const MAX_EDITOR_LEFT_HAND_WIDTH_W_GUTTER =
+  MAX_EDITOR_LEFT_HAND_WIDTH - GUTTER_MARGIN;
+export const DEFAULT_LEFT_WIDTH = 370 - GUTTER_MARGIN;
+
+export const MIN_COMFY_LEFT_WIDTH_PX = 265;
+
+export const MIN_COMFY_SEARCH_WIDTH_PX = 300;
+export const MIN_COMFY_PINS_WIDTH_PX = 200;
