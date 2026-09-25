@@ -90,7 +90,7 @@ const markdownDocument = {
   id: 'document-1',
   type: 'document',
   fileType: 'md',
-  subType: { type: 'note' },
+  subType: null,
 } as EntityData;
 const viewContext = {
   supportsMarkDone: false,
@@ -105,7 +105,7 @@ function actionIds(entities: EntityData[]): string[] {
 }
 
 describe('Duplicate as Task menu eligibility', () => {
-  it('places the action between ordinary Duplicate and Copy Link for one Markdown note', () => {
+  it('places the action between ordinary Duplicate and Copy Link for one ordinary Markdown document', () => {
     const ids = actionIds([markdownDocument]);
     expect(ids).toContain('duplicate');
     expect(
@@ -117,13 +117,22 @@ describe('Duplicate as Task menu eligibility', () => {
     ['task', { ...markdownDocument, subType: { type: 'task' } }],
     ['snippet', { ...markdownDocument, subType: { type: 'snippet' } }],
     ['skill', { ...markdownDocument, subType: { type: 'skill' } }],
-    ['missing subtype', { ...markdownDocument, subType: undefined }],
+    [
+      'unclassified document',
+      { ...markdownDocument, subType: { type: 'other' } },
+    ],
     ['PDF document', { ...markdownDocument, fileType: 'pdf' }],
     ['email', { ...markdownDocument, type: 'email' }],
   ])('keeps normal actions but excludes ineligible %s', (_name, entity) => {
     const ids = actionIds([entity as EntityData]);
     expect(ids).not.toContain('duplicate-as-task');
     if (entity.type === 'document') expect(ids).toContain('duplicate');
+  });
+
+  it('accepts a Markdown document with an absent subtype', () => {
+    expect(actionIds([{ ...markdownDocument, subType: undefined }])).toContain(
+      'duplicate-as-task'
+    );
   });
 
   it('excludes the action for empty and multi-selections without losing ordinary Duplicate', () => {
