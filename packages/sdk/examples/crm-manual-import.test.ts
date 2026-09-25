@@ -359,6 +359,34 @@ describe('manual CRM import example', () => {
     expect(requests).toHaveLength(0);
   });
 
+  test('rejects backend-invalid bare domain shapes before earlier batch writes', async () => {
+    configureApply();
+    const requests = recordTransport(() => jsonResponse({}));
+    for (const domain of [
+      'foo..com',
+      '.foo.com',
+      'foo.com?source=mail',
+      'foo.com#anchor',
+      'service.test.',
+      `${'a'.repeat(250)}.com`,
+    ]) {
+      await withInput(
+        {
+          companies: [
+            { name: 'Valid', domain: 'acme.com' },
+            { name: 'Invalid', domain },
+          ],
+        },
+        async (inputPath) => {
+          await expect(run(['--input', inputPath, '--apply'])).rejects.toThrow(
+            /domain/i,
+          );
+        },
+      );
+    }
+    expect(requests).toHaveLength(0);
+  });
+
   test('blocked backend domains are rejected across the batch before writes', async () => {
     configureApply();
     const requests = recordTransport(() => jsonResponse({}));
