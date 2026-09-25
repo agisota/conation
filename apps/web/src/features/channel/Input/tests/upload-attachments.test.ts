@@ -40,7 +40,11 @@ describe('uploadInputAttachments', () => {
     toastFailureMock.mockReset();
   });
 
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => {
+    localStorage.removeItem('attachment-tracker-stale-upload');
+    localStorage.removeItem('attachment-tracker-remounted-upload');
+    vi.restoreAllMocks();
+  });
 
   it('infers attachment kind from mime type and extension', () => {
     expect(
@@ -218,5 +222,96 @@ describe('uploadInputAttachments', () => {
         size: 3,
       },
     ]);
+  });
+
+  it('does not persist an upload after a remounted composer has sent', async () => {
+    const persistenceKey = 'attachment-tracker-stale-upload';
+    localStorage.removeItem(persistenceKey);
+    const staleTracker = createInputAttachmentTracker({
+      persistenceKey,
+      persistenceStorage: localStorage,
+    });
+    const file = new File(['abc'], 'notes.txt');
+    const { promise: uploadResult, resolve: resolveUpload } =
+      Promise.withResolvers<{
+        failed: false;
+        destination: 'static';
+        id: string;
+      }>();
+
+    const uploadPromise = uploadInputAttachments({
+      files: [file],
+      tracker: staleTracker,
+      uploadFile: () => uploadResult,
+    });
+    await Promise.resolve();
+
+    const remountedTracker = createInputAttachmentTracker({
+      persistenceKey,
+      persistenceStorage: localStorage,
+    });
+    remountedTracker.clearAttachments();
+
+    resolveUpload({
+      failed: false,
+      destination: 'static',
+      id: 'uploaded-notes',
+    });
+    await uploadPromise;
+
+    expect(remountedTracker.attachments()).toEqual([]);
+    expect(JSON.parse(localStorage.getItem(persistenceKey) ?? '[]')).toEqual(
+      []
+    );
+    localStorage.removeItem(persistenceKey);
+  });
+
+  it('persists an in-flight upload when the composer only remounts', async () => {
+    const persistenceKey = 'attachment-tracker-remounted-upload';
+    localStorage.removeItem(persistenceKey);
+    const staleTracker = createInputAttachmentTracker({
+      persistenceKey,
+      persistenceStorage: localStorage,
+    });
+    const file = new File(['abc'], 'notes.txt');
+    const { promise: uploadResult, resolve: resolveUpload } =
+      Promise.withResolvers<{
+        failed: false;
+        destination: 'static';
+        id: string;
+      }>();
+
+    const uploadPromise = uploadInputAttachments({
+      files: [file],
+      tracker: staleTracker,
+      uploadFile: () => uploadResult,
+    });
+    await Promise.resolve();
+
+    createInputAttachmentTracker({
+      persistenceKey,
+      persistenceStorage: localStorage,
+    });
+    resolveUpload({
+      failed: false,
+      destination: 'static',
+      id: 'uploaded-notes',
+    });
+    await uploadPromise;
+
+    const restoredTracker = createInputAttachmentTracker({
+      persistenceKey,
+      persistenceStorage: localStorage,
+    });
+    expect(restoredTracker.attachments()).toEqual([
+      {
+        id: 'uploaded-notes',
+        name: 'notes.txt',
+        kind: 'document',
+        iconType: 'txt',
+        size: 3,
+      },
+    ]);
+    localStorage.removeItem(persistenceKey);
   });
 });

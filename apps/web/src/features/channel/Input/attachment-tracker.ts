@@ -10,6 +10,8 @@ export type InputAttachmentTracker = {
   setAttachmentPending: (attachmentId: string, pending: boolean) => void;
   setAttachments: (attachments: InputAttachmentData[]) => void;
   clearAttachments: () => void;
+  getUploadGeneration: () => number;
+  isUploadGenerationCurrent: (generation: number) => boolean;
 };
 
 type CreateInputAttachmentTrackerOptions = {
@@ -18,6 +20,16 @@ type CreateInputAttachmentTrackerOptions = {
   initialAttachments?: InputAttachmentData[];
   maxAttachments?: number;
 };
+
+// A send in one mount must fence uploads still running against another mount.
+// Keying by the existing persistence key keeps independent drafts isolated.
+const persistenceGenerations = new Map<string, number>();
+
+function nextPersistenceGeneration(key: string): number {
+  const generation = (persistenceGenerations.get(key) ?? 0) + 1;
+  persistenceGenerations.set(key, generation);
+  return generation;
+}
 
 export function createInputAttachmentTracker(
   options: CreateInputAttachmentTrackerOptions = {}
@@ -38,6 +50,13 @@ export function createInputAttachmentTracker(
     : raw;
 
   const maxAttachments = options.maxAttachments ?? 10;
+  let localGeneration = 0;
+  const getUploadGeneration = () =>
+    options.persistenceKey
+      ? (persistenceGenerations.get(options.persistenceKey) ?? 0)
+      : localGeneration;
+  const isUploadGenerationCurrent = (generation: number) =>
+    generation === getUploadGeneration();
 
   const hasPending = createMemo(() =>
     attachments().some((attachment) => attachment.pending === true)
@@ -70,6 +89,11 @@ export function createInputAttachmentTracker(
   };
 
   const clearAttachments = () => {
+    if (options.persistenceKey) {
+      nextPersistenceGeneration(options.persistenceKey);
+    } else {
+      localGeneration += 1;
+    }
     setAttachments([]);
   };
 
@@ -81,5 +105,7 @@ export function createInputAttachmentTracker(
     setAttachmentPending,
     setAttachments: replaceAttachments,
     clearAttachments,
+    getUploadGeneration,
+    isUploadGenerationCurrent,
   };
 }
