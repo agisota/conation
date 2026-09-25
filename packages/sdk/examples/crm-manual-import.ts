@@ -44,7 +44,19 @@ const RESERVED_DOMAIN_SUFFIXES = [
 ];
 
 function normalizedDomain(domain: string): string {
-  return domain.trim().toLowerCase();
+  return domain.trim().replace(/\.+$/, '').toLowerCase();
+}
+
+function isBareDomain(domain: string): boolean {
+  const normalized = normalizedDomain(domain);
+  return (
+    normalized.length > 0 &&
+    Buffer.byteLength(normalized) <= 253 &&
+    normalized.includes('.') &&
+    !normalized.startsWith('.') &&
+    !normalized.includes('..') &&
+    !/[\s/:@?#]/u.test(normalized)
+  );
 }
 
 async function loadBlockedDomains(): Promise<Record<string, true>> {
@@ -226,7 +238,7 @@ function validate(
     const name = company.name?.trim();
     const domain = company.domain?.trim();
     const normalized = domain ? normalizedDomain(domain) : '';
-    if (!name || !domain || /[\s/:@]/.test(domain) || !domain.includes('.')) {
+    if (!name || !domain || !isBareDomain(domain)) {
       throw new Error('Company creation requires a name and bare domain');
     }
     if (isBlockedDomain(domain, blockedDomains)) {
@@ -269,9 +281,13 @@ function validate(
       !name ||
       !email ||
       !companyDomain ||
+      Buffer.byteLength(email) > 320 ||
       emailParts?.length !== 2 ||
       !emailParts[0] ||
-      !emailParts[1]
+      /\s/u.test(emailParts[0]) ||
+      !emailParts[1] ||
+      !isBareDomain(companyDomain) ||
+      !isBareDomain(emailParts[1])
     ) {
       throw new Error(
         'Contact creation requires companyDomain, name, and email',
