@@ -62,6 +62,41 @@ describe('input attachment tracker', () => {
     });
   });
 
+  it('keeps in-memory composition usable when browser storage access throws', () => {
+    const descriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new DOMException('Storage blocked', 'SecurityError');
+      },
+    });
+    try {
+      createRoot((dispose) => {
+        const tracker = createInputAttachmentTracker();
+        tracker.addAttachment({
+          id: 'local',
+          kind: 'document',
+          name: 'local.txt',
+        });
+        expect(tracker.attachments().map(({ id }) => id)).toEqual(['local']);
+        const persisted = createInputAttachmentTracker({
+          persistenceKey: 'unavailable-storage-draft',
+        });
+        persisted.addAttachment({
+          id: 'fallback',
+          kind: 'document',
+          name: 'fallback.txt',
+        });
+        expect(persisted.attachments().map(({ id }) => id)).toEqual([
+          'fallback',
+        ]);
+        dispose();
+      });
+    } finally {
+      if (descriptor) Object.defineProperty(window, 'localStorage', descriptor);
+    }
+  });
+
   it('merges attachment writes from independent trackers sharing persisted state', () => {
     const backing = new Map<string, string>();
     const firstTracker = createInputAttachmentTracker({

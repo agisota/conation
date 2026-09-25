@@ -95,9 +95,16 @@ export function createInputAttachmentTracker(
 ): InputAttachmentTracker {
   const maxAttachments = options.maxAttachments ?? 10;
   let localGeneration = 0;
-  const storage =
-    options.persistenceStorage ??
-    (typeof localStorage === 'undefined' ? undefined : localStorage);
+  let storage: Storage | undefined;
+  if (options.persistenceKey) {
+    try {
+      storage =
+        options.persistenceStorage ??
+        (typeof localStorage === 'undefined' ? undefined : localStorage);
+    } catch {
+      // Opaque origins may throw even while reading Window.localStorage.
+    }
+  }
   let persistedState: PersistedAttachmentState = {
     generation: INITIAL_GENERATION,
     attachments: options.initialAttachments ?? [],
