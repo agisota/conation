@@ -33,9 +33,9 @@ The inventory records every non-archived card, including queued cards with no
 task patch, but a `taskCommits` subject match is not proof that the patch belongs
 to the task. Read-only reviews of the actual unusual artifacts yielded:
 
-- RUS-1436 and CTN-009: task-specific unstaged and untracked work is being
-  reconstructed on separate clean branches. The original 5,000+ missing paths
-  are not part of either patch.
+- RUS-1436 and CTN-009: task-specific unstaged and untracked work was
+  reconstructed on separate clean branches. The original 5,000+ missing
+  paths are not part of either patch.
 - RUS-1443: nested PR #6850 has a five-file draft-persistence patch, but
   cross-account local-storage leakage and storage-failure handling require
   repairs. RUS-1442: closed draft PR #6851 and its separate changeset are
@@ -57,16 +57,41 @@ to the task. Read-only reviews of the actual unusual artifacts yielded:
   claim-fence hunk depends on its scheduled-action PR and lacks a deterministic
   multi-connection regression. CTN-093/256 contain no accepted task patch.
 - CTN-176: unlike the other unlinked cards, its two task-specific commits
-  contain only A/M paths. Those commits were applied without committing to
-  a separate clean checkout; its PR #6709 remains draft with an old remote
-  head and historically failed checks. A local fix is not evidence that the
-  PR itself is green. Keep its tested candidate separate until review.
+  contain only A/M paths and were copied into a clean local candidate.
+  Its PR #6709 remains a draft at its older remote head with failed Biome/Web
+  checks as observed on 2026-09-26. Ordinary-Markdown eligibility and
+  targeted Biome failures were repaired and integrated behind the main freeze.
+  This does not update or turn green the original PR.
 - Remaining unlinked RUS/CTN cards were checked for unique task patches,
   owner state and dependencies. Copied-main branches, already-landed
   follow-ups, incomplete queued tasks and actively owned or review-blocked
   PRs are retained in the inventory, not counted as ready application.
 
-For each held item, preserve its original source ref and task state. The
-selected RUS-1443 and CTN-011 candidate branches are not task acceptance or
-release approval. No source PR was bulk merged or allowed to transfer missing
+For each held item, preserve its original source ref and task state. Reviewed
+local RUS-1436, RUS-1443, CTN-009, CTN-011 and CTN-176 commits are
+integrated only on `operator/apply-rus-ctn-20260925b`, not on main or the
+task PR heads. No source PR was bulk merged or allowed to transfer missing
 tracked paths.
+
+## Integrated verification boundaries
+
+- The final isolated branch passed 14 focused Vitest files and 163 tests
+  together across paste, per-user drafts and cross-tab attachments, external
+  destinations/calendar links, and Duplicate as Task. Biome CI passed for
+  all 26 changed web files and all three changed lexical-core files.
+  CTN-009 passed 20 SDK tests, `tsc --noEmit`, SDK build and scoped Biome CI
+  on that same integrated branch. Its CLI dry-run lists company/contact
+  operations without a write, and rejects an invalid `foo..com` batch before
+  any key/network access; tests cover the backend policy list, no-requests
+  preflight, same-import company handles and partial-failure reporting.
+- The three changed MDX pages compiled, and a local documentation preview
+  navigated the byte-identical API-key guide and CRM recipe and captured
+  screenshots. Full docs lint is blocked by three pre-existing
+  generated MCP MDX parser errors; full web typecheck has pre-existing
+  QueryClient version incompatibilities. The local web browser loaded its
+  shell but displayed no authenticated editor without the required backend;
+  focused component interaction tests cover the edited surfaces, not a live
+  account session.
+- Main and backup must still match the captured baseline. PR #6709's remote
+  Biome and Web Status checks remain red at its older draft head. These local
+  commits do not release or override RUS-1508's main-update safety gate.
