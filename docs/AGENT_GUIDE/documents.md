@@ -640,3 +640,9 @@ An edit uses the revision from a fresh read and atomically applies a CRDT delta
 that is broadcast to connected collaborators. A stale revision is rejected:
 reread and reconsider the change instead of blindly retrying. Unsynced edits
 still follow normal CRDT collaboration semantics when they reconnect.
+
+## Duplicate a document as a task
+
+From a single Markdown document's **…** context menu, choose **Duplicate as Task** to create a separate task with the document title and converted Markdown content. The action is available only for ordinary `.md` documents; it is not shown for tasks, snippets, skills, other file types, email or inbox rows, or multi-selection. The existing **Duplicate** action remains unchanged.
+
+To verify this flow, use a disposable Markdown document with a distinctive title and body, invoke the action from the desktop context menu (or mobile long-press menu), then confirm the created task has the same title and content. Do not use a real user's document for exploratory verification.

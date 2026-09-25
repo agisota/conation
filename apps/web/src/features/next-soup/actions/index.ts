@@ -20,6 +20,7 @@ export {
   markReminderTargetDone,
 } from './make-create-reminder-action';
 export { makeDeleteAction } from './make-delete-action';
+export { makeDuplicateAsTaskAction } from './make-duplicate-as-task-action';
 export { makeEditReminderAction } from './make-edit-reminder-action';
 export { makeFavoriteAction } from './make-favorite-action';
 export { makeHideCompanyAction } from './make-hide-company-action';
