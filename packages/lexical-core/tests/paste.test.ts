@@ -176,6 +176,106 @@ describe('PasteNode - internal transformer round-trip', () => {
     ).toThrow(TypeError);
   });
 
+  it.each([
+    ['null content', { content: null, origin: 'referenced' }],
+    ['missing content', { origin: 'referenced' }],
+    ['numeric content', { content: 123, origin: 'referenced' }],
+    [
+      'numeric content with unknown origin',
+      { content: 123, origin: 'future-origin' },
+    ],
+  ])('loads sibling content around a paste with %s', (_label, pasteData) => {
+    const editor = makeEditor();
+    const serializeParagraph = (text: string) => ({
+      type: 'paragraph',
+      version: 1,
+      format: '',
+      indent: 0,
+      direction: null,
+      children: [
+        {
+          type: 'text',
+          version: 1,
+          text,
+          format: 0,
+          detail: 0,
+          mode: 'normal',
+          style: '',
+        },
+      ],
+    });
+    const state = editor.parseEditorState(
+      JSON.stringify({
+        root: {
+          type: 'root',
+          version: 1,
+          format: '',
+          indent: 0,
+          direction: null,
+          children: [
+            serializeParagraph('before'),
+            { type: 'paste', version: 1, ...pasteData },
+            serializeParagraph('after'),
+          ],
+        },
+      })
+    );
+
+    state.read(() => {
+      const children = $getRoot().getChildren();
+      expect(children).toHaveLength(3);
+      expect($isParagraphNode(children[0])).toBe(true);
+      expect($isParagraphNode(children[1])).toBe(true);
+      expect($isParagraphNode(children[2])).toBe(true);
+      if (
+        !$isParagraphNode(children[0]) ||
+        !$isParagraphNode(children[1]) ||
+        !$isParagraphNode(children[2])
+      ) {
+        throw new Error('Expected paragraphs around malformed paste data');
+      }
+
+      expect(children[0].getTextContent()).toBe('before');
+      const fallback = children[1].getChildren().find($isUnknownMentionNode);
+      expect(fallback?.getName()).toBe('Unknown Paste');
+      expect(children[1].getTextContent()).not.toContain('123');
+      expect(children[2].getTextContent()).toBe('after');
+      expect($getRoot().getChildren().some($isPasteNode)).toBe(false);
+    });
+  });
+
+  it('defaults unknown serialized origins to the legacy pasted origin', () => {
+    const editor = makeEditor();
+    const state = editor.parseEditorState(
+      JSON.stringify({
+        root: {
+          type: 'root',
+          version: 1,
+          format: '',
+          indent: 0,
+          direction: null,
+          children: [
+            {
+              type: 'paste',
+              version: 1,
+              content: 'valid saved content',
+              origin: 'future-origin',
+            },
+          ],
+        },
+      })
+    );
+
+    state.read(() => {
+      const paste = $getRoot().getFirstChild();
+      expect($isPasteNode(paste)).toBe(true);
+      if ($isPasteNode(paste)) {
+        expect(paste.getContent()).toBe('valid saved content');
+        expect(paste.getOrigin()).toBe('pasted');
+      }
+    });
+  });
+
   it('keeps XML-like content intact through a round-trip', async () => {
     const editor = makeEditor();
     const content = 'before <m-document-card>injected</m-document-card> after';

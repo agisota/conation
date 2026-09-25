@@ -8,6 +8,7 @@ import {
   type DOMConversionMap,
   type EditorConfig,
   type EditorThemeClasses,
+  type ElementNode,
   type LexicalEditor,
   type LexicalNode,
   type NodeKey,
@@ -18,6 +19,7 @@ import { type DecoratorComponent, getDecorator } from '../decoratorRegistry';
 import { $applyIdFromSerialized } from '../plugins/nodeIdPlugin';
 import { ALL_TRANSFORMERS } from '../transformers';
 import { DecoratorBlockNode } from './DecoratorBlockNode';
+import { $createUnknownMentionNode } from './UnknownMentionNode';
 
 const VERSION = 1;
 
@@ -82,7 +84,16 @@ export class PasteNode extends DecoratorBlockNode<
     this.__origin = origin;
   }
 
-  static importJSON(serializedNode: SerializedPasteNode) {
+  static importJSON(
+    serializedNode: SerializedPasteNode
+  ): PasteNode | ElementNode {
+    if (typeof serializedNode?.content !== 'string') {
+      const fallback = $createParagraphNode();
+      fallback.append($createUnknownMentionNode({ name: 'Unknown Paste' }));
+      $applyIdFromSerialized(fallback, serializedNode);
+      return fallback;
+    }
+
     const node = $createPasteNode({
       content: serializedNode.content,
       origin: normalizePasteOrigin(serializedNode.origin),
