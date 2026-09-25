@@ -30,6 +30,29 @@ vi.mock('@core/component/Toast/Toast', () => ({
   },
 }));
 
+function createStorageRealm(backing: Map<string, string>): Storage {
+  return {
+    get length() {
+      return backing.size;
+    },
+    clear() {
+      backing.clear();
+    },
+    getItem(key) {
+      return backing.get(key) ?? null;
+    },
+    key(index) {
+      return [...backing.keys()][index] ?? null;
+    },
+    removeItem(key) {
+      backing.delete(key);
+    },
+    setItem(key, value) {
+      backing.set(key, String(value));
+    },
+  };
+}
+
 describe('uploadInputAttachments', () => {
   beforeEach(() => {
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:attachment-preview');
@@ -260,9 +283,10 @@ describe('uploadInputAttachments', () => {
     await uploadPromise;
 
     expect(remountedTracker.attachments()).toEqual([]);
-    expect(JSON.parse(localStorage.getItem(persistenceKey) ?? '[]')).toEqual(
-      []
-    );
+    const persisted = JSON.parse(
+      localStorage.getItem(persistenceKey) ?? 'null'
+    ) as { attachments?: unknown[] } | null;
+    expect(persisted?.attachments ?? []).toEqual([]);
     localStorage.removeItem(persistenceKey);
   });
 
@@ -313,5 +337,47 @@ describe('uploadInputAttachments', () => {
       },
     ]);
     localStorage.removeItem(persistenceKey);
+  });
+
+  it('fences a pending upload when another storage realm clears the draft', async () => {
+    const backing = new Map<string, string>();
+    const firstTabTracker = createInputAttachmentTracker({
+      persistenceKey: 'cross-tab-draft',
+      persistenceStorage: createStorageRealm(backing),
+    });
+    const { promise: uploadResult, resolve: resolveUpload } =
+      Promise.withResolvers<{
+        failed: false;
+        destination: 'static';
+        id: string;
+      }>();
+
+    const uploadPromise = uploadInputAttachments({
+      files: [new File(['abc'], 'notes.txt')],
+      tracker: firstTabTracker,
+      uploadFile: () => uploadResult,
+    });
+    await Promise.resolve();
+
+    vi.resetModules();
+    // Reloading the tracker module gives the simulated tab its own module state.
+    const secondRealm = await import('../attachment-tracker');
+    const secondTabTracker = secondRealm.createInputAttachmentTracker({
+      persistenceKey: 'cross-tab-draft',
+      persistenceStorage: createStorageRealm(backing),
+    });
+    secondTabTracker.clearAttachments();
+    resolveUpload({
+      failed: false,
+      destination: 'static',
+      id: 'uploaded-notes',
+    });
+    await uploadPromise;
+
+    const restoredTracker = createInputAttachmentTracker({
+      persistenceKey: 'cross-tab-draft',
+      persistenceStorage: createStorageRealm(backing),
+    });
+    expect(restoredTracker.attachments()).toEqual([]);
   });
 });
