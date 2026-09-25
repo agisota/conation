@@ -631,3 +631,16 @@ Picture changes refresh other participants' open sessions, including after
 reconnecting.
 Members see the picture without editing controls. One-to-one direct messages
 continue to show the other person's user picture.
+
+## Opening shared external links
+
+Supported X conversation, Discord channel/message, and recognized Google Maps
+or OpenStreetMap links keep their original URL. Their inline **Open in X**,
+**Open in Discord**, or **Open in Maps** action can be used with a keyboard or
+touchscreen without opening a hover preview. The link itself remains available
+as a normal link; plain activation uses Macro's external URL handoff, while
+modified clicks retain browser behavior.
+
+These actions only open the source service. X and Discord conversations are not
+synced into Macro, and ordinary profiles, invite links, unknown social sites,
+and unrecognized map URLs remain ordinary links.

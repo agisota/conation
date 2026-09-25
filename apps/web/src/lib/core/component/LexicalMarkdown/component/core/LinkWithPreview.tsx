@@ -1,3 +1,4 @@
+import { classifyExternalDestination } from '@core/component/external-destinations';
 import { LinkHoverCard } from '@core/component/Link';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
@@ -41,6 +42,12 @@ export function LinkWithPreview(props: LinkWithPreviewProps) {
           e.preventDefault();
           openExternalUrl(props.url);
         }}
+        onFocus={() => {
+          debouncedSetPreviewOpen(true);
+        }}
+        onBlur={() => {
+          debouncedSetPreviewOpen(false);
+        }}
         onMouseEnter={() => {
           if (isTouchDevice()) return;
           debouncedSetPreviewOpen(true);
@@ -54,6 +61,18 @@ export function LinkWithPreview(props: LinkWithPreviewProps) {
       >
         {props.children}
       </a>
+      <Show when={classifyExternalDestination(props.url)}>
+        {(destination) => (
+          <button
+            type="button"
+            class="ml-1 inline text-xs text-link underline-offset-2 hover:underline focus-visible:underline"
+            aria-label={destination().actionLabel}
+            onClick={() => openExternalUrl(destination().url)}
+          >
+            {destination().actionLabel}
+          </button>
+        )}
+      </Show>
       <Show when={previewOpen()}>
         <ScopedPortal>
           <div

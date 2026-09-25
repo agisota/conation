@@ -1,3 +1,4 @@
+import { classifyExternalDestination } from '@core/component/external-destinations';
 import { openDocument } from '@core/component/LexicalMarkdown/component/core/BlockLink';
 import { UserIcon, type UserIconProps } from '@core/component/UserIcon';
 import { ScrollIndicators } from '@core/component/VerticalScrollIndicators';
@@ -339,12 +340,44 @@ function safeConferenceUrl(value: string | undefined) {
 }
 
 /**
- * The location row. A phone number written into the location becomes a call
- * link, so a dial-in number takes one click instead of being retyped into a
- * phone by hand.
+ * The location row. Phone runs remain dialable, while plausible physical
+ * places gain a user-triggered map search.
  */
 function EventLocationItem(props: { location: string }) {
   const segments = createMemo(() => parseEventLocation(props.location));
+  const mapUrl = createMemo(() => {
+    const value = props.location.trim();
+    if (!value || isPhoneOnlyLocation(segments())) return;
+    const recognized = classifyExternalDestination(value);
+    if (recognized?.kind === 'Maps') return recognized.url;
+    if (/^(?:https?:\/\/|www\.)/i.test(value)) return;
+    const physicalText = segments()
+      .filter((segment) => segment.kind === 'text')
+      .map((segment) => segment.text)
+      .join('')
+      .trim()
+      .replace(/[,\s]+$/, '');
+    if (!physicalText) return;
+    if (
+      /\b(?:zoom|teams|meet|webex|conference|dial[\s-]?in|call|meeting|passcode|password|pin|code|room|access|meeting id|conference id|join code)\b/i.test(
+        physicalText
+      )
+    )
+      return;
+    const words = physicalText.match(/[\p{L}\p{N}]+/gu) ?? [];
+    const hasLetters = /\p{L}/u.test(physicalText);
+    const hasPlaceShape =
+      (/\d/.test(physicalText) && hasLetters) ||
+      /\b(?:street|st|road|rd|avenue|ave|boulevard|blvd|lane|ln|drive|dr|way|square|sq)\b/i.test(
+        physicalText
+      );
+    const isNamedPlace =
+      (words.length >= 2 && hasLetters) ||
+      /^[\p{Lu}][\p{L}'’-]{2,}$/u.test(physicalText);
+    return hasPlaceShape || isNamedPlace
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(physicalText)}`
+      : undefined;
+  });
 
   return (
     <div class="contents">
@@ -369,6 +402,18 @@ function EventLocationItem(props: { location: string }) {
           }
         </For>
       </span>
+      <Show when={mapUrl()}>
+        {(url) => (
+          <button
+            type="button"
+            class="text-link hover:text-link-hover hover:underline"
+            aria-label="Open in Maps"
+            onClick={() => openExternalUrl(url())}
+          >
+            Open in Maps
+          </button>
+        )}
+      </Show>
     </div>
   );
 }

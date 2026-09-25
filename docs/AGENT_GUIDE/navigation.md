@@ -39,6 +39,12 @@
 | `/app/md/<doc>/channel/<channel>` | Doc + channel in a split |
 | `/app/settings/account` | Settings (also `/app/settings/api-keys`, `/mcp-server`, `/shortcuts`, etc.) |
 
+Calendar event details retain the location text and expose an **Open in Maps**
+action for plausible physical places or recognized map links. The map opens only
+after the action is selected; the address is encoded as a Maps search, not
+geocoded or verified. Phone numbers remain dialable, while meeting links and
+dial-in/code-only locations are not offered as map searches.
+
 On touch devices, documents (including tasks) open in legacy blocks rather than
 inline Drive details. Canonical `/app/drive/.../<document-type>/<uuid>` links also
 fall back to legacy document routes. This uses touch detection, not the native-app
