@@ -1,5 +1,7 @@
 Macro's SDK: a Typescript library for harnessing the power of Macro
 
+For a guarded, opt-in manual CRM import using this SDK, see the [runnable example](examples/crm-manual-import.ts) and [API key setup guide](../../apps/docs/account/api-keys.mdx).
+
 - **`generated/`**: generated Typescript types and a HeyAPI client from Macro's
   OpenAPI specs.
 - **`src/`**: a hand-written ergonomic SDK layer that provides an "orm"-y API.
@@ -240,6 +242,39 @@ macro.events.on('channel.message_posted', async ({ metadata, message }) => {
 // Hono
 app.post('/webhook', (c) => macro.events.webhook()(c.req.raw));
 ```
+
+### Manual CRM import
+
+Use the SDK facade for CRM writes and optional markdown documents; do not reuse an MCP OAuth cache or call private HTTP endpoints. Create a user API key in **Settings → API Keys**, store it as `MACRO_API_KEY`, and keep it out of source control. The example defaults to a dry run and performs no requests until `--apply` is supplied.
+
+Save input such as this as `crm-import.json`:
+
+```json
+{
+  "companies": [
+    { "name": "Acme", "domain": "acme.example", "note": "# CRM note" },
+    { "id": "company_existing_id", "rename": "Acme, Inc." }
+  ],
+  "contacts": [
+    {
+      "companyDomain": "acme.example",
+      "name": "Jane Example",
+      "email": "jane@acme.example"
+    },
+    { "id": "contact_existing_id", "rename": "Jane Example" }
+  ],
+  "documents": [{ "name": "Import report", "markdown": "# Import report" }]
+}
+```
+
+Set `MACRO_API_KEY` securely before applying. From the repository root, validate and preview the operations, then explicitly apply:
+
+```sh
+bun run packages/sdk/examples/crm-manual-import.ts --input crm-import.json
+CONFIRM_APPEND_ONLY=yes bun run packages/sdk/examples/crm-manual-import.ts --input crm-import.json --apply
+```
+
+Each update requires its existing record `id`; contact creation requires an exact match for a non-generic company domain and an email on that domain. Notes are CRM comments, while `documents` creates separate markdown documents. Both are append-only: reruns can duplicate content, and every applying invocation containing either requires `CONFIRM_APPEND_ONLY=yes`. A failed multi-write import stops at the first error and reports earlier successful operations; it does not retry or roll back. `--apply` requires a `mak_` user API key and team access with CRM enabled. It does not make writes atomic or idempotent.
 
 # Developing
 

@@ -1,0 +1,18 @@
+---
+title: "API keys"
+description: "Create and revoke user API keys for supported scripts and integrations."
+---
+
+## Create a user API key
+
+In Macro, open **Settings → API Keys** and create a named key. Copy the secret when it is shown and store it securely; it is only revealed once. Set it as `MACRO_API_KEY` in the environment where you run a supported SDK script. For the manual-import example, use a user key beginning with `mak_`. Revoke a key you no longer need from the same settings page.
+
+A user API key acts as you: requests have your access, and your team must have CRM enabled for CRM operations. Keep the key private. Do not commit it, put it in an input file, or paste it into logs. Anyone with the key can make requests as you until you revoke it.
+
+For a manual company or contact import, follow the [SDK recipe](/AI/recipes#manual-crm-entry). It defaults to a dry run; review the planned operations before using `--apply`.
+
+## Bot credentials are different
+
+`IssueBotCredential` proposes a bot credential; it does not reveal a raw secret. Credential minting happens through the bot credential UI, such as the chat card or bot settings. Bot scopes and `requestedAs` do not make a bot token equivalent to a user API key. This guide does not document a general headless bot-minting route or guarantee that bot tokens support CRM writes.
+
+MCP OAuth is for MCP clients, not a supported substitute script credential. Do not reuse OAuth tokens cached by another program.
