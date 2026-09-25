@@ -40,7 +40,7 @@ const document: EntityData = {
   name: 'Source title',
   updatedAt: new Date(),
   fileType: 'md',
-  subType: { type: 'note' as const },
+  subType: null,
 } as unknown as EntityData;
 
 beforeEach(() => {

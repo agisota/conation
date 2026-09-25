@@ -13,7 +13,7 @@ export const makeDuplicateAsTaskAction = () => {
   const canExecute = (entity: EntityData): boolean => {
     if (entity.type !== 'document') return false;
     if (entity.fileType !== 'md') return false;
-    if (entity.subType?.type !== 'note') return false;
+    if (entity.subType != null && entity.subType.type !== 'note') return false;
     return true;
   };
 
