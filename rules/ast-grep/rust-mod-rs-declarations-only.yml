@@ -1,0 +1,24 @@
+id: rust-mod-rs-declarations-only
+language: rust
+severity: error
+message: mod.rs should only declare submodules and re-exports; move logic into its own module file.
+note: |-
+  Rule CS-25 in docs/STYLE_GUIDE.md, mined from PR #4175.
+  Prefer the file-and-directory module style: put logic and submodule
+  declarations in `foo.rs` with submodules under `foo/` (Rust supports both
+  coexisting) — that is how all legacy violations were resolved. If you keep
+  a mod.rs, it may only declare submodules and re-exports. lib.rs is
+  deliberately exempt: a small crate living entirely in lib.rs is fine.
+files:
+  - crates/**/mod.rs
+  - services/**/mod.rs
+  - tooling/**/mod.rs
+rule:
+  any:
+    - kind: function_item
+    - kind: struct_item
+    - kind: enum_item
+    - kind: trait_item
+    - kind: impl_item
+  inside:
+    kind: source_file

@@ -1,0 +1,45 @@
+import type { ChatMessageStream } from '@service-connection/stream';
+import { cn } from '@ui';
+import { Match, Switch } from 'solid-js';
+
+type Props = {
+  stream: () => ChatMessageStream | undefined;
+};
+
+export function StreamStatus(props: Props) {
+  console.log('status');
+  return (
+    <div class="p-2 bg-surface border border-edge text-ink font-mono space-y-2 text-sm">
+      <Switch>
+        <Match when={props.stream()}>
+          {(stream) => (
+            <div>
+              Stream state
+              <div class="flex items-center space-x-2">
+                <span> chunks: {stream().data().length}</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <Dot active={stream().isDone()} />
+                <span>isDone: {String(stream().isDone())}</span>
+              </div>
+            </div>
+          )}
+        </Match>
+        <Match when={!props.stream()}>
+          <div>No Stream</div>
+        </Match>
+      </Switch>
+    </div>
+  );
+}
+
+function Dot(props: { active: boolean }) {
+  return (
+    <div
+      class={cn(
+        'size-3 rounded-full border border-edge',
+        props.active && 'bg-accent'
+      )}
+    />
+  );
+}

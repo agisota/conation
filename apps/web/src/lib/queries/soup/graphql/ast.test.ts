@@ -1,0 +1,465 @@
+import {
+  compileToAst,
+  queryStateFrom,
+} from '@app/features/next-soup/filters/filter-store';
+import { describe, expect, it } from 'vitest';
+import {
+  makeGraphqlGroupedSoupContinuationInput,
+  makeGraphqlGroupedSoupInput,
+  makeGraphqlSoupInput,
+} from './ast';
+
+const UPDATED_AT = '2026-01-01T00:00:00.000Z';
+
+function makeInput(query: Parameters<typeof queryStateFrom>[0]) {
+  return makeGraphqlSoupInput({
+    params: { limit: 100, sort_method: 'updated_at' },
+    body: compileToAst(queryStateFrom(query)),
+  });
+}
+
+describe('makeGraphqlSoupInput', () => {
+  it('preserves agent session opt-in and owner exclusions', () => {
+    const input = makeInput({
+      include: { includeAgentSessions: true },
+      exclude: { agentSessionOwnerId: ['macro|me@example.com'] },
+    });
+    expect(input).toMatchObject({
+      initial: {
+        filters: {
+          agentSessionFilter: {
+            and: {
+              left: { not: { literal: { owner: 'macro|me@example.com' } } },
+              right: { literal: { include: true } },
+            },
+          },
+        },
+      },
+    });
+    expect(
+      makeInput({ include: { agentSessionId: ['session'] } })
+    ).toMatchObject({
+      initial: {
+        filters: { agentSessionFilter: { literal: { id: 'session' } } },
+      },
+    });
+  });
+  it('maps exact states and keeps email read independent', () => {
+    for (const state of ['unseen', 'seen', 'done'] as const) {
+      const input = makeGraphqlSoupInput({
+        params: { limit: 100, sort_method: 'updated_at' },
+        body: { df: { l: { ns: state } }, ef: { l: { Read: true } } },
+      });
+      expect(input).toMatchObject({
+        initial: {
+          filters: {
+            documentFilter: {
+              literal: { notificationState: state.toUpperCase() },
+            },
+            emailFilter: { tree: { literal: { read: true } } },
+          },
+        },
+      });
+    }
+    expect(() =>
+      makeGraphqlSoupInput({
+        params: { limit: 100, sort_method: 'updated_at' },
+        body: { df: { l: { ns: false } } },
+      })
+    ).toThrow();
+  });
+  it('maps compiled soup AST and request params into GraphQL Soup input', () => {
+    const input = makeInput({
+      include: {
+        documentDone: false,
+        documentUpdatedAt: { gte: UPDATED_AT },
+        emailShared: 'exclude',
+      },
+      emailView: 'inbox',
+    });
+
+    expect(input).toMatchObject({
+      initial: {
+        limit: 100,
+        expand: true,
+        sortMethod: 'UPDATED_AT',
+        emailView: 'INBOX',
+        filters: {
+          documentFilter: {
+            and: {
+              left: {
+                or: {
+                  left: { literal: { notificationState: 'UNSEEN' } },
+                  right: { literal: { notificationState: 'SEEN' } },
+                },
+              },
+              right: { literal: { updatedAt: { gte: UPDATED_AT } } },
+            },
+          },
+          emailFilter: {
+            tree: { literal: { shared: 'EXCLUDE' } },
+          },
+        },
+      },
+    });
+  });
+
+  it('maps channel participation filters into the channel literal', () => {
+    // The inbox signal view pins channelIsParticipant: [true] so it only ever
+    // shows channels the user is in.
+    const input = makeInput({
+      include: {
+        channelDone: false,
+        channelIsParticipant: [true],
+      },
+    });
+
+    expect(input).toMatchObject({
+      initial: {
+        filters: {
+          channelFilter: {
+            and: {
+              left: {
+                or: {
+                  left: { literal: { notificationState: 'UNSEEN' } },
+                  right: { literal: { notificationState: 'SEEN' } },
+                },
+              },
+              right: { literal: { isParticipant: true } },
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it('ORs multiple channel participation states so non-member team channels match', () => {
+    // The Channels → Teams tab queries [true, false]: member channels plus
+    // team channels of the user's teams they haven't joined.
+    const input = makeInput({
+      include: {
+        channelIsParticipant: [true, false],
+      },
+    });
+
+    expect(input).toMatchObject({
+      initial: {
+        filters: {
+          channelFilter: {
+            or: {
+              left: { literal: { isParticipant: true } },
+              right: { literal: { isParticipant: false } },
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it('maps cursor requests without resending filters or sort', () => {
+    const input = makeGraphqlSoupInput({
+      params: { limit: 100, sort_method: 'updated_at' },
+      body: compileToAst(
+        queryStateFrom({
+          include: { documentDone: false },
+          emailView: 'sent',
+        })
+      ),
+      cursor: 'opaque-cursor',
+    });
+
+    expect(input).toEqual({
+      continuation: {
+        cursor: 'opaque-cursor',
+        expand: true,
+        emailView: 'SENT',
+      },
+    });
+  });
+
+  it('maps grouped requests to GraphQL input', () => {
+    const input = makeGraphqlGroupedSoupInput({
+      params: { limit: 100, sort_method: 'updated_at' },
+      body: compileToAst(queryStateFrom({ include: { documentDone: false } })),
+      groupBy: {
+        type: 'property',
+        propertyDefinitionId: '00000000-0000-0000-0000-000000000001',
+        entityType: 'TASK',
+      },
+    });
+
+    expect(input).toMatchObject({
+      initial: {
+        groupBy: {
+          field: 'PROPERTY',
+          propertyDefinitionId: '00000000-0000-0000-0000-000000000001',
+          entityType: 'TASK',
+        },
+        limit: 100,
+        sortMethod: 'UPDATED_AT',
+        filters: {
+          documentFilter: {
+            or: {
+              left: { literal: { notificationState: 'UNSEEN' } },
+              right: { literal: { notificationState: 'SEEN' } },
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it('maps grouped cursor continuations to GraphQL input', () => {
+    expect(
+      makeGraphqlGroupedSoupContinuationInput({
+        groupBy: { type: 'entity_type' },
+        groupKey: 'document',
+        cursor: 'opaque-cursor',
+      })
+    ).toEqual({
+      continuation: {
+        groupBy: { field: 'ENTITY_TYPE' },
+        groupKey: 'document',
+        cursor: 'opaque-cursor',
+      },
+    });
+  });
+
+  it('maps property filter values', () => {
+    const input = makeInput({
+      include: {
+        properties: [
+          {
+            propertyId: '00000000-0000-0000-0000-000000000001',
+            type: 'select',
+            value: '00000000-0000-0000-0000-000000000002',
+          },
+        ],
+      },
+    });
+
+    expect(input).toMatchObject({
+      initial: {
+        filters: {
+          propertiesFilter: {
+            literal: {
+              propertyDefinitionId: '00000000-0000-0000-0000-000000000001',
+              value: { selectOption: '00000000-0000-0000-0000-000000000002' },
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it('maps channel thread participant filters', () => {
+    const input = makeGraphqlSoupInput({
+      params: { limit: 100, sort_method: 'updated_at' },
+      body: { cthf: { l: { Participant: 'user-1' } } } as never,
+    });
+
+    expect(input).toMatchObject({
+      initial: {
+        filters: {
+          channelThreadFilter: {
+            literal: { participant: 'user-1' },
+          },
+        },
+      },
+    });
+  });
+
+  it('maps the reminder opt-in so reminders are not silently dropped', () => {
+    // `includeReminders` is what opts a query into reminders at all. Dropping
+    // it leaves the server on its default (exclude), which reads as an empty
+    // Reminders view rather than an error.
+    const input = makeInput({
+      include: { includeReminders: true },
+    });
+
+    expect(input).toMatchObject({
+      initial: {
+        filters: { reminderFilter: { literal: { include: true } } },
+      },
+    });
+  });
+
+  it('maps the completed and fired reminder literals', () => {
+    const input = makeInput({
+      include: {
+        includeReminders: true,
+        reminderCompleted: false,
+        reminderFired: true,
+      },
+    });
+
+    expect(input).toMatchObject({
+      initial: {
+        filters: {
+          // Literal order follows FIELD_CONFIG, which puts the opt-in last.
+          reminderFilter: {
+            and: {
+              left: { literal: { completed: false } },
+              right: {
+                and: {
+                  left: { literal: { fired: true } },
+                  right: { literal: { include: true } },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it('maps reminder id and entity literals', () => {
+    const input = makeGraphqlSoupInput({
+      params: { limit: 100, sort_method: 'updated_at' },
+      body: {
+        remf: {
+          '&': [{ l: { id: 'reminder-1' } }, { l: { ent: 'document:doc-1' } }],
+        },
+      } as never,
+    });
+
+    expect(input).toMatchObject({
+      initial: {
+        filters: {
+          reminderFilter: {
+            and: {
+              left: { literal: { id: 'reminder-1' } },
+              right: { literal: { entity: 'document:doc-1' } },
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it('throws for unknown reminder literals so callers can fall back', () => {
+    expect(() =>
+      makeGraphqlSoupInput({
+        params: { limit: 100, sort_method: 'updated_at' },
+        body: { remf: { l: { enabled: true } } } as never,
+      })
+    ).toThrow('Unsupported GraphQL Soup AST');
+  });
+
+  it('maps calendar event id filters', () => {
+    const input = makeGraphqlSoupInput({
+      params: { limit: 100, sort_method: 'updated_at' },
+      body: { calf: { l: { id: 'event-1' } } } as never,
+    });
+
+    expect(input).toMatchObject({
+      initial: {
+        filters: {
+          calendarEventFilter: { literal: { id: 'event-1' } },
+        },
+      },
+    });
+  });
+
+  it('throws for unsupported calendar literals so callers can fall back', () => {
+    expect(() =>
+      makeGraphqlSoupInput({
+        params: { limit: 100, sort_method: 'updated_at' },
+        body: { calf: { l: { s: 'confirmed' } } } as never,
+      })
+    ).toThrow('Unsupported GraphQL Soup AST');
+  });
+
+  it('translates skill inclusion and markdown skill exclusions without falling back', () => {
+    expect(makeInput({ include: { subType: ['skill'] } })).toMatchObject({
+      initial: {
+        filters: { documentFilter: { literal: { subType: 'SKILL' } } },
+      },
+    });
+    expect(makeInput({ exclude: { subType: ['skill'] } })).toMatchObject({
+      initial: {
+        filters: { documentFilter: { not: { literal: { subType: 'SKILL' } } } },
+      },
+    });
+  });
+
+  it('expands file associations into native-evaluatable GraphQL file types', () => {
+    expect(makeInput({ include: { fileAssoc: ['assoc:pdf'] } })).toMatchObject({
+      initial: {
+        filters: { documentFilter: { literal: { fileType: 'pdf' } } },
+      },
+    });
+    const code = makeInput({ include: { fileAssoc: ['assoc:code'] } });
+    const depth = (value: unknown): number =>
+      value && typeof value === 'object'
+        ? 1 + Math.max(0, ...Object.values(value).map(depth))
+        : 0;
+    expect(depth(code)).toBeLessThan(32);
+    expect(JSON.stringify(code)).toContain('"fileType":"ts"');
+    expect(JSON.stringify(code)).not.toContain('assoc:code');
+    expect(() =>
+      makeInput({ include: { fileAssoc: ['assoc:unknown'] } })
+    ).toThrow('unknown file association');
+  });
+
+  it('throws for REST-only top-level filters instead of silently widening the query', () => {
+    for (const body of [
+      { eca: ['person@example.com'] },
+      { ecd: ['example.com'] },
+    ]) {
+      expect(() =>
+        makeGraphqlSoupInput({
+          params: { limit: 100, sort_method: 'updated_at' },
+          body: body as never,
+        })
+      ).toThrow('Unsupported GraphQL Soup AST');
+    }
+  });
+
+  it('rejects REST-only top-level filters for grouped queries too', () => {
+    expect(() =>
+      makeGraphqlGroupedSoupInput({
+        params: { limit: 100, sort_method: 'updated_at' },
+        body: { ecd: ['example.com'] } as never,
+        groupBy: { type: 'entity_type' },
+      })
+    ).toThrow('Unsupported GraphQL Soup AST');
+  });
+
+  it('rejects email views for grouped queries instead of dropping them', () => {
+    expect(() =>
+      makeGraphqlGroupedSoupInput({
+        params: { limit: 100, sort_method: 'updated_at' },
+        body: { emailView: 'inbox' } as never,
+        groupBy: { type: 'entity_type' },
+      })
+    ).toThrow('Unsupported GraphQL Soup AST');
+  });
+
+  it('rejects unknown email views instead of using the GraphQL default', () => {
+    expect(() =>
+      makeGraphqlSoupInput({
+        params: { limit: 100, sort_method: 'updated_at' },
+        body: { emailView: 'unknown' } as never,
+      })
+    ).toThrow('Unsupported GraphQL Soup AST');
+  });
+
+  it('throws for frecency sort so callers can fall back', () => {
+    expect(() =>
+      makeGraphqlSoupInput({
+        params: { limit: 100, sort_method: 'frecency' },
+        body: compileToAst(queryStateFrom({})),
+      })
+    ).toThrow('Unsupported GraphQL Soup AST');
+  });
+
+  it('throws for invalid call statuses so callers can fall back', () => {
+    expect(() =>
+      makeGraphqlSoupInput({
+        params: { limit: 100, sort_method: 'updated_at' },
+        body: { callf: { l: { Status: 'BOGUS' } } } as never,
+      })
+    ).toThrow('Unsupported GraphQL Soup AST');
+  });
+});

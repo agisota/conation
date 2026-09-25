@@ -1,0 +1,91 @@
+import type { NotificationType } from '@core/types';
+import GithubIcon from '@icon/mcp-github.svg';
+import type { NotificationStack } from '@notifications';
+import ArrowBendUpLeftIcon from '@phosphor/arrow-bend-up-left.svg';
+import AtIcon from '@phosphor/at.svg';
+import BellIcon from '@phosphor/bell-simple.svg';
+import CalendarBlankIcon from '@phosphor/calendar-blank.svg';
+import ChatIcon from '@phosphor/chat.svg';
+import ChatTeardropIcon from '@phosphor/chat-teardrop.svg';
+import CheckIcon from '@phosphor/check.svg';
+import EnvelopeIcon from '@phosphor/envelope.svg';
+import FilesIcon from '@phosphor/files.svg';
+import PhoneIcon from '@phosphor/phone-call.svg';
+import QuestionIcon from '@phosphor/question.svg';
+import AgentIcon from '@phosphor/sparkle.svg';
+import UserPlusIcon from '@phosphor/user-plus.svg';
+import { cn } from '@ui';
+import type { JSX } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
+import { match, P } from 'ts-pattern';
+import type { Notification } from '../types/notification';
+
+interface NotificationIconProps {
+  notification?: Notification;
+  stack?: NotificationStack;
+  class?: string;
+}
+
+/**
+ * Gets the appropriate icon for a notification type
+ */
+function getNotificationIcon(
+  type: NotificationType
+): (props: { class?: string }) => JSX.Element {
+  return match(type)
+    .with('channel_mention', () => AtIcon)
+    .with('document_mention', () => FilesIcon)
+    .with(
+      P.union(
+        'mentioned_in_document_comment',
+        'replied_to_document_comment_thread',
+        'commented_on_document'
+      ),
+      () => ChatTeardropIcon
+    )
+    .with('channel_message_reply', () => ArrowBendUpLeftIcon)
+    .with('channel_message_send', () => ChatIcon)
+    .with('new_email', () => EnvelopeIcon)
+    .with('channel_invite', () => UserPlusIcon)
+    .with('invite_to_team', () => UserPlusIcon)
+    .with('task_assigned', () => CheckIcon)
+    .with('ai_response', () => ChatIcon)
+    .with(
+      P.union(
+        'github_pr_status_changed',
+        'github_pr_check_run',
+        'github_review_requested',
+        'github_pr_comment',
+        'github_pr_mention',
+        'github_pr_review'
+      ),
+      () => GithubIcon
+    )
+    .with('call_started', () => PhoneIcon)
+    .with('reminder', () => BellIcon)
+    .with('calendar_event_reminder', () => CalendarBlankIcon)
+    .with('inbox_reauth_required', () => EnvelopeIcon)
+    .with('agent_session_settled', () => AgentIcon)
+    .with('agent_session_waiting_for_input', () => QuestionIcon)
+    .with('agent_session_mentioned', () => AtIcon)
+    .exhaustive();
+}
+
+/**
+ * Displays the appropriate icon for a notification or stack
+ */
+export function NotificationIcon(props: NotificationIconProps) {
+  const notificationType = (): NotificationType | undefined => {
+    if (props.stack) return props.stack.type;
+    if (props.notification) return props.notification.notification_metadata.tag;
+    return undefined;
+  };
+
+  const icon = () => {
+    const type = notificationType();
+    if (!type) return ChatIcon;
+    return getNotificationIcon(type);
+  };
+
+  return <Dynamic component={icon()} class={cn('size-4', props.class)} />;
+}

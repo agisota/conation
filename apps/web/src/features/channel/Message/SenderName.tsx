@@ -1,0 +1,35 @@
+import type { MessageData } from '@core/messages/types';
+import { getDisplayName, tryMacroId } from '@core/user';
+import { getBotDisplayName } from '@queries/messages/message-sender';
+import { cn } from '@ui';
+import { Show } from 'solid-js';
+import { useMessage } from './context';
+
+type SenderNameProps = {
+  class?: string;
+  hidden?: boolean;
+};
+
+export function MessageSenderName(props: SenderNameProps) {
+  const message = useMessage();
+
+  return (
+    <Show when={!props.hidden}>
+      <span class={cn('text-sm font-medium truncate', props.class)}>
+        <SenderName message={message()} />
+      </span>
+    </Show>
+  );
+}
+
+export function SenderName(props: { message: MessageData }) {
+  const macroId = () => tryMacroId(props.message.sender_id);
+  const displayName = () => getDisplayName(macroId());
+  const agentName = () =>
+    getBotDisplayName(props.message.sender_id, props.message.sender);
+  const importedName = () => {
+    const name = props.message.imported_author?.name?.trim();
+    return name ? name : undefined;
+  };
+  return <>{importedName() ?? agentName() ?? displayName()}</>;
+}

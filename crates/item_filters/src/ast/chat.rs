@@ -1,0 +1,116 @@
+use filter_ast::{ExpandFrame, Expr, FoldTree, TryExpandNode};
+use model_owner::Owner;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::{
+    ChatFilters,
+    ast::{ExpandErr, ParseFromStr, UnknownValue, date::DateLiteral},
+};
+
+/// the literal ast type for the chat entity
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ChatLiteral {
+    /// the chat is in some nested project structure where [Uuid] is a parent node
+    #[serde(rename = "pid")]
+    ProjectId(Uuid),
+    /// the chat has role [ChatRole]
+    #[serde(rename = "r")]
+    Role(ChatRole),
+    /// the chat has the id [Uuid]
+    #[serde(rename = "cid")]
+    ChatId(Uuid),
+    /// the chat is owned by [Owner]
+    #[serde(rename = "o")]
+    Owner(Owner),
+    /// this node value filters by chat importance. false short-circuits to match nothing.
+    #[serde(rename = "imp")]
+    Importance(bool),
+    /// An entity has a non-deleted notification in this exact state.
+    #[serde(rename = "ns")]
+    NotificationState(crate::NotificationState),
+    /// this node value filters by chat createdAt timestamp
+    #[serde(rename = "ca")]
+    CreatedAt(DateLiteral),
+    /// this node value filters by chat updatedAt timestamp
+    #[serde(rename = "ua")]
+    UpdatedAt(DateLiteral),
+}
+
+/// the possible roles for a chat
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ChatRole {
+    /// the role is user
+    User,
+    /// the role is system
+    System,
+    /// the role is assistant
+    Assistant,
+}
+
+impl ParseFromStr for ChatRole {
+    fn parse_from_str<T: AsRef<str>>(s: T) -> Result<Self, super::UnknownValue<Self>> {
+        match s.as_ref() {
+            "user" => Ok(Self::User),
+            "system" => Ok(Self::System),
+            "assistant" => Ok(Self::Assistant),
+            _ => Err(UnknownValue(
+                s.as_ref().to_string(),
+                std::marker::PhantomData,
+            )),
+        }
+    }
+}
+
+impl ExpandFrame<ChatLiteral> for ChatFilters {
+    type Err = ExpandErr;
+
+    fn expand_ast(filter_request: ChatFilters) -> Result<Option<Expr<ChatLiteral>>, Self::Err> {
+        let ChatFilters {
+            role,
+            chat_ids,
+            project_ids,
+            owners,
+            importance,
+            notification_filters,
+        } = filter_request;
+
+        let project_ids = project_ids
+            .iter()
+            .map(|s| Uuid::parse_str(s))
+            .try_expand(|r| r.map(ChatLiteral::ProjectId), Expr::or)?;
+
+        let chat_ids = chat_ids
+            .iter()
+            .map(|s| Uuid::parse_str(s))
+            .try_expand(|r| r.map(ChatLiteral::ChatId), Expr::or)?;
+
+        let role = role
+            .iter()
+            .map(ChatRole::parse_from_str)
+            .try_expand(|r| r.map(ChatLiteral::Role), Expr::or)?;
+
+        let owners = owners
+            .iter()
+            .map(|s| Owner::from_principal_str(s))
+            .try_expand(|r| r.map(ChatLiteral::Owner), Expr::or)?;
+
+        let importance_node = importance.map(|imp| Expr::Literal(ChatLiteral::Importance(imp)));
+        let notification_state_node = notification_filters
+            .into_unique_states()
+            .into_iter()
+            .map(|state| Expr::Literal(ChatLiteral::NotificationState(state)))
+            .reduce(Expr::or);
+
+        Ok([
+            project_ids,
+            chat_ids,
+            role,
+            owners,
+            importance_node,
+            notification_state_node,
+        ]
+        .into_iter()
+        .fold_with(Expr::and))
+    }
+}

@@ -1,0 +1,108 @@
+import { initializeBrowserObservability } from './observability/browser';
+import './index.css';
+
+import '@fontsource-variable/inter';
+import '@fontsource-variable/roboto-mono';
+import '@fontsource-variable/playfair-display';
+// SolidDevtools retains disposed memos, causes memory leak
+// import 'solid-devtools';
+import { initializeLexical } from '@core/component/LexicalMarkdown/init';
+import { isTouchDevice } from '@core/mobile/isTouchDevice';
+import { getPlatform, isTauri } from '@core/util/platform';
+import { platformFetch } from '@core/util/platformFetch';
+import { initMonochromeIcons } from '@ui/utils/monochromeIcons';
+import { ErrorBoundary, render } from 'solid-js/web';
+import { FatalError } from './components/app/FatalError';
+import { Root } from './routes/Root';
+
+// Override global fetch with platformFetch for Tauri compatibility
+// Skip localhost requests (dev server) to avoid breaking HMR
+if (isTauri()) {
+  const originalFetch = window.fetch;
+  window.fetch = new Proxy(originalFetch, {
+    apply: (target, thisArg, args) => {
+      const url = args[0];
+      const urlString = url instanceof Request ? url.url : String(url);
+      if (urlString.includes('localhost')) {
+        return target.apply(thisArg, args as Parameters<typeof fetch>);
+      }
+      return platformFetch.apply(thisArg, args as Parameters<typeof fetch>);
+    },
+  });
+}
+
+initializeLexical();
+initMonochromeIcons();
+
+const renderApp = () => {
+  const root = document.getElementById('root');
+  if (!root) return console.error('Root element not found');
+  document.documentElement.dataset.platform = getPlatform();
+  document.documentElement.dataset.touchDevice = isTouchDevice()
+    ? 'true'
+    : 'false';
+
+  // Track current input modality (keyboard / mouse / touch) on the document element.
+  // Used by hotkeys and other modality-aware behaviors.
+  // Use capture phase to ensure we catch events even if they're stopped by handlers
+  document.addEventListener(
+    'keydown',
+    () => {
+      document.documentElement.dataset.modality = 'keyboard';
+    },
+    { capture: true }
+  );
+
+  document.addEventListener(
+    'mousedown',
+    () => {
+      document.documentElement.dataset.modality = 'mouse';
+    },
+    { capture: true }
+  );
+
+  document.addEventListener(
+    'touchstart',
+    () => {
+      document.documentElement.dataset.modality = 'touch';
+    },
+    { capture: true, passive: true }
+  );
+
+  if (import.meta.env.MODE === 'development') {
+    return render(
+      () => (
+        <ErrorBoundary
+          fallback={(error, reset) => (
+            <FatalError error={error} reset={reset} />
+          )}
+        >
+          <Root />
+        </ErrorBoundary>
+      ),
+      root
+    );
+  }
+
+  render(() => <Root />, root);
+};
+
+async function main() {
+  await initializeBrowserObservability();
+
+  console.log('App Version ', import.meta.env.__APP_VERSION__);
+
+  // during `vite dev` (but not dev builds), don't inject analytics/observability
+  if (!import.meta.hot) {
+    // this event is emitted when dynamically loading a module fails
+    // for example when you're using the app and a new version is deployed
+    window.addEventListener('vite:preloadError', () =>
+      window.alert('Please refresh page to update app to new version')
+    );
+  }
+
+  renderApp();
+}
+
+// unawaited
+main();

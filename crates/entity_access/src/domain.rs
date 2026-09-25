@@ -1,0 +1,14 @@
+//! Domain layer for entity access.
+//!
+//! Contains models, ports (traits), and the service implementation.
+
+pub mod models;
+
+#[cfg(feature = "ports")]
+pub mod ports;
+
+#[cfg(feature = "ports")]
+pub mod service;
+
+#[cfg(feature = "explain_binary")]
+pub mod explain;
