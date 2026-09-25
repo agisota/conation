@@ -14,6 +14,12 @@ import { ChatComposer } from '../components/ChatComposer';
 import type { AgentKind } from '../core/agent-kind';
 import { defaultBranchFor } from '../core/repository';
 import { MACRO_PERSONA_ID, type RosterAgent } from '../core/roster';
+import {
+  createPersistedComposerDraft,
+  createSafeLocalStorage,
+  newConversationAttachmentsKey,
+  newConversationDraftKey,
+} from '../primitives/composer-draft';
 import { createRecentRepositories } from '../primitives/recent-repositories';
 import { createReachableRepositories } from '../queries/reachable-repositories';
 import { createRepositoryBranches } from '../queries/repository-branches';
@@ -52,10 +58,27 @@ export function NewChatPage(props: {
   const [modelOverride, setModelOverride] = createSignal<string>();
   // A new conversation starts on Automatic until the caller picks a repository.
   const [repoUrl, setRepoUrl] = createSignal<string | undefined>();
-  const [localDraft, setLocalDraft] = createSignal('');
-  const draft = () => props.draft ?? localDraft();
+  const persistenceUserId = userId();
+  const persistenceKeys =
+    persistenceUserId && !props.onDraftChange
+      ? {
+          draft: newConversationDraftKey(persistenceUserId),
+          attachments: newConversationAttachmentsKey(persistenceUserId),
+        }
+      : undefined;
+  const persistenceStorage = createSafeLocalStorage(
+    persistenceKeys ? [persistenceKeys.draft, persistenceKeys.attachments] : []
+  );
+  const persistedDraft = createPersistedComposerDraft(
+    persistenceKeys?.draft,
+    persistenceStorage
+  );
+  const draft = () =>
+    props.onDraftChange ? (props.draft ?? '') : persistedDraft.draft();
   const setDraft = (text: string) =>
-    props.onDraftChange ? props.onDraftChange(text) : setLocalDraft(text);
+    props.onDraftChange
+      ? props.onDraftChange(text)
+      : persistedDraft.setDraft(text);
   const [branchOverride, setBranchOverride] = createSignal<string>();
   const selected = createMemo(() => {
     const wanted =
@@ -95,7 +118,10 @@ export function NewChatPage(props: {
     if (agent.harness === 'cursor') openSettings('Harness');
   };
 
-  const attachmentTracker = createInputAttachmentTracker();
+  const attachmentTracker = createInputAttachmentTracker({
+    persistenceKey: persistenceKeys?.attachments,
+    persistenceStorage,
+  });
   const attachFiles = (files: File[]) =>
     void uploadInputAttachments({
       files,

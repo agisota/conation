@@ -9,9 +9,14 @@ import {
   waitFor,
   within,
 } from '@solidjs/testing-library';
-import type { JSX } from 'solid-js';
+import { For, type JSX } from 'solid-js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAgentRoster, type PersistedAgentLike } from '../core/roster';
+import {
+  createSafeLocalStorage,
+  newConversationAttachmentsKey,
+  newConversationDraftKey,
+} from '../primitives/composer-draft';
 import { NewChatPage } from './NewChatPage';
 
 const mocks = vi.hoisted(() => ({
@@ -20,13 +25,32 @@ const mocks = vi.hoisted(() => ({
   recentIds: [] as string[],
   recentUrls: [] as string[],
   repositories: [] as { url: string; defaultBranch?: string }[],
+  userId: 'user',
+  pendingUpload: false,
 }));
 vi.mock('@core/util/upload', () => ({ uploadFile: vi.fn() }));
 vi.mock('@channel/Input', async () => ({
   ...(await import('../../channel/Input/attachment-tracker')),
-  uploadInputAttachments: vi.fn(),
+  uploadInputAttachments: async ({
+    files,
+    tracker,
+  }: {
+    files: File[];
+    tracker: {
+      addAttachment: (attachment: InputAttachmentData) => void;
+    };
+  }) => {
+    for (const file of files) {
+      tracker.addAttachment({
+        id: file.name,
+        kind: 'document',
+        name: file.name,
+        pending: mocks.pendingUpload,
+      });
+    }
+  },
 }));
-vi.mock('@core/context/user', () => ({ useUserId: () => () => 'user' }));
+vi.mock('@core/context/user', () => ({ useUserId: () => () => mocks.userId }));
 vi.mock('@core/constant/SettingsState', () => ({
   useSettingsState: () => ({ openSettings: mocks.openSettings }),
 }));
@@ -100,6 +124,8 @@ type ComposerProps = {
   draft: string;
   onDraftChange: (draft: string) => void;
   onSend: (prompt: string, attachments: InputAttachmentData[]) => void;
+  attachments: InputAttachmentData[];
+  onAttachFiles: (files: File[]) => void;
 };
 vi.mock('../components/ChatComposer', () => ({
   ChatComposer: (props: ComposerProps) => (
@@ -114,23 +140,41 @@ vi.mock('../components/ChatComposer', () => ({
         onInput={(event) => props.onDraftChange(event.currentTarget.value)}
       />
       <button
-        onClick={() =>
-          props.onSend(
-            props.draft || (mocks.attachments.length ? '' : 'Prompt'),
-            mocks.attachments
-          )
-        }
+        onClick={() => {
+          const attachments = props.attachments.length
+            ? props.attachments
+            : mocks.attachments;
+          const prompt = props.draft || (attachments.length ? '' : 'Prompt');
+          props.onDraftChange('');
+          props.onSend(prompt, attachments);
+        }}
       >
         Send
+      </button>
+      <button
+        aria-label="Attach test file"
+        onClick={() =>
+          props.onAttachFiles([new File(['draft file'], 'notes.txt')])
+        }
+      >
+        Attach
+        <For each={props.attachments}>
+          {(attachment) => <span>{attachment.name}</span>}
+        </For>
       </button>
     </>
   ),
 }));
 
-function page(connected = true, agents: PersistedAgentLike[] = []) {
+function page(
+  connected = true,
+  agents: PersistedAgentLike[] = [],
+  controlledDraft?: { draft?: string; onDraftChange: (draft: string) => void }
+) {
   const onStart = vi.fn();
   render(() => (
     <NewChatPage
+      {...controlledDraft}
       roster={buildAgentRoster({
         agents,
         runtimes: [],
@@ -170,10 +214,18 @@ async function hoverAgent(name: string) {
   const search = await screen.findByRole('textbox', { name: 'Search models' });
   return within(search.closest('[role="menu"]') as HTMLElement);
 }
+beforeEach(() => {
+  createSafeLocalStorage([
+    newConversationDraftKey('user'),
+    newConversationAttachmentsKey('user'),
+  ]).clear();
+});
 
 describe('agent-led new conversation', () => {
   let motionStyles: HTMLStyleElement;
   beforeEach(() => {
+    mocks.userId = 'user';
+    mocks.pendingUpload = false;
     mocks.attachments = [];
     mocks.recentIds = [MACRO_CODER_BOT_ID];
     mocks.recentUrls = [];
@@ -249,7 +301,7 @@ describe('agent-led new conversation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     expect(send).toHaveBeenLastCalledWith({
       botId: CURSOR_BOT_ID,
-      prompt: 'Shared draft',
+      prompt: 'Prompt',
       repoUrl: 'https://github.com/macro-inc/macro',
       repoBranch: 'feature/home',
     });
@@ -504,6 +556,81 @@ describe('agent-led new conversation', () => {
       'Chat default'
     );
     expect(screen.getByTestId('drawer').hasAttribute('hidden')).toBe(true);
+  });
+  it('restores text and completed attachments after a component remount', async () => {
+    page();
+    fireEvent.input(screen.getByRole('textbox', { name: 'Draft' }), {
+      target: { value: 'Keep this prompt' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Attach test file' }));
+    await screen.findByText('notes.txt');
+    cleanup();
+
+    page();
+    const restoredInput = screen.getByRole('textbox', {
+      name: 'Draft',
+    }) as HTMLInputElement;
+    expect(restoredInput.value).toBe('Keep this prompt');
+    expect(screen.getByText('notes.txt')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    cleanup();
+    page();
+    const clearedInput = screen.getByRole('textbox', {
+      name: 'Draft',
+    }) as HTMLInputElement;
+    expect(clearedInput.value).toBe('');
+    expect(screen.queryByText('notes.txt')).toBeNull();
+  });
+
+  it('does not expose one user’s saved draft or attachments to another user', () => {
+    page();
+    fireEvent.input(screen.getByRole('textbox', { name: 'Draft' }), {
+      target: { value: 'Alice private draft' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Attach test file' }));
+    cleanup();
+
+    mocks.userId = 'bob';
+    page();
+    const bobInput = screen.getByRole('textbox', {
+      name: 'Draft',
+    }) as HTMLInputElement;
+    expect(bobInput.value).toBe('');
+    expect(screen.queryByText('notes.txt')).toBeNull();
+    cleanup();
+    mocks.userId = 'user';
+  });
+  it('does not restore a pending attachment after a remount', async () => {
+    mocks.pendingUpload = true;
+    page();
+    fireEvent.click(screen.getByRole('button', { name: 'Attach test file' }));
+    await screen.findByText('notes.txt');
+    cleanup();
+
+    mocks.pendingUpload = false;
+    page();
+    expect(screen.queryByText('notes.txt')).toBeNull();
+  });
+
+  it('keeps Home drafts controlled and out of Agents local storage', () => {
+    page();
+    fireEvent.input(screen.getByRole('textbox', { name: 'Draft' }), {
+      target: { value: 'Agents draft' },
+    });
+    cleanup();
+
+    const onDraftChange = vi.fn();
+    page(true, [], { onDraftChange });
+    const homeInput = screen.getByRole('textbox', {
+      name: 'Draft',
+    }) as HTMLInputElement;
+    expect(homeInput.value).toBe('');
+    const storedEntryCount = localStorage.length;
+    fireEvent.input(homeInput, { target: { value: 'Updated Home draft' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Attach test file' }));
+    expect(onDraftChange).toHaveBeenCalledWith('Updated Home draft');
+    expect(localStorage.length).toBe(storedEntryCount);
   });
 });
 

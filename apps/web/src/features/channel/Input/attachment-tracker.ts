@@ -14,6 +14,7 @@ export type InputAttachmentTracker = {
 
 type CreateInputAttachmentTrackerOptions = {
   persistenceKey?: string;
+  persistenceStorage?: Storage;
   initialAttachments?: InputAttachmentData[];
   maxAttachments?: number;
 };
@@ -28,6 +29,7 @@ export function createInputAttachmentTracker(
   const [attachments, setAttachments] = options.persistenceKey
     ? makePersisted(raw, {
         name: options.persistenceKey,
+        storage: options.persistenceStorage,
         serialize: (data: InputAttachmentData[]) =>
           JSON.stringify(data.filter((a) => !a.pending)),
         deserialize: (data: string) =>

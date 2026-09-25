@@ -84,6 +84,11 @@ permission failures should display a failed tool call without a successful resul
   when changing agents. **Create agent** stays pinned at the bottom of the dropdown
   while the agent and model lists scroll. It opens the roster on the selected kind's
   tab, where either kind can be created.
+  In the Agents workspace, unsent New conversation text and completed file
+  attachments survive leaving and reopening that page. They are stored under
+  the signed-in user’s separate local-storage keys; Home keeps its draft in
+  memory. Pending uploads are never restored. If browser storage is unavailable,
+  editing and sending remain available but drafts cannot survive a remount.
 - On Home and New conversation, selecting a coding agent expands the input even
   with an empty or short draft. Both pages place the composer above the viewport's
   vertical center. The heading and first input line stay anchored while the composer
