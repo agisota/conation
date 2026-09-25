@@ -1,0 +1,29 @@
+mod run_task;
+use aws_sdk_ecs as ecs;
+
+#[cfg(not(test))]
+pub use ECSClient as ECS;
+#[cfg(test)]
+pub use MockECSClient as ECS;
+
+#[derive(Clone, Debug)]
+pub struct ECSClient {
+    /// Inner ECS client
+    inner: ecs::Client,
+}
+
+#[cfg_attr(test, mockall::automock)]
+impl ECSClient {
+    pub fn new(inner: ecs::Client) -> Self {
+        Self { inner }
+    }
+
+    pub async fn run_task(
+        &self,
+        task_definition: &str,
+        cluster: &str,
+        subnets: Vec<String>,
+    ) -> Result<(), anyhow::Error> {
+        run_task::run_task(&self.inner, task_definition, cluster, subnets).await
+    }
+}

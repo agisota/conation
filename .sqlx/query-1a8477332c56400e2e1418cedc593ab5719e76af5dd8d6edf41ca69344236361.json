@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            WITH updated AS (\n                UPDATE saved_view\n                SET name = $3, config = $4, updated_at = NOW()\n                WHERE user_id = $2 AND config->>'kind' = 'dashboard'\n                  AND config->>'id' = 'dashboard:personal'\n                  AND COALESCE((config->>'revision')::bigint, 0) = $7::bigint\n                RETURNING id, user_id, name, config, created_at, updated_at\n            ), inserted AS (\n                INSERT INTO saved_view (id, user_id, name, config, created_at, updated_at)\n                SELECT $1, $2, $3, $4, $5, $6\n                WHERE $7::bigint = 0 AND NOT EXISTS (SELECT 1 FROM updated)\n                ON CONFLICT (user_id) WHERE config->>'kind' = 'dashboard'\n                    AND config->>'id' = 'dashboard:personal' DO NOTHING\n                RETURNING id, user_id, name, config, created_at, updated_at\n            )\n            SELECT id AS \"id!\", user_id AS \"user_id!\", name AS \"name!\",\n                config AS \"config!\", created_at AS \"created_at!\", updated_at AS \"updated_at!\"\n            FROM (SELECT * FROM updated UNION ALL SELECT * FROM inserted) saved\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "user_id!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "name!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "config!",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at!",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "updated_at!",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Jsonb",
+        "Timestamptz",
+        "Timestamptz",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "1a8477332c56400e2e1418cedc593ab5719e76af5dd8d6edf41ca69344236361"
+}

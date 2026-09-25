@@ -1,0 +1,28 @@
+import { SUPPORTED_IMAGE_ATTACHMENT_EXTENSIONS } from '@core/component/AI/constant';
+import { FileType as FileTypeMap } from '@service-cognition/generated/schemas/fileType';
+import type { AttachmentPreview, FileType } from '../types';
+
+const FILE_TYPE_SET = new Set(Object.keys(FileTypeMap));
+
+// maps file type string to FileType enum if it exists
+export const asFileType = (
+  fileType: string | null | undefined
+): FileType | undefined => {
+  if (!fileType || !FILE_TYPE_SET.has(fileType)) return undefined;
+  return fileType as FileType;
+};
+
+export const isImageAttachment = (attachment: AttachmentPreview) => {
+  if (attachment.entity_type === 'static_file') return true;
+  if (attachment.entity_type === 'document') {
+    if (!attachment.metadata) return false;
+    if (attachment.metadata.type === 'image') return true;
+    if (attachment.metadata.type === 'document') {
+      return SUPPORTED_IMAGE_ATTACHMENT_EXTENSIONS.includes(
+        attachment.metadata.document_type
+      );
+    }
+    return false;
+  }
+  return false;
+};

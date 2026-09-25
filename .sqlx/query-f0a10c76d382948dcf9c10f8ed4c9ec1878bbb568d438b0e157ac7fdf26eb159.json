@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE saved_view\n            SET name = COALESCE($3, name),\n                config = CASE WHEN $4::jsonb IS NOT NULL THEN config || $4 ELSE config END,\n                updated_at = NOW()\n            WHERE id = $1 AND user_id = $2\n              AND config->>'kind' IS DISTINCT FROM 'dashboard'\n              AND config->>'id' IS DISTINCT FROM 'dashboard:personal'\n              AND (config || COALESCE($4::jsonb, '{}'::jsonb))->>'kind'\n                  IS DISTINCT FROM 'dashboard'\n              AND (config || COALESCE($4::jsonb, '{}'::jsonb))->>'id'\n                  IS DISTINCT FROM 'dashboard:personal'\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f0a10c76d382948dcf9c10f8ed4c9ec1878bbb568d438b0e157ac7fdf26eb159"
+}

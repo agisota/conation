@@ -1,0 +1,469 @@
+# DO NOT EDIT — regenerate with `cargo x workflows` (from the repository root).
+# Source: tooling/xtask/crates/xtask_workflows/src/workflows/code_check_cloud_storage.rs
+name: cloud storage code check
+env:
+  CARGO_INCREMENTAL: '0'
+  CARGO_TERM_COLOR: always
+  CARGO_PROFILE_DEV_DEBUG: limited
+  CARGO_PROFILE_TEST_DEBUG: limited
+  RUST_BACKTRACE: '1'
+  RUSTFLAGS: '-C link-arg=-fuse-ld=lld'
+'on':
+  pull_request:
+    types:
+    - opened
+    - synchronize
+    - reopened
+    - ready_for_review
+    branches:
+    - main
+jobs:
+  path-check:
+    runs-on: namespace-profile-linux-small
+    outputs:
+      should_run: ${{ steps.filter.outputs.should_run }}
+      rust_packages: ${{ steps.nextest-filter.outputs.rust_packages }}
+      skip_tests: ${{ steps.nextest-filter.outputs.skip_tests }}
+      doppler_config_bins: ${{ steps.doppler-bins.outputs.doppler_config_bins }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      with:
+        clean: 'false'
+        persist-credentials: 'false'
+        fetch-depth: '2'
+    - name: Setup Rust
+      uses: './.github/actions/setup-rust'
+      with:
+        sccache: 'false'
+        rust-cache: 'false'
+    - id: filter
+      name: Filter changed paths
+      uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590
+      with:
+        filters: |
+          should_run:
+            - 'Cargo.toml'
+            - 'Cargo.lock'
+            - 'Cross.toml'
+            - 'clippy.toml'
+            - 'deny.toml'
+            - 'rust-toolchain.toml'
+            - '.cargo/**'
+            - '.config/**'
+            - '.sqlx/**'
+            - 'crates/**'
+            - 'services/**'
+            - 'tooling/xtask/**'
+            - 'static_assets/**'
+            - 'nix/**'
+            - 'flake.nix'
+            - 'flake.lock'
+            - '.github/actions/setup-nix/**'
+            - '.github/actions/setup-nix-dev-shell/**'
+            - '.github/actions/teardown-nix/**'
+            - '.github/actions/setup-sccache/**'
+            - .github/workflows/code_check_cloud_storage.yml
+    - name: compute changed files
+      if: steps.filter.outputs.should_run == 'true'
+      run: |
+        set -euo pipefail
+
+        # Compare against the merge-base so a deleted file still appears. `--no-renames`
+        # turns a rename into a delete+add pair so the old path is attributed to its
+        # package (otherwise git reports only the new name).
+
+        if [ -z "${GITHUB_BASE_REF:-}" ]; then
+          compare_rev="$(git rev-parse HEAD~1)"
+        else
+          git fetch origin "$GITHUB_BASE_REF:refs/remotes/origin/$GITHUB_BASE_REF"
+          if ! compare_rev="$(git merge-base "origin/${GITHUB_BASE_REF}" HEAD)"; then
+            echo "Unable to find merge-base for origin/${GITHUB_BASE_REF}; falling back to full test suite" >&2
+            : > /tmp/changed-files
+            exit 0
+          fi
+        fi
+
+        printf '%s\n' "$compare_rev" > /tmp/base-revision
+        git diff --name-only --no-renames "$compare_rev" "$GITHUB_SHA" > /tmp/changed-files
+      shell: bash
+    - id: doppler-bins
+      name: compute affected Doppler config bins
+      if: steps.filter.outputs.should_run == 'true'
+      run: |
+        set -euo pipefail
+
+        doppler_config_bins="$(cargo run --manifest-path tooling/xtask/Cargo.toml -- doppler-bins /tmp/changed-files)"
+        {
+          echo 'doppler_config_bins<<__DOPPLER_CONFIG_BINS__'
+          if [ -n "$doppler_config_bins" ]; then
+            printf '%s\n' "$doppler_config_bins"
+          fi
+          echo '__DOPPLER_CONFIG_BINS__'
+        } >> "$GITHUB_OUTPUT"
+      shell: bash
+    - id: nextest-filter
+      name: compute nextest package filter
+      if: steps.filter.outputs.should_run == 'true'
+      run: |
+        set -euo pipefail
+
+        # Writes `rust_packages` for the check/test jobs:
+        #   all  — compile and run the whole workspace
+        #   none — no Rust packages to lint/test (Nix-only, top-level JSON, docs, …)
+        #   <names> — space-separated workspace packages (changed + reverse deps)
+        #
+        # `skip_tests=true` keeps clippy on a package set while the live-Postgres
+        # test job stays skipped (used for `.sqlx`-only diffs).
+        #
+        # Root Cargo/toolchain/config edits force `all`. Cargo.lock is handled by
+        # determinator's old/new graph comparison. flake.nix, the Nix shell action,
+        # and this workflow file used to live on the full-suite list and turned every
+        # dev-shell tweak into a full-suite rebuild.
+
+        echo "skip_tests=false" >> "$GITHUB_OUTPUT"
+
+        if [ ! -s /tmp/changed-files ]; then
+          echo "Unknown or empty change set; running all tests"
+          echo "rust_packages=all" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        if grep -qE '^(Cargo\.toml|rust-toolchain\.toml|Cross\.toml|clippy\.toml|deny\.toml|\.cargo/.*|\.config/.*)$' /tmp/changed-files; then
+          echo "Workspace-level Cargo/toolchain change detected; running all tests"
+          echo "rust_packages=all" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        # The test job compiles queries against live Postgres (SQLX_OFFLINE is unset
+        # there), so `.sqlx` contents cannot change test outcomes. Clippy is the
+        # offline SQLx check (`SQLX_OFFLINE=true`), so a snapshot-only diff must
+        # still compile against the cache rather than skip the check job.
+        if ! grep -qvE '^\.sqlx/' /tmp/changed-files; then
+          echo "Only .sqlx changes detected; clippy all, skip live-Postgres tests"
+          echo "rust_packages=all" >> "$GITHUB_OUTPUT"
+          echo "skip_tests=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        packages="$(cargo run --manifest-path tooling/xtask/Cargo.toml -- nextest-filter /tmp/changed-files "$(< /tmp/base-revision)")"
+
+        if [ -z "$packages" ] || [ "$packages" = "none" ]; then
+          echo "No package-specific Rust changes detected; running no tests"
+          echo "rust_packages=none" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        echo "rust packages: $packages"
+        echo "rust_packages=$packages" >> "$GITHUB_OUTPUT"
+      shell: bash
+  check:
+    needs:
+    - path-check
+    if: needs.path-check.outputs.should_run == 'true' && github.event.pull_request.draft == false
+    runs-on: namespace-profile-linux-rust-ci;overrides.cache-tag=sccache-ci
+    env:
+      RUSTFLAGS: '-Dwarnings -Dclippy::disallowed_methods -C link-arg=-fuse-ld=mold'
+      RUSTDOCFLAGS: '-Dwarnings'
+      SQLX_OFFLINE: 'true'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      with:
+        clean: 'false'
+        persist-credentials: 'false'
+    - name: Mount Namespace cache volume
+      uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0
+      with:
+        cache: rust
+        path: /nix
+      continue-on-error: true
+    - name: Setup Nix
+      uses: './.github/actions/setup-nix'
+    - name: Setup Nix dev shell
+      uses: './.github/actions/setup-nix-dev-shell'
+    - name: Configure Namespace remote sccache
+      if: (github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.event.pull_request.head.repo.full_name == github.repository
+      run: |-
+        set -euo pipefail
+        env_file="$(mktemp "$RUNNER_TEMP/namespace-sccache.XXXXXX")"
+        trap 'rm -f "$env_file"' EXIT
+        if nsc cache sccache setup --cache_name sccache-ci > "$env_file"; then
+          # Register credential values as masked BEFORE exporting: GitHub only
+          # masks `secrets.*`, so without this SCCACHE_WEBDAV_TOKEN — a broad,
+          # ~24h Namespace workspace token (registry + cache write) — printed
+          # verbatim in every subsequent step's env dump. Masking is selective by
+          # key name: masking non-secrets like the endpoint URL or key prefix
+          # would redact those strings everywhere in the logs.
+          while IFS= read -r line; do
+            k="${line%%=*}"
+            v="${line#*=}"
+            [ -n "$v" ] && [ "$k" != "$line" ] || continue
+            case "$k" in
+              *TOKEN*|*SECRET*|*PASSWORD*) echo "::add-mask::$v" ;;
+            esac
+          done < "$env_file"
+          cat "$env_file" >> "$GITHUB_ENV"
+          # Force the next compiler invocation to start a server with the new remote
+          # backend even if a setup hook happened to launch one already.
+          sccache --stop-server >/dev/null 2>&1 || true
+        else
+          echo "::warning::Namespace remote sccache setup failed; using local cache fallback"
+        fi
+    - name: validate Doppler configs
+      if: needs.path-check.outputs.doppler_config_bins != ''
+      run: |
+        set -euo pipefail
+
+        if [ -z "${DOPPLER_TOKEN:-}" ]; then
+          echo "DOPPLER_TOKEN secret is required to validate Doppler configs" >&2
+          exit 1
+        fi
+
+        if [ -z "${RUSTC_WRAPPER:-}" ]; then
+          echo "RUSTC_WRAPPER is required so Doppler config binaries build through sccache" >&2
+          exit 1
+        fi
+
+        bins=()
+        cargo_args=(build --locked --all-features)
+        while IFS= read -r bin; do
+          if [ -z "$bin" ]; then
+            continue
+          fi
+
+          bins+=("$bin")
+          cargo_args+=(--bin "$bin")
+        done <<< "$DOPPLER_CONFIG_BINS"
+
+        if [ "${#bins[@]}" -eq 0 ]; then
+          echo "No Doppler config binaries to validate"
+          exit 0
+        fi
+
+        echo "Building affected Doppler config binaries with RUSTC_WRAPPER=$RUSTC_WRAPPER"
+        printf '  %s\n' "${bins[@]}"
+
+        cargo "${cargo_args[@]}"
+        for bin in "${bins[@]}"; do
+          "./target/debug/$bin"
+        done
+      env:
+        DOPPLER_CONFIG_BINS: ${{ needs.path-check.outputs.doppler_config_bins }}
+        DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+    - name: fmt
+      run: cargo fmt --check
+    - name: clippy
+      run: |
+        set -euo pipefail
+
+        # Mirrors run_tests.sh package selection so clippy only lints the crates this
+        # PR can actually affect. `all` keeps the historical workspace invocation,
+        # including sync_service's special-cased feature set.
+
+        packages="${RUST_PACKAGES:-}"
+
+        clippy_sync_service() {
+          cargo clippy -p sync_service -- \
+            -A clippy::unnecessary_map_or \
+            -A clippy::collapsible_if
+        }
+
+        if [ -z "$packages" ] || [ "$packages" = "all" ]; then
+          cargo clippy --workspace --all-features --exclude sync_service
+          clippy_sync_service
+          exit 0
+        fi
+
+        if [ "$packages" = "none" ]; then
+          echo "No Rust packages to lint"
+          exit 0
+        fi
+
+        sync=false
+        pkg_args=()
+        for p in $packages; do
+          if [ "$p" = "sync_service" ]; then
+            sync=true
+          else
+            pkg_args+=(-p "$p")
+          fi
+        done
+
+        if [ "${#pkg_args[@]}" -gt 0 ]; then
+          cargo clippy --all-features "${pkg_args[@]}"
+        fi
+
+        if [ "$sync" = true ]; then
+          clippy_sync_service
+        fi
+      env:
+        RUST_PACKAGES: ${{ needs.path-check.outputs.rust_packages }}
+    - name: show sccache stats
+      if: always()
+      run: sccache --show-stats || true
+    - name: Teardown Nix
+      if: always()
+      uses: './.github/actions/teardown-nix'
+  test:
+    needs:
+    - path-check
+    if: needs.path-check.outputs.should_run == 'true' && github.event.pull_request.draft == false && needs.path-check.outputs.rust_packages != 'none' && needs.path-check.outputs.skip_tests != 'true'
+    runs-on: namespace-profile-linux-rust-ci;overrides.cache-tag=sccache-ci
+    env:
+      RUST_PACKAGES: ${{ needs.path-check.outputs.rust_packages }}
+      NEXTEST_TEST_THREADS: '32'
+      RUSTFLAGS: '-Dwarnings -C link-arg=-fuse-ld=mold'
+    services:
+      postgres:
+        image: pgvector/pgvector:pg18
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: macrodb
+        ports:
+        - '5432:5432'
+        options: '--health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5 --shm-size 1g'
+      redis:
+        image: redis:7
+        ports:
+        - '6379:6379'
+        options: '--health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      with:
+        clean: 'false'
+        persist-credentials: 'false'
+    - name: Mount Namespace cache volume
+      uses: namespacelabs/nscloud-cache-action@15799a6b54e5765f85b2aac25b3f0df43ed571c0
+      with:
+        cache: rust
+        path: /nix
+      continue-on-error: true
+    - name: Setup Nix
+      uses: './.github/actions/setup-nix'
+    - name: Setup Nix dev shell
+      uses: './.github/actions/setup-nix-dev-shell'
+    - name: Configure Namespace remote sccache
+      if: (github.event_name != 'pull_request' && github.event_name != 'pull_request_target') || github.event.pull_request.head.repo.full_name == github.repository
+      run: |-
+        set -euo pipefail
+        env_file="$(mktemp "$RUNNER_TEMP/namespace-sccache.XXXXXX")"
+        trap 'rm -f "$env_file"' EXIT
+        if nsc cache sccache setup --cache_name sccache-ci > "$env_file"; then
+          # Register credential values as masked BEFORE exporting: GitHub only
+          # masks `secrets.*`, so without this SCCACHE_WEBDAV_TOKEN — a broad,
+          # ~24h Namespace workspace token (registry + cache write) — printed
+          # verbatim in every subsequent step's env dump. Masking is selective by
+          # key name: masking non-secrets like the endpoint URL or key prefix
+          # would redact those strings everywhere in the logs.
+          while IFS= read -r line; do
+            k="${line%%=*}"
+            v="${line#*=}"
+            [ -n "$v" ] && [ "$k" != "$line" ] || continue
+            case "$k" in
+              *TOKEN*|*SECRET*|*PASSWORD*) echo "::add-mask::$v" ;;
+            esac
+          done < "$env_file"
+          cat "$env_file" >> "$GITHUB_ENV"
+          # Force the next compiler invocation to start a server with the new remote
+          # backend even if a setup hook happened to launch one already.
+          sccache --stop-server >/dev/null 2>&1 || true
+        else
+          echo "::warning::Namespace remote sccache setup failed; using local cache fallback"
+        fi
+    - name: configure postgres for concurrent tests
+      run: |
+        postgres_container="$(docker ps --format '{{.ID}} {{.Image}}' | awk '$2 == "pgvector/pgvector:pg18" { print $1; exit }')"
+        if [ -z "$postgres_container" ]; then
+          echo "pgvector/pgvector:pg18 service container not found" >&2
+          docker ps
+          exit 1
+        fi
+
+        docker exec -i "$postgres_container" psql -U user -d macrodb <<'SQL'
+        ALTER SYSTEM SET fsync = off;
+        ALTER SYSTEM SET synchronous_commit = off;
+        ALTER SYSTEM SET full_page_writes = off;
+        ALTER SYSTEM SET max_wal_size = '4GB';
+        ALTER SYSTEM SET checkpoint_timeout = '30min';
+        ALTER SYSTEM SET max_locks_per_transaction = 8192;
+        SQL
+        docker restart "$postgres_container"
+        until docker exec "$postgres_container" pg_isready -U user -d macrodb; do
+          sleep 1
+        done
+        docker exec "$postgres_container" psql -U user -d macrodb -c "SHOW max_locks_per_transaction;"
+    - name: prepare tests
+      run: just setup_test_envs && just initialize_dbs
+    - name: run tests
+      run: |
+        set -euo pipefail
+
+        # --no-tests=pass: a package filter can legitimately select a crate with no
+        # tests; treat that as success, not nextest's default error.
+        # sync-service is not part of this suite, and its storage backends are mutually
+        # exclusive under --all-features.
+        #
+        # Package selection uses `cargo nextest run -p`, not `--workspace -E rdeps(...)`.
+        # The filterset only decides which tests *run* after a workspace build; `-p`
+        # is what keeps an unrelated crate's test binary from being compiled.
+        #
+        # `--lib --bins --tests` is safe with `--workspace` (cargo skips packages that
+        # lack a given target type) but fails with `-p` when any selected package has
+        # no lib — xtask binaries such as xtask_nextest_filter / xtask_workflows.
+        # Unconstrained `-p` still runs that package's tests.
+
+        : "${RUST_PACKAGES:?RUST_PACKAGES is required}"
+        common=(--all-features --no-tests=pass --test-threads "$NEXTEST_TEST_THREADS")
+
+        if [ "$RUST_PACKAGES" = "all" ]; then
+          cargo nextest run --workspace --exclude sync_service --lib --bins --tests "${common[@]}"
+          exit 0
+        fi
+
+        pkg_args=()
+        for package in $RUST_PACKAGES; do
+          [ "$package" = "sync_service" ] || pkg_args+=(-p "$package")
+        done
+
+        if [ "${#pkg_args[@]}" -eq 0 ]; then
+          echo "No packages in the test suite were affected"
+          exit 0
+        fi
+
+        cargo nextest run "${common[@]}" "${pkg_args[@]}"
+    - name: show sccache stats
+      if: always()
+      run: sccache --show-stats || true
+    - name: Teardown Nix
+      if: always()
+      uses: './.github/actions/teardown-nix'
+  status-check:
+    needs:
+    - path-check
+    - check
+    - test
+    if: always()
+    name: Cloud Storage Status Check
+    runs-on: namespace-profile-linux-small
+    steps:
+    - name: Check job results
+      run: |
+        echo "path-check: ${{ needs.path-check.result }}"
+        echo "check: ${{ needs.check.result }}"
+        echo "test: ${{ needs.test.result }}"
+
+        # Fail if any job failed (skipped and success are both OK)
+        if [[ "${{ needs.path-check.result }}" == "failure" ]] || \
+           [[ "${{ needs.check.result }}" == "failure" ]] || \
+           [[ "${{ needs.test.result }}" == "failure" ]]; then
+          echo "❌ One or more jobs failed"
+          exit 1
+        fi
+
+        echo "✅ All jobs passed or were skipped"
+concurrency:
+  group: code-check-cloud-storage-${{ github.ref }}
+  cancel-in-progress: true

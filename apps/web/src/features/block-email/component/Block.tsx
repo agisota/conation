@@ -1,0 +1,102 @@
+import { displaySubject } from '@app/features/email-compose/core/subject-text';
+import { createEmailThreadSource } from '@app/features/email-thread/queries/thread-source';
+import { useBlockEntityCommands } from '@app/features/next-soup/actions';
+import { ContentLoading } from '@components/app/ContentLoading';
+import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
+import { useBlockId } from '@core/block';
+import { DocumentBlockContainer } from '@core/component/DocumentBlockContainer';
+import { toEntityLoadError } from '@core/component/EntityLoadGate';
+import { buildEntityData } from '@entity';
+import { useThreadQuery } from '@queries/email/thread';
+import { representativeThreadMessage } from '@queries/email/thread-subject';
+import { createMemo, Show, Suspense } from 'solid-js';
+import { EmailBlockAdapter } from '../EmailBlockAdapter';
+import { EmailThreadLoadGate } from './EmailThreadLoadGate';
+
+export default function BlockEmail() {
+  const blockId = useBlockId();
+
+  const threadId = () => blockId;
+
+  const threadQuery = useThreadQuery(threadId, () => ({
+    enabled: !!threadId(),
+  }));
+  const source = createEmailThreadSource(threadId, threadQuery);
+
+  // Email threads are absent from quick access, so the entity the block-level
+  // commands act on has to come from here. Gated on isSuccess so the
+  // command-menu conditions, which read this outside a Suspense boundary,
+  // never touch pending query data.
+  const commandEntity = createMemo(() => {
+    if (!threadQuery.isSuccess) return undefined;
+    const thread = threadQuery.data?.thread;
+    if (!thread) return undefined;
+    return buildEntityData({
+      id: thread.db_id,
+      name: displaySubject(
+        representativeThreadMessage(thread.messages)?.subject
+      ),
+      blockName: 'email',
+      isRead: thread.is_read,
+      done: !thread.inbox_visible,
+    });
+  });
+
+  useBlockEntityCommands({ resolveEntity: commandEntity });
+
+  // The gate owns the load policy: structural errors are authoritative even
+  // over cached data, a transport failure over cached data still renders the
+  // thread, and an offline load with nothing cached gates as the retryable
+  // state. Loader-level errors (e.g. an invalid source) still reach
+  // DocumentBlockContainer through blockErrorSignal.
+  const threadData = createMemo(
+    (previous: typeof threadQuery.data | undefined) =>
+      threadQuery.isSuccess || threadQuery.isError ? threadQuery.data : previous
+  );
+  const threadLoadResult = {
+    data: threadData,
+    error: () =>
+      threadQuery.isError ? toEntityLoadError(threadQuery.error) : undefined,
+    isPending: () => threadQuery.isLoading,
+  };
+
+  const notificationSource = useGlobalNotificationSource();
+
+  const title = () => {
+    const data = threadData();
+    if (!data || !data.thread || data.thread.messages.length === 0) return '';
+    return displaySubject(
+      representativeThreadMessage(data.thread.messages)?.subject
+    );
+  };
+
+  return (
+    <Suspense fallback={<ContentLoading />}>
+      <DocumentBlockContainer title={title() ?? 'Email'}>
+        <div class="size-full" tabIndex={-1}>
+          <EmailThreadLoadGate
+            result={threadLoadResult}
+            notificationSource={notificationSource}
+            threadId={threadId()}
+            linkId={threadData()?.thread?.link_id}
+            debounceTime={100}
+            onRetry={() => void threadQuery.refetch()}
+          >
+            <Show when={threadId()}>
+              {(id) => (
+                <Suspense fallback={<ContentLoading />}>
+                  <EmailBlockAdapter
+                    title={title()}
+                    threadId={id}
+                    source={source}
+                    threadTransport={() => threadQuery.transport}
+                  />
+                </Suspense>
+              )}
+            </Show>
+          </EmailThreadLoadGate>
+        </div>
+      </DocumentBlockContainer>
+    </Suspense>
+  );
+}

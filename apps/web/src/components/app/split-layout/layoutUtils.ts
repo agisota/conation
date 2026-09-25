@@ -1,0 +1,208 @@
+import { isListViewID, LIST_VIEW_ID } from '@app/constants/list-views';
+import { globalSplitManager } from '@app/signal/splitLayout';
+import { createCallback } from '@solid-primitives/rootless';
+import {
+  type Accessor,
+  createMemo,
+  createSignal,
+  onCleanup,
+  useContext,
+} from 'solid-js';
+import { SplitLayoutContext, SplitPanelContext } from './context';
+import type {
+  SplitContent,
+  SplitContentType,
+  SplitHandle,
+  SplitManager,
+} from './layoutManager';
+import type { CollapsibleItemInput } from './utils/createPriorityCollapser';
+
+const _isInSplit = createCallback(() => {
+  return !!useContext(SplitPanelContext);
+});
+
+const _isInSplitLayout = createCallback(() => {
+  return !!useContext(SplitLayoutContext);
+});
+
+export const getSplitPanelRef = createCallback(() => {
+  const ctx = useContext(SplitPanelContext);
+  if (!ctx) return null;
+  return ctx.panelRef() ?? null;
+});
+
+/**
+ * Get the context value for the the SplitPanel.
+ * @throws if used outside of a properly set up <SplitPanel/>
+ * @returns
+ */
+export function useSplitPanelOrThrow() {
+  const ctxValue = useContext(SplitPanelContext);
+  if (ctxValue === undefined) {
+    console.trace(
+      'You are trying to access SplitPanelContext outside of a <SplitPanel />!'
+    );
+    throw new Error(
+      'You are trying to access SplitPanelContext outside of a <SplitPanel />!'
+    );
+  }
+  return ctxValue;
+}
+
+/**
+ * Creates or replaces a named resource under the current split panel's owner.
+ */
+export function withSplitPanelOwner<T>(name: string, factory: () => T): T {
+  return useSplitPanelOrThrow().replaceOwnedSlot(name, factory);
+}
+
+/**
+ * Get the context value for the the SplitPanel with possible undefined.
+ * @returns
+ */
+export function useSplitPanel() {
+  return useContext(SplitPanelContext);
+}
+
+/** Whether closing this split leaves another split visible. */
+export function shouldShowSplitCloseButton(manager: SplitManager) {
+  return manager.getVisibleSplitCount() > 1;
+}
+
+/** Close a visible panel, or return the last one to its most recent list. */
+export function closeSplitOrReturnToList(
+  manager: SplitManager,
+  handle: SplitHandle
+) {
+  if (shouldShowSplitCloseButton(manager)) {
+    handle.close();
+    return;
+  }
+  const content = handle.content();
+  if (content.type === 'component' && isListViewID(content.id)) return;
+  if (
+    handle.goBackTo(
+      (entry) => entry.type === 'component' && isListViewID(entry.id)
+    )
+  )
+    return;
+  handle.replace({
+    next: { type: 'component', id: LIST_VIEW_ID.inbox },
+    mergeHistory: true,
+  });
+}
+
+/** Inline previews stay passive until the user focuses them. */
+export function useCanAutofocusSplitContent() {
+  return !useSplitPanel()?.isInlinePreview;
+}
+
+/**
+ * Remove all the items from all split histories that meet a certain criteria.
+ * @param manager
+ * @param predicate A function that returns true to remove a SplitContent entry
+ *     from all splits' histories.
+ */
+export function globalRemoveFromSplitHistory(
+  manager: SplitManager,
+  predicate: (item: SplitContent) => boolean
+) {
+  for (const split of manager.splits()) {
+    const handle = manager.getSplit(split.id);
+    handle?.removeFromHistory(predicate);
+  }
+}
+
+/**
+ * Send a split back to the most recent soup list view in its history — e.g.
+ * after deleting the entity it was showing — falling back to a reset (the
+ * default inbox) when the history holds none. Reuses the stored entry, so
+ * its captured state (scroll, focus) restores like a history-back, while
+ * `mergeHistory` drops the split's current entry so the deleted entity does
+ * not linger as a back target.
+ */
+export function returnSplitToRecentListView(handle: SplitHandle) {
+  const target = handle
+    .history()
+    .slice(0, -1)
+    .reverse()
+    .find((item) => item.type === 'component' && isListViewID(item.id));
+  if (target) {
+    handle.replace({ next: target, mergeHistory: true });
+  } else {
+    handle.reset();
+  }
+}
+
+export function focusAdjacentSplit(direction: 'left' | 'right') {
+  const splitManager = globalSplitManager();
+  if (!splitManager) return;
+  const activeSplitId = splitManager.activeSplitId();
+  if (!activeSplitId) return;
+  const currentSplitIds = splitManager.splits().map((s) => s.id);
+  const currentSplitIndex = currentSplitIds.indexOf(activeSplitId);
+  const getAdjacentSplitId = () => {
+    if (direction === 'left') {
+      if (currentSplitIndex === 0)
+        return currentSplitIds[currentSplitIds.length - 1];
+      return currentSplitIds[currentSplitIndex - 1];
+    } else {
+      if (currentSplitIndex === currentSplitIds.length - 1)
+        return currentSplitIds[0];
+      return currentSplitIds[currentSplitIndex + 1];
+    }
+  };
+  const adjacentSplitId = getAdjacentSplitId();
+  if (!adjacentSplitId) return;
+  splitManager.activateSplit(adjacentSplitId);
+  splitManager.returnFocus();
+}
+
+/**
+ * Reactive boolean accessor indicating whether the active split is currently
+ * showing a specific component content id.
+ */
+function _createIsActiveSplitContentMemo(
+  activeSplit: Accessor<SplitHandle | undefined>,
+  contentType: SplitContentType,
+  id: string
+) {
+  return createMemo(() => {
+    const content = activeSplit()?.content();
+    return content?.type === contentType && content.id === id;
+  });
+}
+
+function useRegisterCollapsibleItem(
+  input: CollapsibleItemInput,
+  region: 'header' | 'toolbar'
+): Accessor<boolean> {
+  const [collapsed, setCollapsedInner] = createSignal(false);
+  const setCollapsed = (value: boolean, opts?: { silent?: boolean }) => {
+    setCollapsedInner(value);
+    if (!opts?.silent) input.onCollapsedChange?.(value);
+  };
+  input.onCollapsedChange?.(false);
+  const ctx = useSplitPanelOrThrow();
+  const collapser =
+    region === 'header' ? ctx.headerCollapser : ctx.toolbarCollapser;
+  const cleanup = collapser.register({
+    ...input,
+    collapsed,
+    setCollapsed,
+  });
+  onCleanup(cleanup);
+  return collapsed;
+}
+
+export function useRegisterCollapsibleHeaderItem(
+  input: CollapsibleItemInput
+): Accessor<boolean> {
+  return useRegisterCollapsibleItem(input, 'header');
+}
+
+export function useRegisterCollapsibleToolbarItem(
+  input: CollapsibleItemInput
+): Accessor<boolean> {
+  return useRegisterCollapsibleItem(input, 'toolbar');
+}

@@ -1,0 +1,168 @@
+import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
+import { isMobile } from '@core/mobile/isMobile';
+import { RadioGroup as KobalteRadioGroup } from '@kobalte/core/radio-group';
+import CheckIcon from '@phosphor/check.svg';
+import CloseIcon from '@phosphor/x.svg';
+import type { CalendarRsvpScope } from '@service-email/client';
+import { Button, Dialog, Panel, RadioGroup } from '@ui';
+import { For, Show } from 'solid-js';
+
+const SCOPE_OPTIONS = [
+  { scope: 'this_event', label: 'Это событие' },
+  { scope: 'all', label: 'Все события' },
+] as const satisfies readonly {
+  scope: CalendarRsvpScope;
+  label: string;
+}[];
+
+/** The caller owns the pending response; dismissing never submits it. */
+export function EventRsvpScopeDialog(props: {
+  open: boolean;
+  scope: CalendarRsvpScope;
+  onScopeChange: (scope: CalendarRsvpScope) => void;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Show
+      when={isMobile()}
+      fallback={
+        <Dialog
+          open={props.open}
+          onOpenChange={(open) => !open && props.onClose()}
+        >
+          <Panel depth={2} class="max-w-[calc(100vw-2rem)] rounded-xl text-ink">
+            <Panel.Header class="gap-1 px-2">
+              <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
+                <CloseIcon />
+              </Dialog.CloseButton>
+              <Dialog.Title as="span" class="m-0 p-0 text-sm font-medium">
+                Ответить на повторяющееся событие
+              </Dialog.Title>
+            </Panel.Header>
+            <Panel.Body class="flex flex-col gap-3 p-3">
+              <RadioGroup
+                value={props.scope}
+                onChange={(value) =>
+                  props.onScopeChange(value as CalendarRsvpScope)
+                }
+                aria-label="Для каких событий"
+                class="max-w-80 text-sm text-ink-muted"
+              >
+                <For each={SCOPE_OPTIONS}>
+                  {(option) => (
+                    <RadioGroup.Item value={option.scope}>
+                      <RadioGroup.ItemControl />
+                      <RadioGroup.ItemLabel>
+                        {option.label}
+                      </RadioGroup.ItemLabel>
+                    </RadioGroup.Item>
+                  )}
+                </For>
+              </RadioGroup>
+              <div class="flex justify-end gap-1 pt-2">
+                <Button
+                  variant="ghost"
+                  class="rounded-lg"
+                  onClick={props.onClose}
+                >
+                  Отмена
+                </Button>
+                <Button
+                  variant="accent"
+                  class="rounded-lg"
+                  onClick={props.onConfirm}
+                >
+                  Готово
+                </Button>
+              </div>
+            </Panel.Body>
+          </Panel>
+        </Dialog>
+      }
+    >
+      <MobileDrawer
+        side="bottom"
+        open={props.open}
+        onOpenChange={(open) => !open && props.onClose()}
+        preventScroll={false}
+        preventScrollbarShift={false}
+      >
+        <MobileDrawer.Portal>
+          <MobileDrawer.Overlay />
+          <MobileDrawer.Content
+            aria-label="Ответ на повторяющееся событие"
+            class="overflow-hidden"
+          >
+            <MobileDrawer.Handle class="pb-1" />
+            <div class="flex shrink-0 items-center justify-between gap-3 px-6 pb-4">
+              <h2 class="text-lg font-semibold text-ink">
+                Ответить на повторяющееся событие
+              </h2>
+              <MobileDrawer.Close
+                as={Button}
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Закрыть ответ на приглашение"
+                class="size-11 shrink-0 rounded-full bg-ink/6"
+              >
+                <CloseIcon class="size-5" />
+              </MobileDrawer.Close>
+            </div>
+            <MobileDrawer.ScrollBody>
+              <p class="px-6 pb-3 text-sm text-ink-muted">Применить ответ к:</p>
+              <MobileDrawer.Section>
+                <KobalteRadioGroup
+                  value={props.scope}
+                  onChange={(value) => {
+                    const option = SCOPE_OPTIONS.find(
+                      (option) => option.scope === value
+                    );
+                    if (option) props.onScopeChange(option.scope);
+                  }}
+                  aria-label="Для каких событий"
+                  class="flex flex-col gap-1"
+                >
+                  <For each={SCOPE_OPTIONS}>
+                    {(option) => (
+                      <KobalteRadioGroup.Item
+                        value={option.scope}
+                        class="relative rounded-[20px] text-ink data-checked:bg-ink/8 focus-within:outline-2 focus-within:outline-accent"
+                      >
+                        <KobalteRadioGroup.ItemInput />
+                        <KobalteRadioGroup.ItemLabel class="flex min-h-12 items-center justify-between gap-3 px-4 py-3 text-base">
+                          {option.label}
+                          <KobalteRadioGroup.ItemControl class="flex size-5 items-center justify-center">
+                            <KobalteRadioGroup.ItemIndicator>
+                              <CheckIcon class="size-5 text-accent" />
+                            </KobalteRadioGroup.ItemIndicator>
+                          </KobalteRadioGroup.ItemControl>
+                        </KobalteRadioGroup.ItemLabel>
+                      </KobalteRadioGroup.Item>
+                    )}
+                  </For>
+                </KobalteRadioGroup>
+              </MobileDrawer.Section>
+              <div class="flex gap-3 px-6 pt-5 pb-2">
+                <Button
+                  variant="ghost"
+                  class="min-h-11 flex-1 rounded-full bg-ink/6"
+                  onClick={props.onClose}
+                >
+                  Отмена
+                </Button>
+                <Button
+                  variant="cta"
+                  class="min-h-11 flex-1 rounded-full"
+                  onClick={props.onConfirm}
+                >
+                  Сохранить ответ
+                </Button>
+              </div>
+            </MobileDrawer.ScrollBody>
+          </MobileDrawer.Content>
+        </MobileDrawer.Portal>
+      </MobileDrawer>
+    </Show>
+  );
+}

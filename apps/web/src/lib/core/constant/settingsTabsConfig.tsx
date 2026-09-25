@@ -1,0 +1,254 @@
+import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { SERVER_HOSTS } from '@core/constant/servers';
+import { fetchWithToken } from '@core/util/fetchWithToken';
+import BellIcon from '@phosphor/bell-simple.svg';
+import BugIcon from '@phosphor/bug.svg';
+import BuildingsIcon from '@phosphor/buildings.svg';
+import CpuIcon from '@phosphor/cpu.svg';
+import CreditCardIcon from '@phosphor/credit-card.svg';
+import DeviceMobileIcon from '@phosphor/device-mobile-speaker.svg';
+import HardDrivesIcon from '@phosphor/hard-drives.svg';
+import KeyIcon from '@phosphor/key.svg';
+import KeyboardIcon from '@phosphor/keyboard.svg';
+import PlugIcon from '@phosphor/plug.svg';
+import BotIcon from '@phosphor/robot.svg';
+import AgentIcon from '@phosphor/sparkle.svg';
+import SwatchesIcon from '@phosphor/swatches.svg';
+import TagIcon from '@phosphor/tag-simple.svg';
+import UserIconPhosphor from '@phosphor/user.svg';
+import UsersThreeIcon from '@phosphor/users-three.svg';
+import { type Component, createMemo, createResource } from 'solid-js';
+import { useHasPermission } from '../context/user';
+import { isNativeMobilePlatform } from '../mobile/isNativeMobilePlatform';
+import { isTouchDevice } from '../mobile/isTouchDevice';
+import {
+  botManagement,
+  DEV_MODE_ENV,
+  ENABLE_APP_STORE_QR_CODE,
+  enableChatV3Agents,
+  enableCrm,
+  enableNotificationSettings,
+} from './featureFlags';
+import { PERMISSION_IDS } from './permissions';
+import type { SettingsTab } from './SettingsState';
+
+export type SettingsTabItem = {
+  tab: SettingsTab;
+  label: string;
+  icon: Component<{ class?: string; triggerAnimation?: boolean }>;
+};
+
+export type SettingsTabGroup = {
+  label: string;
+  items: SettingsTabItem[];
+};
+
+/**
+ * Single source of truth for the settings categories: ordering, labels, icons
+ * and grouping. Consumed by the settings panel's side nav (and bottom tabs) and
+ * the app sidebar's settings dropdown. Group order also defines keyboard nav
+ * order (see `flatTabs` in {@link useSettingsTabs}).
+ *
+ * Presentation-free and hook-free: gating lives in {@link useSettingsTabAvailable}.
+ */
+export const SETTINGS_TAB_GROUPS: SettingsTabGroup[] = [
+  {
+    label: 'Общие',
+    items: [
+      { tab: 'Account', label: 'Аккаунт', icon: UserIconPhosphor },
+      { tab: 'API Keys', label: 'Ключи API', icon: KeyIcon },
+      { tab: 'Notifications', label: 'Уведомления', icon: BellIcon },
+      { tab: 'Billing', label: 'Оплата', icon: CreditCardIcon },
+      { tab: 'Appearance', label: 'Оформление', icon: SwatchesIcon },
+      {
+        tab: 'Mobile App',
+        label: 'Мобильное приложение',
+        icon: DeviceMobileIcon,
+      },
+      { tab: 'Shortcuts', label: 'Сочетания клавиш', icon: KeyboardIcon },
+    ],
+  },
+  {
+    label: 'Рабочее пространство',
+    items: [
+      { tab: 'Team', label: 'Команда', icon: UsersThreeIcon },
+      { tab: 'Tags', label: 'Метки', icon: TagIcon },
+      { tab: 'CRM', label: 'CRM', icon: BuildingsIcon },
+      {
+        tab: 'Connected',
+        label: 'Интеграции',
+        icon: CpuIcon,
+      },
+      { tab: 'Agent', label: 'Сервер MCP', icon: PlugIcon },
+      { tab: 'Bots', label: 'Боты', icon: BotIcon },
+    ],
+  },
+  {
+    label: 'Агенты',
+    items: [
+      { tab: 'Agents', label: 'Агенты', icon: AgentIcon },
+      { tab: 'Harness', label: 'Среда агентов', icon: HardDrivesIcon },
+    ],
+  },
+  {
+    label: 'Администрирование',
+    items: [
+      { tab: 'Brand', label: 'Бренд установки', icon: SwatchesIcon },
+      { tab: 'Admin', label: 'Отладка', icon: BugIcon },
+    ],
+  },
+];
+
+/** Flattened view of {@link SETTINGS_TAB_GROUPS} for direct tab lookups. */
+const SETTINGS_TAB_ITEMS = SETTINGS_TAB_GROUPS.flatMap((group) => group.items);
+
+/**
+ * URL slugs for each settings tab, used to build the settings page path
+ * (`/settings/<slug>`, and the `settings/<slug>` pair when docked in a split).
+ * Kept separate from labels so we can rename a tab's UI label without breaking
+ * existing/bookmarked URLs.
+ */
+const SETTINGS_TAB_SLUGS: Record<SettingsTab, string> = {
+  Account: 'account',
+  'API Keys': 'api-keys',
+  Notifications: 'notifications',
+  Billing: 'billing',
+  Subscription: 'subscription',
+  Organization: 'organization',
+  Appearance: 'appearance',
+  Mobile: 'mobile',
+  'AI Memory': 'ai-memory',
+  Inbox: 'inbox',
+  Shortcuts: 'shortcuts',
+  'Mobile App': 'mobile-app',
+  Agent: 'mcp-server',
+  Agents: 'agents',
+  Harness: 'harness',
+  Bots: 'bots',
+  Team: 'team',
+  Tags: 'tags',
+  CRM: 'crm',
+  Connected: 'connections',
+  Email: 'email',
+  GitHub: 'github',
+  Admin: 'admin',
+  Brand: 'brand',
+};
+
+const SETTINGS_SLUG_TO_TAB = new Map<string, SettingsTab>(
+  (Object.entries(SETTINGS_TAB_SLUGS) as [SettingsTab, string][]).map(
+    ([tab, slug]) => [slug, tab]
+  )
+);
+
+/** The URL slug for a settings tab (e.g. `Connected` → `connections`). */
+export const settingsTabToSlug = (tab: SettingsTab): string =>
+  SETTINGS_TAB_SLUGS[tab];
+
+/** Resolve a URL slug back to its settings tab, or `undefined` if unknown. */
+export const settingsSlugToTab = (
+  slug: string | null | undefined
+): SettingsTab | undefined =>
+  slug ? SETTINGS_SLUG_TO_TAB.get(slug) : undefined;
+
+/**
+ * Look up a single tab's presentation (label + icon). Lets consumers that
+ * surface individual tabs (e.g. the sidebar's quick links) reuse the config's
+ * label/icon instead of hardcoding their own.
+ */
+export const getSettingsTabItem = (
+  tab: SettingsTab
+): SettingsTabItem | undefined =>
+  SETTINGS_TAB_ITEMS.find((item) => item.tab === tab);
+
+/**
+ * Returns a predicate gating which settings tabs are available given feature
+ * flags and platform. This is the single gate that the settings panel and the
+ * app sidebar both rely on — keep tab rendering guarded by it so we never
+ * surface a tab the panel won't render.
+ */
+export const useSettingsTabAvailable = () => {
+  const botManagementFlag = useFeatureFlag(botManagement);
+  const chatV3AgentsFlag = useFeatureFlag(enableChatV3Agents);
+  const crmFlag = useFeatureFlag(enableCrm);
+  const notificationSettingsFlag = useFeatureFlag(enableNotificationSettings);
+  const hasInstallationBrandPermission = useHasPermission(
+    PERMISSION_IDS.WRITE_IT_PANEL
+  );
+  const hasAdminPanel = useHasPermission(PERMISSION_IDS.WRITE_ADMIN_PANEL);
+  const [ownerBrandAdmin] = createResource(
+    hasInstallationBrandPermission,
+    async (hasPermission) => {
+      if (!hasPermission) return false;
+      const result = await fetchWithToken<{ canManage: boolean }>(
+        `${SERVER_HOSTS['auth-service']}/brand/capability`,
+        { method: 'GET' }
+      );
+      return result.isOk() && result.value.canManage;
+    }
+  );
+
+  return (tab: SettingsTab): boolean => {
+    switch (tab) {
+      case 'Appearance':
+      case 'Account':
+      case 'API Keys':
+      case 'Billing':
+        return true;
+      case 'Notifications':
+        return notificationSettingsFlag().enabled;
+      case 'Team':
+      case 'Tags':
+        return true;
+      // CRM is still rolling out (Macro-internal only); keep the settings tab
+      // behind the same enable-crm gate as every other CRM surface so it never
+      // leaks into teams that can't actually use the CRM.
+      case 'CRM':
+        return crmFlag().enabled;
+      case 'Connected':
+        return true;
+      case 'Shortcuts':
+        return !isTouchDevice();
+      case 'Mobile App':
+        return ENABLE_APP_STORE_QR_CODE && !isNativeMobilePlatform();
+      case 'Agent':
+        return !isNativeMobilePlatform();
+      // settings never advertises agents to a user who cannot mention one.
+      case 'Harness':
+      case 'Agents':
+        return chatV3AgentsFlag().enabled;
+      case 'Bots':
+        return botManagementFlag().enabled;
+      case 'Mobile':
+        return isNativeMobilePlatform() && DEV_MODE_ENV;
+      case 'Brand':
+        return hasInstallationBrandPermission() && ownerBrandAdmin() === true;
+      case 'Admin':
+        return hasAdminPanel();
+      default:
+        return false;
+    }
+  };
+};
+
+/**
+ * Reactive view of the settings tabs: groups filtered to the currently
+ * available tabs (empty groups dropped), plus a flattened ordered list for
+ * keyboard navigation and the mobile bottom tabs.
+ */
+export const useSettingsTabs = () => {
+  const isAvailable = useSettingsTabAvailable();
+
+  const groups = createMemo<SettingsTabGroup[]>(() =>
+    SETTINGS_TAB_GROUPS.map((group) => ({
+      label: group.label,
+      items: group.items.filter((item) => isAvailable(item.tab)),
+    })).filter((group) => group.items.length > 0)
+  );
+
+  const flatTabs = createMemo<SettingsTabItem[]>(() =>
+    groups().flatMap((group) => group.items)
+  );
+
+  return { groups, flatTabs, isAvailable };
+};

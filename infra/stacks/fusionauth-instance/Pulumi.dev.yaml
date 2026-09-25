@@ -1,0 +1,25 @@
+config:
+  aws-native:region: us-east-1
+  aws:region: us-east-1
+  fusionauth-instance:authentication-service-domain: https://auth-service-dev.macro.com
+  fusionauth-instance:authentication-service-internal-secret-key: authentication-service-internal-api-key-dev
+  fusionauth-instance:fusionauth-license-key-secret-key: fusionauth-license-key-dev
+  fusionauth-instance:fusionauth-default-tenant-id: 5e13f524-8d32-0454-81f8-061936256aa4
+  fusionauth-instance:fusionauth-client-id: eb75fe7a-0ef1-4186-96d9-cc62cfb1d10c
+  fusionauth-instance:fusionauth-client-secret-key: fusionauth-client-secret-dev
+  fusionauth-instance:fusionauth-signing-key-id: aea64fc1-84f6-89ab-fb7c-08a21556263e
+  fusionauth-instance:smtp-user-secret-key: smtp-user
+  fusionauth-instance:fusionauth-issuer: fusionauth-dev.macro.com
+  fusionauth-instance:default-from-email: authdev@macro.com
+  fusionauth-instance:fusionauth-google-idp-id: 17dc55db-c78e-4b19-940b-2e847479a08f
+  fusionauth-instance:fusionauth-google-gmail-idp-id: b99932ac-bce5-4f1d-99a1-e64760aae811
+  fusionauth-instance:google-client-id-secret-key: google-client-id-dev
+  fusionauth-instance:google-client-secret-secret-key: google-client-secret-dev
+  fusionauth-instance:enable-google-calendar: true 
+  fusionauth-instance:github-client-id-secret-key: github-client-id-dev
+  fusionauth-instance:github-client-secret-secret-key: github-client-secret-dev
+  fusionauth-instance:fusionauth-github-idp-id: 9315cdd2-d172-4b3a-aa35-7b7db3e77382
+  fusionauth-instance:microsoft-idp-secret-key: microsoft-idp-dev
+  fusionauth:host: https://fusionauth-dev.macro.com
+  fusionauth:apiKey:
+    secure: AAABAGgKVJijjzcGu5lYU2bdn90Xhj6JcMl0mfKwaLTvNccxRKljjFRHrLaXY63ZLseAxo39MMakTB8SyYbebCvHBDv/zkCV5tnFjx4UBZozo4ABYRLgoQ==

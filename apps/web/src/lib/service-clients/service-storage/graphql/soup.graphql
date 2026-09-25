@@ -1,0 +1,714 @@
+query Soup($input: SoupInput!) {
+	user {
+		id
+		emailLinks @cacheOnly { id emailAddress photoUrl }
+		soup(input: $input) {
+			items {
+				...SoupItemFields
+			}
+			nextCursor
+		}
+	}
+}
+
+query SoupBackfill($input: SoupInput!) {
+	user {
+		id @cacheOnly
+		emailLinks @cacheOnly { id emailAddress photoUrl }
+		soup(input: $input) {
+			items @cacheOnly {
+				...SoupItemFields
+				... on GraphqlSoupEmailThread {
+					viewerPermission {
+						__typename
+						... on GraphqlAccessLevelPermission {
+							accessLevel
+						}
+					}
+					messages(offset: 0, limit: 20) {
+						...EmailThreadMessageFields
+					}
+				}
+			}
+			nextCursor
+		}
+	}
+}
+
+query SoupMailBackfill($input: SoupInput!) {
+	user {
+		id @cacheOnly
+		emailLinks @cacheOnly { id emailAddress photoUrl }
+		soup(input: $input) {
+			items @cacheOnly { ...SoupItemFields }
+			nextCursor
+		}
+	}
+}
+
+query SoupSharedMailBackfill($input: SoupInput!) {
+	user {
+		id @cacheOnly
+		emailLinks @cacheOnly { id emailAddress photoUrl }
+		soup(input: $input) {
+			items @cacheOnly { ...SoupItemFields }
+			scopeIds: items { __typename id }
+			nextCursor
+		}
+	}
+}
+
+query MailAccounts {
+	user {
+		id
+		emailLinks { id emailAddress photoUrl }
+	}
+}
+
+fragment MailPreviewFields on GraphqlMailPreviewMessage {
+	id
+	subject
+	snippet
+	isDraft
+	senderEmail
+	senderName
+	senderPhotoUrl
+}
+
+# Local-only selection: materialize canonical preview references instead of the
+# query-dependent preview fields last written by a different tab/filter.
+fragment MailItemFields on GraphqlSoupEntity {
+	...SoupItemFields
+	... on GraphqlSoupEmailThread {
+		mailAllPreview { ...MailPreviewFields }
+		mailDraftPreview { ...MailPreviewFields }
+		mailSentPreview { ...MailPreviewFields }
+	}
+}
+
+fragment SoupItemFields on GraphqlSoupEntity {
+	...SoupItemPreviewFields
+	notifications { ...SoupNotificationFields }
+}
+
+# Shared entity data without historical notification presentation payloads.
+fragment SoupItemPreviewFields on GraphqlSoupEntity {
+	__typename
+	cacheProjection @cacheOnly
+	...SoupEntityIdentityFields
+	... on GraphqlSoupAgentSession {
+		sessionName: name
+		ownerId
+		botId
+		harness
+		repoUrl
+		repoBranch
+		pullRequestUrl
+		workingBranch
+		pullRequestState
+		pullRequestId
+		turnState
+		bot {
+			id
+			name
+			avatarUrl
+		}
+		threadId
+		status
+		createdAt
+		updatedAt
+		viewedAt
+		properties {
+			...SoupPropertyFields
+		}
+	}
+	frecencyScore
+	... on GraphqlSoupDocument {
+		documentName: name
+		ownerId
+		fileType
+		projectId
+		createdAt
+		updatedAt
+		viewedAt
+		deletedAt
+		subType {
+			__typename
+			... on GraphqlTaskSubType {
+				isCompleted
+			}
+		}
+		properties {
+			...SoupPropertyFields
+		}
+	}
+	... on GraphqlSoupChat {
+		chatName: name
+		model
+		ownerId
+		projectId
+		isPersistent
+		createdAt
+		updatedAt
+		viewedAt
+		deletedAt
+		properties {
+			...SoupPropertyFields
+		}
+	}
+	... on GraphqlSoupProject {
+		projectName: name
+		ownerId
+		parentId
+		createdAt
+		updatedAt
+		viewedAt
+		deletedAt
+		properties {
+			...SoupPropertyFields
+		}
+	}
+	... on GraphqlSoupEmailThread {
+		providerId
+		ownerId
+		inboxVisible
+		linkId
+		latestInboundMessageTs
+		mailAllPreview @cacheOnly { ...MailPreviewFields }
+		mailDraftPreview @cacheOnly { ...MailPreviewFields }
+		mailSentPreview @cacheOnly { ...MailPreviewFields }
+		emailName: name
+		snippet
+		senderEmail
+		senderName
+		senderPhotoUrl
+		isRead
+		isDraft
+		isImportant
+		isSignal
+		projectId
+		sortTs
+		createdAt
+		updatedAt
+		viewedAt
+		participants {
+			id
+			linkId
+			name
+			email
+			sfsPhotoUrl
+		}
+		attachments {
+			id
+			messageId
+			providerAttachmentId
+			filename
+			mimeType
+			sizeBytes
+			contentId
+			createdAt
+		}
+		labels {
+			__typename
+			id
+			linkId
+			providerLabelId
+			name
+			createdAt
+			messageListVisibility
+			labelListVisibility
+			type
+		}
+		properties {
+			...SoupPropertyFields
+		}
+	}
+	... on GraphqlSoupChannel {
+		channelName: name
+		channelType
+		ownerId
+		organizationId
+		channelTeamId: teamId
+		createdAt
+		updatedAt
+		viewedAt
+		interactedAt
+		isParticipant
+		participants {
+			channelId
+			userId
+			role
+			joinedAt
+			leftAt
+		}
+		latestMessage {
+			...SoupChannelMessageFields
+		}
+		latestNonThreadMessage {
+			...SoupChannelMessageFields
+		}
+	}
+	... on GraphqlSoupChannelMessage {
+		channelId
+		senderId
+		content
+		createdAt
+		updatedAt
+		effectiveUpdatedAt
+		replyCount
+	}
+	... on GraphqlSoupCall {
+		channelId
+		channelName
+		createdBy
+		customName
+		summary
+		startedAt
+		endedAt
+		durationMs
+		isActive
+		status
+		attended
+		participants {
+			userId
+			joinedAt
+			leftAt
+		}
+		properties {
+			...SoupPropertyFields
+		}
+	}
+	... on GraphqlSoupCrmCompany {
+		crmTeamId: teamId
+		crmCompanyName: name
+		description
+		emailSync
+		hidden
+		createdAt
+		updatedAt
+		viewedAt
+		domains
+		properties {
+			...SoupPropertyFields
+		}
+	}
+	... on GraphqlSoupForeignEntity {
+		foreignEntityId
+		foreignEntitySource
+		storedForId
+		storedForAuthEntity
+		sourceMetadata
+		createdAt
+		updatedAt
+	}
+	... on GraphqlSoupReminder {
+		reminderDescription: description
+		scheduleType
+		remindAt
+		cron
+		timezone
+		nextRunAt
+		enabled
+		completedAt
+		createdAt
+		updatedAt
+		referencedEntity {
+			id
+			entityType
+			fileType
+			subType
+		}
+		properties {
+			...SoupPropertyFields
+		}
+	}
+	... on GraphqlSoupCalendarEvent {
+		calendarEventTitle: title
+		calendarEventStatus: status
+		time
+		conferenceUrl
+		isReadOnly
+		ownerId
+		createdAt
+		updatedAt
+		properties {
+			...SoupPropertyFields
+		}
+	}
+}
+
+fragment SoupEntityCoreFields on GraphqlSoupEntity {
+	...SoupEntityIdentityFields
+	notifications { ...SoupNotificationFields }
+}
+
+fragment SoupEntityIdentityFields on GraphqlSoupEntity {
+	id
+	entityType
+	displayName
+	isFavorited
+}
+
+fragment SoupPropertyFields on GraphqlProperty {
+	id
+	propertyDefinitionId
+	displayName
+	dataType
+	isMultiSelect
+	specificEntityType
+	isSystem
+	isMetadata
+	value {
+		__typename
+		... on GraphqlBooleanPropertyValue {
+			boolValue: value
+		}
+		... on GraphqlNumberPropertyValue {
+			numberValue: value
+		}
+		... on GraphqlStringPropertyValue {
+			stringValue: value
+		}
+		... on GraphqlDatePropertyValue {
+			dateValue: value
+		}
+		... on GraphqlSelectOptionPropertyValue {
+			optionIds
+		}
+		... on GraphqlEntityReferencePropertyValue {
+			references {
+				entityId
+				entityType
+				specificMessageId
+			}
+		}
+		... on GraphqlLinkPropertyValue {
+			urls
+		}
+	}
+}
+
+fragment SoupChannelMessageFields on GraphqlSoupChannelMessagePreview {
+	messageId
+	channelId
+	threadId
+	senderId
+	content
+	createdAt
+	updatedAt
+	deletedAt
+	mentions
+}
+
+fragment SoupNotificationFields on GraphqlNotification {
+	...SoupNotificationStateFields
+	metadata { ...SoupNotificationMetadataFields }
+}
+
+fragment SoupNotificationStateFields on GraphqlNotification {
+	id
+	eventType
+	entityType
+	entityId
+	sent
+	state
+	createdAt
+	viewedAt
+	updatedAt
+	senderId
+}
+
+fragment SoupNotificationMetadataFields on GraphqlNotifEvent {
+	...SoupNotificationNavigationMetadataFields
+	... on GraphqlChannelMentionMetadata {
+		channelMentionHasAttachments: hasAttachments
+		channelMentionSenderDisplayName: senderDisplayName
+		channelMentionChannelName: channelName
+		channelMentionSenderProfilePictureUrl: senderProfilePictureUrl
+	}
+	... on GraphqlChannelMessageSendMetadata {
+		channelMessageSendMessageContent: messageContent
+		channelMessageSendHasAttachments: hasAttachments
+		channelMessageSendSenderDisplayName: senderDisplayName
+		channelMessageSendChannelName: channelName
+		channelMessageSendSenderProfilePictureUrl: senderProfilePictureUrl
+	}
+	... on GraphqlChannelReplyMetadata {
+		channelReplyHasAttachments: hasAttachments
+		channelReplySenderDisplayName: senderDisplayName
+		channelReplyChannelName: channelName
+		channelReplySenderProfilePictureUrl: senderProfilePictureUrl
+	}
+}
+
+# Preserve notification lifecycle, thread membership, and click targets. Required
+# REST metadata (including mention/reply content) remains available to consumers.
+fragment SoupNotificationNavigationMetadataFields on GraphqlNotifEvent {
+	__typename
+	... on GraphqlChannelMentionMetadata {
+		channelMentionMessageId: messageId
+		channelMentionMessageContent: messageContent
+		channelMentionThreadId: threadId
+		channelMentionChannelType: channelType
+	}
+	... on GraphqlDocumentMentionMetadata {
+		documentMentionDocumentName: documentName
+		documentMentionOwner: owner
+		documentMentionFileType: fileType
+		documentMentionSubType: subType
+		documentMentionMessageId: messageId
+		documentMentionMessageContent: messageContent
+		documentMentionHasAttachments: hasAttachments
+		documentMentionThreadId: threadId
+		documentMentionSenderDisplayName: senderDisplayName
+		documentMentionChannelType: channelType
+		documentMentionChannelName: channelName
+		documentMentionSenderProfilePictureUrl: senderProfilePictureUrl
+	}
+	... on GraphqlMentionedInDocumentCommentMetadata {
+		mentionedInDocumentCommentDocumentName: documentName
+		mentionedInDocumentCommentOwner: owner
+		mentionedInDocumentCommentFileType: fileType
+		mentionedInDocumentCommentSubType: subType
+		mentionedInDocumentCommentMentionId: mentionId
+		mentionedInDocumentCommentCommentId: commentId
+		mentionedInDocumentCommentThreadId: threadId
+		mentionedInDocumentCommentText: text
+		mentionedInDocumentCommentSenderProfilePictureUrl: senderProfilePictureUrl
+		mentionedInDocumentCommentSenderDisplayName: senderDisplayName
+	}
+	... on GraphqlRepliedToDocumentCommentThreadMetadata {
+		repliedToDocumentCommentThreadDocumentName: documentName
+		repliedToDocumentCommentThreadOwner: owner
+		repliedToDocumentCommentThreadFileType: fileType
+		repliedToDocumentCommentThreadSubType: subType
+		repliedToDocumentCommentThreadCommentId: commentId
+		repliedToDocumentCommentThreadThreadId: threadId
+		repliedToDocumentCommentThreadText: text
+		repliedToDocumentCommentThreadSenderProfilePictureUrl: senderProfilePictureUrl
+		repliedToDocumentCommentThreadSenderDisplayName: senderDisplayName
+	}
+	... on GraphqlCommentedOnDocumentMetadata {
+		commentedOnDocumentDocumentName: documentName
+		commentedOnDocumentOwner: owner
+		commentedOnDocumentFileType: fileType
+		commentedOnDocumentSubType: subType
+		commentedOnDocumentCommentId: commentId
+		commentedOnDocumentThreadId: threadId
+		commentedOnDocumentText: text
+		commentedOnDocumentSenderProfilePictureUrl: senderProfilePictureUrl
+		commentedOnDocumentSenderDisplayName: senderDisplayName
+	}
+	... on GraphqlChannelInviteMetadata {
+		channelInviteInvitedBy: invitedBy
+		channelInviteChannelName: channelName
+		channelInviteMessageContent: messageContent
+		channelInviteSenderProfilePictureUrl: senderProfilePictureUrl
+	}
+	... on GraphqlChannelMessageSendMetadata {
+		channelMessageSendSender: sender
+		channelMessageSendMessageId: messageId
+		channelMessageSendChannelType: channelType
+	}
+	... on GraphqlChannelReplyMetadata {
+		channelReplyThreadId: threadId
+		channelReplyMessageId: messageId
+		channelReplyUserId: userId
+		channelReplyMessageContent: messageContent
+		channelReplyThreadParentSenderId: threadParentSenderId
+		channelReplyChannelType: channelType
+	}
+	... on GraphqlCallStartedMetadata {
+		callStartedChannelName: channelName
+		callStartedSenderProfilePictureUrl: senderProfilePictureUrl
+	}
+	... on GraphqlNewEmailMetadata {
+		newEmailSender: sender
+		newEmailToEmail: toEmail
+		newEmailThreadId: threadId
+		newEmailSubject: subject
+		newEmailSnippet: snippet
+	}
+	... on GraphqlInboxReauthRequiredMetadata {
+		inboxReauthRequiredEmailAddress: emailAddress
+	}
+	... on GraphqlInviteToTeamMetadata {
+		inviteToTeamTeamName: teamName
+		inviteToTeamTeamId: teamId
+		inviteToTeamTeamInviteId: teamInviteId
+		inviteToTeamInvitedBy: invitedBy
+		inviteToTeamRole: role
+		inviteToTeamSenderProfilePictureUrl: senderProfilePictureUrl
+	}
+	... on GraphqlTaskAssignedMetadata {
+		taskAssignedTaskId: taskId
+		taskAssignedTaskName: taskName
+		taskAssignedSubType: subType
+		taskAssignedAssignedBy: assignedBy
+		taskAssignedSenderProfilePictureUrl: senderProfilePictureUrl
+	}
+	... on GraphqlReminderMetadata {
+		reminderReminderId: reminderId
+		reminderDescription: description
+	}
+	... on GraphqlCalendarEventReminderMetadata {
+		calendarEventReminderEventId: eventId
+		calendarEventReminderOccurrenceKey: occurrenceKey
+		calendarEventReminderTitle: title
+		calendarEventReminderStartsAt: startsAt
+		calendarEventReminderEndsAt: endsAt
+		calendarEventReminderStartDate: startDate
+		calendarEventReminderTimeZone: timeZone
+		calendarEventReminderMinutesBefore: minutesBefore
+	}
+	... on GraphqlAiResponseMetadata {
+		aiResponseSummary: summary
+		aiResponseMessageId: messageId
+	}
+	... on GraphqlGithubPrStatusChangedMetadata {
+		githubPrStatusChangedForeignEntityId: foreignEntityId
+		githubPrStatusChangedGithubKey: githubKey
+		githubPrStatusChangedOwner: owner
+		githubPrStatusChangedRepo: repo
+		githubPrStatusChangedNumber: number
+		githubPrStatusChangedUrl: url
+		githubPrStatusChangedDisplayName: displayName
+		githubPrStatusChangedTitle: title
+		githubPrStatusChangedSenderGithubLogin: senderGithubLogin
+		githubPrStatusChangedSenderGithubUserId: senderGithubUserId
+		githubPrStatusChangedSenderGithubAvatarUrl: senderGithubAvatarUrl
+		githubPrStatusChangedStatus: status
+		githubPrStatusChangedAction: action
+		githubPrStatusChangedPreviousStatus: previousStatus
+		githubPrStatusChangedHeadBranch: headBranch
+		githubPrStatusChangedBaseBranch: baseBranch
+		githubPrStatusChangedMergedAt: mergedAt
+	}
+	... on GraphqlGithubPrCheckRunMetadata {
+		githubPrCheckRunForeignEntityId: foreignEntityId
+		githubPrCheckRunGithubKey: githubKey
+		githubPrCheckRunOwner: owner
+		githubPrCheckRunRepo: repo
+		githubPrCheckRunNumber: number
+		githubPrCheckRunUrl: url
+		githubPrCheckRunDisplayName: displayName
+		githubPrCheckRunTitle: title
+		githubPrCheckRunSenderGithubLogin: senderGithubLogin
+		githubPrCheckRunSenderGithubUserId: senderGithubUserId
+		githubPrCheckRunSenderGithubAvatarUrl: senderGithubAvatarUrl
+		githubPrCheckRunCheckRunGithubId: checkRunGithubId
+		githubPrCheckRunCheckName: checkName
+		githubPrCheckRunCheckStatus: checkStatus
+		githubPrCheckRunConclusion: conclusion
+		githubPrCheckRunState: state
+		githubPrCheckRunCheckUrl: checkUrl
+		githubPrCheckRunCompletedAt: completedAt
+	}
+	... on GraphqlGithubReviewRequestedMetadata {
+		githubReviewRequestedForeignEntityId: foreignEntityId
+		githubReviewRequestedGithubKey: githubKey
+		githubReviewRequestedOwner: owner
+		githubReviewRequestedRepo: repo
+		githubReviewRequestedNumber: number
+		githubReviewRequestedUrl: url
+		githubReviewRequestedDisplayName: displayName
+		githubReviewRequestedTitle: title
+		githubReviewRequestedSenderGithubLogin: senderGithubLogin
+		githubReviewRequestedSenderGithubUserId: senderGithubUserId
+		githubReviewRequestedSenderGithubAvatarUrl: senderGithubAvatarUrl
+		githubReviewRequestedRequestedReviewerGithubLogin: requestedReviewerGithubLogin
+		githubReviewRequestedRequestedReviewerGithubUserId: requestedReviewerGithubUserId
+	}
+	... on GraphqlGithubPrCommentMetadata {
+		githubPrCommentForeignEntityId: foreignEntityId
+		githubPrCommentGithubKey: githubKey
+		githubPrCommentOwner: owner
+		githubPrCommentRepo: repo
+		githubPrCommentNumber: number
+		githubPrCommentUrl: url
+		githubPrCommentDisplayName: displayName
+		githubPrCommentTitle: title
+		githubPrCommentSenderGithubLogin: senderGithubLogin
+		githubPrCommentSenderGithubUserId: senderGithubUserId
+		githubPrCommentSenderGithubAvatarUrl: senderGithubAvatarUrl
+		githubPrCommentCommentKind: commentKind
+		githubPrCommentCommentGithubId: commentGithubId
+		githubPrCommentCommentUrl: commentUrl
+		githubPrCommentCommentSnippet: commentSnippet
+	}
+	... on GraphqlGithubPrMentionMetadata {
+		githubPrMentionForeignEntityId: foreignEntityId
+		githubPrMentionGithubKey: githubKey
+		githubPrMentionOwner: owner
+		githubPrMentionRepo: repo
+		githubPrMentionNumber: number
+		githubPrMentionUrl: url
+		githubPrMentionDisplayName: displayName
+		githubPrMentionTitle: title
+		githubPrMentionSenderGithubLogin: senderGithubLogin
+		githubPrMentionSenderGithubUserId: senderGithubUserId
+		githubPrMentionSenderGithubAvatarUrl: senderGithubAvatarUrl
+		githubPrMentionLocation: location
+		githubPrMentionCommentGithubId: commentGithubId
+		githubPrMentionCommentUrl: commentUrl
+		githubPrMentionTextSnippet: textSnippet
+	}
+	... on GraphqlGithubPrReviewMetadata {
+		githubPrReviewForeignEntityId: foreignEntityId
+		githubPrReviewGithubKey: githubKey
+		githubPrReviewOwner: owner
+		githubPrReviewRepo: repo
+		githubPrReviewNumber: number
+		githubPrReviewUrl: url
+		githubPrReviewDisplayName: displayName
+		githubPrReviewTitle: title
+		githubPrReviewSenderGithubLogin: senderGithubLogin
+		githubPrReviewSenderGithubUserId: senderGithubUserId
+		githubPrReviewSenderGithubAvatarUrl: senderGithubAvatarUrl
+		githubPrReviewReviewGithubId: reviewGithubId
+		githubPrReviewReviewUrl: reviewUrl
+		githubPrReviewState: state
+		githubPrReviewReviewSnippet: reviewSnippet
+	}
+	... on GraphqlAgentSessionSettledMetadata {
+		agentSessionSettledSession: session {
+			sessionId
+			sessionName
+			botId
+			botName
+			channelId
+			threadId
+			announcementMessageId
+		}
+		agentSessionSettledTurn: turn
+		agentSessionSettledActor: actor
+		agentSessionSettledStopReason: stopReason
+		agentSessionSettledExcerpt: excerpt
+	}
+	... on GraphqlAgentSessionWaitingForInputMetadata {
+		agentSessionWaitingForInputSession: session {
+			sessionId
+			sessionName
+			botId
+			botName
+			channelId
+			threadId
+			announcementMessageId
+		}
+		agentSessionWaitingForInputTurn: turn
+		agentSessionWaitingForInputQuestion: question
+	}
+	... on GraphqlAgentSessionMentionedMetadata {
+		agentSessionMentionedSession: session {
+			sessionId
+			sessionName
+			botId
+			botName
+			channelId
+			threadId
+			announcementMessageId
+		}
+		agentSessionMentionedMentionedBy: mentionedBy
+		agentSessionMentionedActionId: actionId
+	}
+}

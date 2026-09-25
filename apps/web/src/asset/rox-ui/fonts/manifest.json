@@ -1,0 +1,23 @@
+[
+  {
+    "file": "rox-condensed.woff2",
+    "source": "/Library/Fonts/RoxMonoTypefaceSmLtSmCn.ttf",
+    "sha256": "01e6111a745ba1a4250164c9a25b0ac0dac264c6a63559cae3cd5984df499b13",
+    "size": 329368,
+    "cyrillic_verified": true
+  },
+  {
+    "file": "rox-condensed-italic.woff2",
+    "source": "/Library/Fonts/RoxMonoTypefaceSmLtSmCn-Italic.ttf",
+    "sha256": "d8627b13d3e41b8235833141df56acefa51df6c9ed50d406434d8e52ebe68e7b",
+    "size": 375164,
+    "cyrillic_verified": true
+  },
+  {
+    "file": "rox-regular.woff2",
+    "source": "/Users/t/Projects/2026-09-23-rox-mono-typeface/fonts/RoxMonoTypeface-Regular.ttf",
+    "sha256": "15a9f2dab17ba551316f28c52412f39de55f56b14c03cb16c39b795d9d8dd217",
+    "size": 333912,
+    "cyrillic_verified": true
+  }
+]

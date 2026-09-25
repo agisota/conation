@@ -1,0 +1,183 @@
+import {
+  AgentChangesProvider,
+  AgentChangesSplit,
+  ChangesHandoff,
+  ReviewNotesDock,
+} from '@app/features/agent-changes/agent-changes';
+import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
+import { FloatRegionOrInline } from '@components/app/mobile/float-regions/FloatRegion';
+import { SidePanel } from '@components/app/side-panel';
+import { SplitPanelContext } from '@components/app/split-layout/context';
+import { useCanAutofocusSplitContent } from '@components/app/split-layout/layoutUtils';
+import { useNavigatedFromJK } from '@components/app/useNavigatedFromJK';
+import { useBlockId } from '@core/block';
+import { LoadErrorPanel } from '@core/component/EntityLoadGate';
+import { StaticMarkdownContext } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
+import { nativeNetworkStatus } from '@core/mobile/native-network-status';
+import { createMethodRegistration } from '@core/orchestrator';
+import { blockHandleSignal } from '@core/signal/load';
+import type { NotificationSource } from '@notifications/notification-source';
+import { useSearchParams } from '@solidjs/router';
+import { EmptyStatePanel } from '@ui';
+import { createSignal, Show, useContext } from 'solid-js';
+import { AgentSessionProvider } from '../agent-session-provider';
+import { useAgentSession } from '../context/AgentSessionContext';
+import { forgetPendingSession } from '../context/pending-session';
+import { parseAgentMessageTarget } from '../core/search-location';
+import { AgentComposer } from './AgentComposer';
+import { AgentSessionReadMarker } from './AgentSessionReadMarker';
+import { AgentSplitHeader } from './AgentSplitHeader';
+import { AgentSidePanelSections } from './sidepanel/AgentSidePanelSections';
+import { Transcript } from './Transcript';
+
+function AgentBlockContent(props: {
+  active: boolean;
+  notificationSource: NotificationSource;
+}) {
+  const [params] = useSearchParams();
+  const [searchTarget, setSearchTarget] = createSignal(
+    parseAgentMessageTarget(params)
+  );
+  createMethodRegistration(blockHandleSignal.get, {
+    goToLocationFromParams: (params: Record<string, unknown>) => {
+      const target = parseAgentMessageTarget(params);
+      if (target) setSearchTarget(target);
+    },
+  });
+  const {
+    session,
+    sessionId,
+    metadata,
+    accessDenied,
+    loadFailed,
+    loadRetryable,
+    pending,
+    retryLoad,
+    startupError,
+  } = useAgentSession();
+  const canAutofocusSplitContent = useCanAutofocusSplitContent();
+  const { navigatedFromJK } = useNavigatedFromJK();
+
+  // Nothing loaded and no way forward: the load failed outright, or the
+  // device is offline and the pending load cannot complete until
+  // connectivity returns (that one resumes by itself, so no Retry). Gating
+  // the whole block — like the other entity blocks — keeps the composer and
+  // header from rendering against a session that never loaded.
+  const loadUnavailable = () =>
+    loadFailed() ||
+    (nativeNetworkStatus() === 'offline' && !session() && !pending());
+
+  return (
+    <Show
+      when={!loadUnavailable()}
+      fallback={
+        <Show
+          when={startupError()}
+          fallback={
+            <Show
+              when={accessDenied()}
+              fallback={
+                <LoadErrorPanel
+                  title="Unable to load this agent session"
+                  onRetry={loadRetryable() ? retryLoad : undefined}
+                />
+              }
+            >
+              <EmptyStatePanel
+                centered
+                title="You don't have access to this agent session"
+                description="Ask a participant to share it with you."
+              />
+            </Show>
+          }
+        >
+          {(error) => (
+            <EmptyStatePanel
+              centered
+              title="Unable to start this agent"
+              description={error()}
+            />
+          )}
+        </Show>
+      }
+    >
+      {/* One shared static-markdown editor for every text part, rather than
+          one per part — the same scoping the channel does around its message
+          tree. */}
+      <StaticMarkdownContext>
+        <AgentSessionReadMarker
+          sessionId={session() ? sessionId() : undefined}
+          active={props.active}
+          notificationSource={props.notificationSource}
+        />
+        <div class="size-full overflow-hidden flex">
+          {/* Collapsed by default, like the other conversation-shaped blocks —
+            the transcript wants the width; `]` or the header button opens it. */}
+          <SidePanel.Layout defaultOpen={false}>
+            <AgentSidePanelSections />
+            <AgentSplitHeader
+              session={session()}
+              title={metadata()?.title ?? undefined}
+            />
+            {/* The Changes pane opens beside the transcript; closed, the
+                transcript keeps the whole width. */}
+            <AgentChangesSplit>
+              <Transcript searchTarget={searchTarget()} />
+              {/* Full-frame mobile: composer + queue float in the bottom
+                  accessory region above the dock; desktop stays inline. */}
+              <FloatRegionOrInline region="accessory">
+                {/* Home/chat: re-enable pointer events on the accessory
+                    contribution — the float host is pointer-transparent. */}
+                <div class="flex w-full justify-center shrink-0 px-4 pb-4.5 pointer-events-auto touch:px-(--mobile-chrome-gutter) touch:pb-0">
+                  <div class="macro-message-width mx-auto flex flex-col gap-2">
+                    <ChangesHandoff />
+                    <ReviewNotesDock />
+                    <AgentComposer
+                      autofocus={
+                        canAutofocusSplitContent &&
+                        !navigatedFromJK() &&
+                        !searchTarget()
+                      }
+                    />
+                  </div>
+                </div>
+              </FloatRegionOrInline>
+            </AgentChangesSplit>
+          </SidePanel.Layout>
+        </div>
+      </StaticMarkdownContext>
+    </Show>
+  );
+}
+
+export default function BlockAgent() {
+  const blockId = useBlockId();
+  const split = useContext(SplitPanelContext);
+  const notificationSource = useGlobalNotificationSource();
+
+  // A block opened from the create menu mounts against a placeholder while
+  // `POST /agent-sessions` provisions its sandbox — minutes, during which the
+  // user is already typing. When the real id lands the split adopts it in
+  // place: the URL becomes the session's, this mount keeps running, and the
+  // placeholder is gone from history rather than being a back step to
+  // nowhere.
+  const adoptSessionId = (sessionId: string) => {
+    split?.handle.adoptContentId({ type: 'agent', nextId: sessionId });
+    forgetPendingSession(blockId);
+  };
+
+  return (
+    <Show when={blockId}>
+      {(id) => (
+        <AgentSessionProvider blockId={id()} onSessionId={adoptSessionId}>
+          <AgentChangesProvider>
+            <AgentBlockContent
+              active={split?.isPanelActive() ?? false}
+              notificationSource={notificationSource}
+            />
+          </AgentChangesProvider>
+        </AgentSessionProvider>
+      )}
+    </Show>
+  );
+}

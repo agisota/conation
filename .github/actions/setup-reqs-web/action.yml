@@ -1,0 +1,47 @@
+name: Setup Prereqs Web
+description: Checkout and Setup Prerequisite Dependencies for web app
+inputs:
+  playwright:
+    description: Install Playwright and cache
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Nix dev shell
+      uses: ./.github/actions/setup-nix-dev-shell
+
+    - name: Setup bunfig.toml
+      shell: bash
+      run: |
+        echo "[run]" >> bunfig.toml
+        echo "bun = true" >> bunfig.toml
+
+    - name: Install Dependencies
+      shell: bash
+      run: bun install --frozen-lockfile
+
+    - name: Get Playwright version (for caching)
+      if: inputs.playwright == 'true'
+      shell: bash
+      working-directory: apps/web
+      run: echo "PW_VERSION=$(bunx playwright --version | cut -d' ' -f2)" >> $GITHUB_ENV
+    - name: Restore Playwright browsers
+      if: inputs.playwright == 'true'
+      id: pw-browsers
+      uses: runs-on/cache/restore@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: pw-browsers-${{ runner.os }}-${{ env.PW_VERSION }}
+    - name: Install Playwright Browsers
+      if: inputs.playwright == 'force' || (inputs.playwright == 'true' && steps.pw-browsers.outputs.cache-hit != 'true')
+      shell: bash
+      working-directory: apps/web
+      run: bunx playwright install --with-deps chromium
+    - name: Save Playwright browsers to cache
+      if: inputs.playwright == 'force' || (inputs.playwright == 'true' && steps.pw-browsers.outputs.cache-hit != 'true')
+      uses: runs-on/cache/save@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: pw-browsers-${{ runner.os }}-${{ env.PW_VERSION }}

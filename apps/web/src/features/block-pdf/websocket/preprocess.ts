@@ -1,0 +1,56 @@
+import type {
+  PreprocessInvoke,
+  PreprocessResponseData,
+} from '@coparse/document-processing-types';
+
+import {
+  type ProcessingResultResponseType,
+  storageServiceClient,
+} from '@service-storage/client';
+import { createWebSocketJob } from '@service-storage/websocket';
+
+export async function preprocess({
+  documentId,
+  documentVersionId,
+}: {
+  documentId: string;
+  documentVersionId: number;
+}) {
+  try {
+    const parseResult = await storageServiceClient.getDocumentProcessingResult({
+      documentId,
+      type: 'PREPROCESS',
+    });
+    if (parseResult.isOk()) return parseResult.value.preprocess;
+  } catch (e) {
+    console.error('preprocess fetch error', e);
+  }
+
+  return createWebSocketJob<
+    string,
+    ProcessingResultResponseType<'PREPROCESS'>,
+    PreprocessInvoke,
+    PreprocessResponseData
+  >({
+    data: {
+      documentId,
+      documentVersionId,
+    },
+    action: 'pdf_preprocess',
+    processResult: async (_data, jobId) => {
+      // any data resonse is a success response
+      return jobId;
+    },
+    handleSuccess: async (jobId) => {
+      const result = await storageServiceClient.getJobProcessingResult({
+        documentId,
+        jobId,
+        type: 'PREPROCESS',
+      });
+      if (result.isErr()) {
+        throw result;
+      }
+      return result.value.preprocess;
+    },
+  });
+}
