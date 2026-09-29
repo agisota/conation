@@ -359,6 +359,64 @@ describe('manual CRM import example', () => {
     expect(requests).toHaveLength(0);
   });
 
+  test('normalized duplicate contact emails fail before any request', async () => {
+    configureApply();
+    const requests = recordTransport(() => jsonResponse({}));
+    await withInput(
+      {
+        contacts: [
+          {
+            companyDomain: 'acme.com',
+            name: 'Jane',
+            email: 'jane@acme.com',
+          },
+          {
+            companyDomain: 'acme.com',
+            name: 'Jane',
+            email: 'jane@acme.com.',
+          },
+        ],
+      },
+      async (inputPath) => {
+        await expect(run(['--input', inputPath, '--apply'])).rejects.toThrow(
+          /Duplicate/i,
+        );
+      },
+    );
+    expect(requests).toHaveLength(0);
+  });
+
+  test('invalid rename UUIDs fail before earlier create operations are sent', async () => {
+    configureApply();
+    const requests = recordTransport(() => jsonResponse({}));
+    for (const input of [
+      {
+        companies: [
+          { name: 'Acme', domain: 'acme.com' },
+          { id: 'company_existing_id', rename: 'Renamed Acme' },
+        ],
+      },
+      {
+        contacts: [
+          {
+            companyDomain: 'acme.com',
+            name: 'Jane',
+            email: 'jane@acme.com',
+          },
+          { id: 'contact_existing_id', rename: 'Jane Renamed' },
+        ],
+      },
+    ]) {
+      await withInput(input, async (inputPath) => {
+        await expect(run(['--input', inputPath, '--apply'])).rejects.toThrow(
+          /UUID/i,
+        );
+      });
+    }
+    expect(requests).toHaveLength(0);
+  });
+
+
   test('rejects backend-invalid bare domain shapes before earlier batch writes', async () => {
     configureApply();
     const requests = recordTransport(() => jsonResponse({}));
