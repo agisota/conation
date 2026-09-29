@@ -49,6 +49,23 @@ function normalizedDomain(domain: string): string {
 
 const UUID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/iu;
 
+function validatedDisplayName(
+  raw: string | undefined,
+  label: string,
+): string | undefined {
+  const name = raw?.trim();
+  if (!name) return name;
+
+  let characterCount = 0;
+  for (const _character of name) {
+    characterCount++;
+    if (characterCount > 200) {
+      throw new Error(`${label} must not exceed 200 Unicode characters`);
+    }
+  }
+  return name;
+}
+
 function isBareDomain(domain: string): boolean {
   const normalized = normalizedDomain(domain);
   return (
@@ -221,7 +238,7 @@ function validate(
   for (const company of input.companies ?? []) {
     if (company.id !== undefined) {
       const id = company.id.trim();
-      const rename = company.rename?.trim();
+      const rename = validatedDisplayName(company.rename, 'Company name');
       if (!id || !rename) {
         throw new Error(
           'Company updates require an explicit id and non-blank rename',
@@ -230,7 +247,7 @@ function validate(
       if (!UUID_PATTERN.test(id)) {
         throw new Error('Company update id must be a UUID');
       }
-      addIdentity(`company:${id}`);
+      addIdentity(`company:${id.toLowerCase()}`);
       operations.push(`Rename company ${id}`);
       companies.push({
         kind: 'rename',
@@ -240,7 +257,7 @@ function validate(
       });
       continue;
     }
-    const name = company.name?.trim();
+    const name = validatedDisplayName(company.name, 'Company name');
     const domain = company.domain?.trim();
     const normalized = domain ? normalizedDomain(domain) : '';
     if (!name || !domain || !isBareDomain(domain)) {
@@ -262,7 +279,7 @@ function validate(
   for (const contact of input.contacts ?? []) {
     if (contact.id !== undefined) {
       const id = contact.id.trim();
-      const rename = contact.rename?.trim();
+      const rename = validatedDisplayName(contact.rename, 'Contact name');
       if (!id || !rename) {
         throw new Error(
           'Contact updates require an explicit id and non-blank rename',
@@ -271,7 +288,7 @@ function validate(
       if (!UUID_PATTERN.test(id)) {
         throw new Error('Contact update id must be a UUID');
       }
-      addIdentity(`contact:${id}`);
+      addIdentity(`contact:${id.toLowerCase()}`);
       operations.push(`Rename contact ${id}`);
       contacts.push({
         kind: 'rename',
@@ -281,7 +298,7 @@ function validate(
       });
       continue;
     }
-    const name = contact.name?.trim();
+    const name = validatedDisplayName(contact.name, 'Contact name');
     const email = contact.email?.trim();
     const companyDomain = contact.companyDomain?.trim();
     const emailParts = email?.split('@');
