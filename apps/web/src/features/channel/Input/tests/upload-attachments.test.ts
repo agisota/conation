@@ -108,6 +108,38 @@ describe('uploadInputAttachments', () => {
       },
     ]);
   });
+  it('does not restore an upload after the composer is cleared while it is in flight', async () => {
+    const persistenceKey = 'attachment-tracker-stale-upload';
+    localStorage.removeItem(persistenceKey);
+    const tracker = createInputAttachmentTracker({ persistenceKey });
+    const file = new File(['abc'], 'image.png', { type: 'image/png' });
+    const { promise: uploadResult, resolve: resolveUpload } =
+      Promise.withResolvers<{
+        failed: false;
+        destination: 'static';
+        id: string;
+      }>();
+
+    const uploadPromise = uploadInputAttachments({
+      files: [file],
+      tracker,
+      uploadFile: () => uploadResult,
+    });
+
+    await Promise.resolve();
+    expect(tracker.attachments()).toHaveLength(1);
+    tracker.clearAttachments();
+    resolveUpload({
+      failed: false,
+      destination: 'static',
+      id: 'uploaded-stale-image',
+    });
+    await uploadPromise;
+
+    expect(tracker.attachments()).toEqual([]);
+    expect(localStorage.getItem(persistenceKey)).toBeNull();
+    localStorage.removeItem(persistenceKey);
+  });
 
   it.each([
     {
