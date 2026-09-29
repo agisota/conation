@@ -108,6 +108,130 @@ describe('uploadInputAttachments', () => {
       },
     ]);
   });
+  it('does not restore an upload after the composer is cleared while it is in flight', async () => {
+    const persistenceKey = 'attachment-tracker-stale-upload';
+    localStorage.removeItem(persistenceKey);
+    const staleTracker = createInputAttachmentTracker({ persistenceKey });
+    const file = new File(['abc'], 'image.png', { type: 'image/png' });
+    const { promise: uploadResult, resolve: resolveUpload } =
+      Promise.withResolvers<{
+        failed: false;
+        destination: 'static';
+        id: string;
+      }>();
+
+    const uploadPromise = uploadInputAttachments({
+      files: [file],
+      tracker: staleTracker,
+      uploadFile: () => uploadResult,
+    });
+
+    await Promise.resolve();
+    expect(staleTracker.attachments()).toHaveLength(1);
+    const currentTracker = createInputAttachmentTracker({ persistenceKey });
+    currentTracker.clearAttachments();
+    resolveUpload({
+      failed: false,
+      destination: 'static',
+      id: 'uploaded-stale-image',
+    });
+    await uploadPromise;
+
+    const remountedTracker = createInputAttachmentTracker({ persistenceKey });
+    expect(remountedTracker.attachments()).toEqual([]);
+    expect(JSON.parse(localStorage.getItem(persistenceKey) ?? 'null')).toEqual(
+      []
+    );
+    localStorage.removeItem(persistenceKey);
+    localStorage.removeItem(`${persistenceKey}-upload-generation`);
+  });
+  it('does not restore an in-flight upload when generation storage rejects the clear', async () => {
+    const persistenceKey = 'attachment-tracker-storage-failure';
+    const generationKey = `${persistenceKey}-upload-generation`;
+    localStorage.setItem(generationKey, 'old-generation');
+    const tracker = createInputAttachmentTracker({ persistenceKey });
+    const { promise: uploadResult, resolve: resolveUpload } =
+      Promise.withResolvers<{
+        failed: false;
+        destination: 'static';
+        id: string;
+      }>();
+    const uploadPromise = uploadInputAttachments({
+      files: [new File(['abc'], 'image.png', { type: 'image/png' })],
+      tracker,
+      uploadFile: () => uploadResult,
+    });
+    await Promise.resolve();
+
+    const originalSetItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key,
+      value
+    ) {
+      if (key === generationKey)
+        throw new DOMException('Full', 'QuotaExceededError');
+      return originalSetItem.call(this, key, value);
+    });
+    tracker.clearAttachments();
+    resolveUpload({
+      failed: false,
+      destination: 'static',
+      id: 'uploaded-after-clear',
+    });
+    await uploadPromise;
+
+    expect(tracker.attachments()).toEqual([]);
+    expect(localStorage.getItem(generationKey)).toBe('old-generation');
+    localStorage.removeItem(generationKey);
+    localStorage.removeItem(persistenceKey);
+  });
+  it('fences an earlier tracker when a remount clears and generation storage fails', async () => {
+    const persistenceKey = 'attachment-tracker-remount-storage-failure';
+    const generationKey = `${persistenceKey}-upload-generation`;
+    localStorage.setItem(generationKey, 'old-generation');
+    const staleTracker = createInputAttachmentTracker({ persistenceKey });
+    const { promise: uploadResult, resolve: resolveUpload } =
+      Promise.withResolvers<{
+        failed: false;
+        destination: 'static';
+        id: string;
+      }>();
+    const uploadPromise = uploadInputAttachments({
+      files: [new File(['abc'], 'image.png', { type: 'image/png' })],
+      tracker: staleTracker,
+      uploadFile: () => uploadResult,
+    });
+    await Promise.resolve();
+
+    const currentTracker = createInputAttachmentTracker({ persistenceKey });
+    const originalSetItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key,
+      value
+    ) {
+      if (key === generationKey)
+        throw new DOMException('Full', 'QuotaExceededError');
+      return originalSetItem.call(this, key, value);
+    });
+    currentTracker.clearAttachments();
+    resolveUpload({
+      failed: false,
+      destination: 'static',
+      id: 'uploaded-after-remount',
+    });
+    await uploadPromise;
+
+    expect(
+      createInputAttachmentTracker({ persistenceKey }).attachments()
+    ).toEqual([]);
+    expect(JSON.parse(localStorage.getItem(persistenceKey) ?? 'null')).toEqual(
+      []
+    );
+    localStorage.removeItem(generationKey);
+    localStorage.removeItem(persistenceKey);
+  });
 
   it.each([
     {

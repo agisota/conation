@@ -9,7 +9,7 @@ import {
   waitFor,
   within,
 } from '@solidjs/testing-library';
-import type { JSX } from 'solid-js';
+import { createSignal, For, type JSX } from 'solid-js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAgentRoster, type PersistedAgentLike } from '../core/roster';
 import { AgentPicker } from './AgentPicker';
@@ -21,17 +21,33 @@ const mocks = vi.hoisted(() => ({
   recentIds: [] as string[],
   recentUrls: [] as string[],
   preferredInmemModel: undefined as string | undefined,
+  userId: 'user',
+  setUserId: undefined as ((id: string) => void) | undefined,
   rememberInmemModel: vi.fn((id: string) => {
     mocks.preferredInmemModel = id;
   }),
   repositories: [] as { url: string; defaultBranch?: string }[],
 }));
 vi.mock('@core/util/upload', () => ({ uploadFile: vi.fn() }));
+// Keep the real tracker in this partial mock; only the external upload is replaced.
 vi.mock('@channel/Input', async () => ({
   ...(await import('../../channel/Input/attachment-tracker')),
-  uploadInputAttachments: vi.fn(),
+  uploadInputAttachments: (options: {
+    tracker: { addAttachment: (attachment: InputAttachmentData) => void };
+  }) =>
+    options.tracker.addAttachment({
+      id: 'account-attachment',
+      name: 'account.md',
+      kind: 'document',
+    }),
 }));
-vi.mock('@core/context/user', () => ({ useUserId: () => () => 'user' }));
+vi.mock('@core/context/user', () => ({
+  useUserId: () => {
+    const [id, setId] = createSignal(mocks.userId);
+    mocks.setUserId = setId;
+    return id;
+  },
+}));
 vi.mock('@core/constant/SettingsState', () => ({
   useSettingsState: () => ({ openSettings: mocks.openSettings }),
 }));
@@ -127,6 +143,8 @@ type ComposerProps = {
   draft: string;
   onDraftChange: (draft: string) => void;
   onSend: (prompt: string, attachments: InputAttachmentData[]) => void;
+  attachments: InputAttachmentData[];
+  onAttachFiles: (files: File[]) => void;
 };
 vi.mock('../components/ChatComposer', () => ({
   ChatComposer: (props: ComposerProps) => (
@@ -140,6 +158,18 @@ vi.mock('../components/ChatComposer', () => ({
         value={props.draft}
         onInput={(event) => props.onDraftChange(event.currentTarget.value)}
       />
+      <div aria-label="Attachments">
+        <For each={props.attachments}>
+          {(attachment) => <span>{attachment.name}</span>}
+        </For>
+      </div>
+      <button
+        onClick={() =>
+          props.onAttachFiles([new File(['account'], 'account.md')])
+        }
+      >
+        Attach
+      </button>
       <button
         onClick={() =>
           props.onSend(
@@ -218,6 +248,8 @@ async function hoverAgent(name: string) {
 describe('agent-led new conversation', () => {
   let motionStyles: HTMLStyleElement;
   beforeEach(() => {
+    mocks.userId = 'user';
+    mocks.setUserId = undefined;
     mocks.attachments = [];
     mocks.recentIds = [MACRO_CODER_BOT_ID];
     mocks.recentUrls = [];
@@ -239,6 +271,60 @@ describe('agent-led new conversation', () => {
     cleanup();
     motionStyles.remove();
     vi.unstubAllGlobals();
+  });
+  it('keeps New conversation drafts and attachments isolated by account', () => {
+    mocks.userId = 'account-a';
+    page();
+    fireEvent.input(screen.getByRole('textbox', { name: 'Draft' }), {
+      target: { value: 'Account A draft' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
+    expect(screen.getByText('account.md')).toBeTruthy();
+    cleanup();
+
+    mocks.userId = 'account-b';
+    page();
+    expect(
+      (screen.getByRole('textbox', { name: 'Draft' }) as HTMLInputElement).value
+    ).toBe('');
+    expect(screen.queryByText('account.md')).toBeNull();
+    cleanup();
+
+    mocks.userId = 'account-a';
+    page();
+    expect(
+      (screen.getByRole('textbox', { name: 'Draft' }) as HTMLInputElement).value
+    ).toBe('Account A draft');
+    expect(screen.getByText('account.md')).toBeTruthy();
+  });
+  it('rebinds drafts and attachments when the signed-in account changes without unmounting', () => {
+    mocks.userId = 'account-a';
+    page();
+    fireEvent.input(screen.getByRole('textbox', { name: 'Draft' }), {
+      target: { value: 'Account A draft' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
+    expect(screen.getByText('account.md')).toBeTruthy();
+
+    mocks.setUserId?.('account-b');
+    expect(
+      (screen.getByRole('textbox', { name: 'Draft' }) as HTMLInputElement).value
+    ).toBe('');
+    expect(screen.queryByText('account.md')).toBeNull();
+    fireEvent.input(screen.getByRole('textbox', { name: 'Draft' }), {
+      target: { value: 'Account B draft' },
+    });
+
+    mocks.setUserId?.('account-a');
+    expect(
+      (screen.getByRole('textbox', { name: 'Draft' }) as HTMLInputElement).value
+    ).toBe('Account A draft');
+    expect(screen.getByText('account.md')).toBeTruthy();
+    mocks.setUserId?.('account-b');
+    expect(
+      (screen.getByRole('textbox', { name: 'Draft' }) as HTMLInputElement).value
+    ).toBe('Account B draft');
+    expect(screen.queryByText('account.md')).toBeNull();
   });
   it('offers both kinds without a mode or model control and starts with the agent default', async () => {
     const send = page();
