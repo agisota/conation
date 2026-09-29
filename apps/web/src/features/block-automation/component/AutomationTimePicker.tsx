@@ -55,11 +55,18 @@ export function AutomationTimePicker(props: {
     initial.minute.toString().padStart(2, '0')
   );
   const [period, setPeriod] = createSignal<'AM' | 'PM'>(initial.period);
+  let pendingValueAcknowledgment: string | null = null;
 
   createEffect(
     on(
       () => props.value,
       (value) => {
+        if (value === pendingValueAcknowledgment) {
+          pendingValueAcknowledgment = null;
+          return;
+        }
+
+        pendingValueAcknowledgment = null;
         const p = parseHHMM(value);
         setHour(p.hour);
         setHourDisplay(p.hour.toString());
@@ -76,7 +83,9 @@ export function AutomationTimePicker(props: {
     nextMinute: number,
     nextPeriod: 'AM' | 'PM'
   ) => {
-    props.onChange(toHHMM(nextHour, nextMinute, nextPeriod));
+    const value = toHHMM(nextHour, nextMinute, nextPeriod);
+    pendingValueAcknowledgment = value;
+    props.onChange(value);
   };
 
   return (
@@ -110,7 +119,7 @@ export function AutomationTimePicker(props: {
                 onInput={(e) => {
                   const raw = e.currentTarget.value;
                   setHourDisplay(raw);
-                  const val = parseInt(raw);
+                  const val = /^\d+$/.test(raw) ? Number(raw) : NaN;
                   if (!isNaN(val) && val >= 1 && val <= 12) {
                     setHour(val);
                     commit(val, minute(), period());
@@ -134,7 +143,7 @@ export function AutomationTimePicker(props: {
                 onInput={(e) => {
                   const raw = e.currentTarget.value;
                   setMinuteDisplay(raw);
-                  const val = parseInt(raw);
+                  const val = /^\d+$/.test(raw) ? Number(raw) : NaN;
                   if (!isNaN(val) && val >= 0 && val <= 59) {
                     setMinute(val);
                     commit(hour(), val, period());

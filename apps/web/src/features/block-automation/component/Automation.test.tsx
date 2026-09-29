@@ -84,7 +84,7 @@ vi.mock('./AutomationPromptEditor', () => ({
     );
   },
 }));
-vi.mock('./AutomationTimePicker', () => ({ AutomationTimePicker: () => null }));
+vi.mock('@core/directive/clickOutside', () => ({ default: () => {} }));
 vi.mock('@ui', () => ({
   Button: (props: JSX.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props} />
@@ -223,6 +223,31 @@ describe('automation editor trigger guards', () => {
     expect(mocks.openWithSplit).toHaveBeenCalledWith(
       { type: 'chat', id: 'chat-id' },
       { activate: true, preferNewSplit: false }
+    );
+  });
+  it('persists valid editor time after controlled typing and picker reopen', async () => {
+    render(() => <Automation />);
+    fireEvent.click(screen.getByRole('button', { name: /^9:00 AM$/i }));
+    const minute = screen.getByRole('textbox', { name: 'Minute' });
+    fireEvent.input(minute, { target: { value: '3' } });
+    expect(minute).toHaveProperty('value', '3');
+    fireEvent.input(minute, { target: { value: '30' } });
+    expect(minute).toHaveProperty('value', '30');
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+
+    fireEvent.click(screen.getByRole('button', { name: /^9:30 AM$/i }));
+    expect(screen.getByRole('textbox', { name: 'Minute' })).toHaveProperty(
+      'value',
+      '30'
+    );
+    await vi.advanceTimersByTimeAsync(300);
+    expect(mocks.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scheduleId: 'routine-id',
+        body: expect.objectContaining({
+          trigger: expect.objectContaining({ schedule: '0 30 9 * * 2' }),
+        }),
+      })
     );
   });
 
