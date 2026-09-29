@@ -51,6 +51,31 @@ vi.mock('@app/features/next-soup/utils', () => ({
   markReminderSeenOnOpen: vi.fn(),
   openEntityInSplitFromUnifiedList: vi.fn(),
 }));
+vi.mock('@app/lib/analytics/posthog', () => ({
+  useFeatureFlag: () => () => ({ enabled: false }),
+}));
+// The action graph imports websocket clients that open module-scope sockets;
+// quarantine them because jsdom cannot provide those browser connections.
+vi.mock('@service-storage/websocket', () => ({
+  storageWS: {
+    send() {},
+    addEventListener() {},
+    removeEventListener() {},
+    reconnectIfDisconnected: vi.fn(),
+  },
+  createWebSocketJob: vi.fn(),
+}));
+vi.mock('@service-connection/websocket', () => ({
+  ws: {
+    send() {},
+    addEventListener() {},
+    removeEventListener() {},
+  },
+  state: () => 'closed',
+  createConnectionBlockWebsocketEffect() {},
+  createConnectionWebsocketEffect() {},
+  parseWebsocketPayload: () => undefined,
+}));
 vi.mock('@app/lib/analytics/analytics-context', () => ({
   useAnalytics: () => ({ track: vi.fn() }),
 }));
