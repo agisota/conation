@@ -143,13 +143,15 @@ describe('manual CRM import example', () => {
       }
       if (
         request.method === 'PUT' &&
-        url.pathname === '/dss/crm/companies/co_rename/name'
+        url.pathname ===
+          '/dss/crm/companies/00000000-0000-4000-8000-000000000001/name'
       ) {
         return new Response(null, { status: 204 });
       }
       if (
         request.method === 'PUT' &&
-        url.pathname === '/dss/crm/contacts/ct_rename/name'
+        url.pathname ===
+          '/dss/crm/contacts/00000000-0000-4000-8000-000000000002/name'
       ) {
         return new Response(null, { status: 204 });
       }
@@ -189,7 +191,10 @@ describe('manual CRM import example', () => {
     const input = {
       companies: [
         { name: 'Acme', domain: 'acme.com', note: '# Import note' },
-        { id: 'co_rename', rename: 'Renamed Acme' },
+        {
+          id: '00000000-0000-4000-8000-000000000001',
+          rename: 'Renamed Acme',
+        },
       ],
       contacts: [
         {
@@ -197,7 +202,10 @@ describe('manual CRM import example', () => {
           name: 'Jane Example',
           email: 'jane@acme.com',
         },
-        { id: 'ct_rename', rename: 'Jane Renamed' },
+        {
+          id: '00000000-0000-4000-8000-000000000002',
+          rename: 'Jane Renamed',
+        },
       ],
       documents: [{ name: 'Import report', markdown: '# Report' }],
     };
@@ -225,9 +233,9 @@ describe('manual CRM import example', () => {
     ).toEqual([
       'POST /dss/crm/companies',
       'POST /dss/crm/comments/crm_company/co_created',
-      'PUT /dss/crm/companies/co_rename/name',
+      'PUT /dss/crm/companies/00000000-0000-4000-8000-000000000001/name',
       'POST /dss/crm/companies/co_created/contacts',
-      'PUT /dss/crm/contacts/ct_rename/name',
+      'PUT /dss/crm/contacts/00000000-0000-4000-8000-000000000002/name',
       'POST /dss/documents/create_markdown',
     ]);
     expect(await requests[0]?.clone().json()).toEqual({

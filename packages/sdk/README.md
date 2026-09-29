@@ -247,13 +247,15 @@ app.post('/webhook', (c) => macro.events.webhook()(c.req.raw));
 
 Use the SDK facade for CRM writes and optional markdown documents; do not reuse an MCP OAuth cache or call private HTTP endpoints. Create a user API key in **Settings → API Keys**, store it as `MACRO_API_KEY`, and keep it out of source control. The example defaults to a dry run and performs no requests until `--apply` is supplied.
 
-Save input such as this as `crm-import.json`:
+Save input such as this as `crm-import.json`. The UUIDs are format-valid placeholders, not existing records.
+Before applying, replace each with the UUID of an existing record you intend to rename, or remove that
+rename row. Otherwise, a rename can fail after earlier create operations have written.
 
 ```json
 {
   "companies": [
     { "name": "Acme", "domain": "acme.com", "note": "# CRM note" },
-    { "id": "company_existing_id", "rename": "Acme, Inc." }
+    { "id": "00000000-0000-4000-8000-000000000001", "rename": "Acme, Inc." }
   ],
   "contacts": [
     {
@@ -261,7 +263,7 @@ Save input such as this as `crm-import.json`:
       "name": "Jane Example",
       "email": "jane@acme.com"
     },
-    { "id": "contact_existing_id", "rename": "Jane Example" }
+    { "id": "00000000-0000-4000-8000-000000000002", "rename": "Jane Example" }
   ],
   "documents": [{ "name": "Import report", "markdown": "# Import report" }]
 }

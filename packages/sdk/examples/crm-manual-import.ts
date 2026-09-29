@@ -47,6 +47,8 @@ function normalizedDomain(domain: string): string {
   return domain.trim().replace(/\.+$/, '').toLowerCase();
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/iu;
+
 function isBareDomain(domain: string): boolean {
   const normalized = normalizedDomain(domain);
   return (
@@ -225,6 +227,9 @@ function validate(
           'Company updates require an explicit id and non-blank rename',
         );
       }
+      if (!UUID_PATTERN.test(id)) {
+        throw new Error('Company update id must be a UUID');
+      }
       addIdentity(`company:${id}`);
       operations.push(`Rename company ${id}`);
       companies.push({
@@ -262,6 +267,9 @@ function validate(
         throw new Error(
           'Contact updates require an explicit id and non-blank rename',
         );
+      }
+      if (!UUID_PATTERN.test(id)) {
+        throw new Error('Contact update id must be a UUID');
       }
       addIdentity(`contact:${id}`);
       operations.push(`Rename contact ${id}`);
@@ -301,7 +309,9 @@ function validate(
     if (isBlockedDomain(normalizedCompanyDomain, blockedDomains)) {
       throw new Error('Contact domain is blocked by CRM policy');
     }
-    addIdentity(`contact-email:${email.toLowerCase()}`);
+    addIdentity(
+      `contact-email:${emailParts[0].toLowerCase()}@${normalizedEmailDomain}`,
+    );
     operations.push(
       `Create contact ${email} under company ${normalizedCompanyDomain}`,
     );
