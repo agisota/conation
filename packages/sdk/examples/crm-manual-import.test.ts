@@ -394,6 +394,107 @@ describe('manual CRM import example', () => {
     expect(requests).toHaveLength(0);
   });
 
+  test('Rust Unicode whitespace fails complete preflight before any request', async () => {
+    configureApply();
+    const requests = recordTransport(() => jsonResponse({}));
+    const whitespace = '\u0085';
+    const cases = [
+      {
+        companies: [
+          { name: 'Acme', domain: 'acme.com' },
+          { name: `${whitespace}Later`, domain: 'later.com' },
+        ],
+      },
+      {
+        companies: [
+          { name: 'Acme', domain: 'acme.com' },
+          { name: 'Later', domain: `${whitespace}later.com` },
+        ],
+      },
+      {
+        companies: [
+          { name: 'Acme', domain: 'acme.com' },
+          {
+            id: '00000000-0000-4000-8000-000000000001',
+            rename: `${whitespace}Renamed Acme`,
+          },
+        ],
+      },
+      {
+        companies: [{ name: 'Acme', domain: 'acme.com' }],
+        contacts: [
+          {
+            companyDomain: 'acme.com',
+            name: `${whitespace}Jane`,
+            email: 'jane@acme.com',
+          },
+        ],
+      },
+      {
+        companies: [{ name: 'Acme', domain: 'acme.com' }],
+        contacts: [
+          {
+            companyDomain: 'acme\u0085.com',
+            name: 'Jane',
+            email: 'jane@acme\u0085.com',
+          },
+        ],
+      },
+      {
+        companies: [{ name: 'Acme', domain: 'acme.com' }],
+        contacts: [
+          {
+            companyDomain: 'acme.com',
+            name: 'Jane',
+            email: `ja${whitespace}ne@acme.com`,
+          },
+        ],
+      },
+      {
+        companies: [{ name: 'Acme', domain: 'acme.com' }],
+        contacts: [
+          {
+            companyDomain: 'acme.com',
+            name: 'Jane',
+            email: 'jane@acme.com',
+          },
+          {
+            id: '00000000-0000-4000-8000-000000000002',
+            rename: `${whitespace}Renamed Jane`,
+          },
+        ],
+      },
+    ];
+    for (const input of cases) {
+      await withInput(input, async (inputPath) => {
+        await expect(run(['--input', inputPath, '--apply'])).rejects.toThrow();
+      });
+    }
+    expect(requests).toHaveLength(0);
+  });
+
+  test('valid Unicode names remain accepted by preflight', async () => {
+    delete process.env.MACRO_API_KEY;
+    const requests = recordTransport(() => {
+      throw new Error('dry-run must not reach transport');
+    });
+    const output: string[] = [];
+    const log = console.log;
+    console.log = (message) => output.push(String(message));
+    try {
+      await withInput(
+        { companies: [{ name: 'München 東京', domain: 'acme.com' }] },
+        async (inputPath) => {
+          await run(['--input', inputPath]);
+        },
+      );
+    } finally {
+      console.log = log;
+    }
+    expect(requests).toHaveLength(0);
+    expect(output.join('\n')).toContain('Create company München 東京 (acme.com)');
+  });
+
   test('invalid rename UUIDs fail before earlier create operations are sent', async () => {
     configureApply();
     const requests = recordTransport(() => jsonResponse({}));
