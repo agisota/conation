@@ -38,9 +38,12 @@ export function classifyExternalDestination(
       (host === 'maps.google.com' ||
         host === 'www.google.com' ||
         host === 'google.com') &&
-      (/^\/maps\/(?:place(?:\/|$)|dir(?:\/|$)|search(?:\/|$))/.test(
-        url.pathname
-      ) ||
+      (/^\/maps\/(?:place|dir|search)\/.+/.test(url.pathname) ||
+        (/^\/maps\/(?:place|dir|search)\/?$/.test(url.pathname) &&
+          (url.searchParams.has('q') ||
+            url.searchParams.has('query') ||
+            url.searchParams.has('daddr') ||
+            url.searchParams.has('destination'))) ||
         (host === 'maps.google.com' &&
           /^\/$/.test(url.pathname) &&
           (url.searchParams.has('q') || url.searchParams.has('query'))) ||

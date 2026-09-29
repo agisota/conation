@@ -76,7 +76,12 @@ export function LinkWithPreview(props: LinkWithPreviewProps) {
             {(() => {
               const data = unfurlData();
               if (data?.type === 'success') {
-                return <LinkHoverCard unfurled={data.data} />;
+                return (
+                  <LinkHoverCard
+                    unfurled={data.data}
+                    showDestinationAction={false}
+                  />
+                );
               }
               return (
                 <LinkHoverCard
@@ -84,6 +89,7 @@ export function LinkWithPreview(props: LinkWithPreviewProps) {
                     url: props.url,
                     title: props.title ?? '',
                   }}
+                  showDestinationAction={false}
                 />
               );
             })()}
