@@ -341,9 +341,10 @@ Body placeholder advertises: `/` for block commands, `@` to reference files, `;`
 Markdown auto-format works while typing (`#` heading, `[]` checklist, `>` quote).
 
 AI text-writing operations require a paragraph/list-item or text-run ID. A
-table, row, cell, or list-container ID is rejected with guidance to choose a
-content block or use `setCell`. Existing stray inline content directly inside
-table cells is preserved in paragraphs when the editor opens the document.
+table, row, cell, or list-container ID is rejected before mutation with guidance
+to choose a content block or use `setCell`; merging also rejects table, row, or
+cell IDs before changing the document. Existing stray inline content directly
+inside table cells is preserved in paragraphs when the editor opens the document.
 
 `@` opens the mention menu wherever the caret starts a word, including directly
 in front of existing text — the menu opens empty there instead of searching for
