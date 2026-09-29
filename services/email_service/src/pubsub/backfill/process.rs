@@ -11,6 +11,7 @@ use models_email::email::service::backfill::{
 use models_email::email::service::link;
 use models_email::email::service::pubsub::{DetailedError, FailureReason, ProcessingError};
 use sqs_worker::cleanup_message;
+use std::future::Future;
 use uuid::Uuid;
 
 // Process a single message from the backfill queue
@@ -21,12 +22,11 @@ pub async fn process_message(
     // Malformed JSON is NOT retryable.
     let data = match extract_backfill_message(message) {
         Ok(data) => data,
-        Err(e) => {
-            tracing::error!(error = %e, "Failed to extract message, this is non-retryable.");
-            if let Err(cleanup_err) = cleanup_message(&ctx.sqs_worker, message).await {
-                tracing::error!(error = %cleanup_err, "Failed to clean up message after extraction error");
-            }
-            return Err(e);
+        Err(error) => {
+            return handle_extraction_error(&ctx.db, message, error, async {
+                cleanup_message(&ctx.sqs_worker, message).await
+            })
+            .await;
         }
     };
 
@@ -232,3 +232,72 @@ fn extract_backfill_message(
 
     Ok(backfill_message)
 }
+
+/// A pre-extraction email worker may still deliver this removed variant.
+/// Only a well-formed legacy envelope may change an outbox row; unrelated
+/// malformed/unknown messages keep the existing non-retryable cleanup path.
+fn extract_legacy_calendar_delivery(message: &aws_sdk_sqs::types::Message) -> Option<(Uuid, Uuid)> {
+    let value: serde_json::Value = serde_json::from_str(message.body()?).ok()?;
+    let scope = value
+        .get("backfillOperation")?
+        .get("calendar_google_backfill")?;
+    let link_id = scope.get("link_id")?.as_str()?.parse().ok()?;
+    let job_id = scope.get("calendar_job_id")?.as_str()?.parse().ok()?;
+    Some((link_id, job_id))
+}
+
+/// Shared malformed-delivery branch used by the worker, including the real
+/// legacy-envelope classifier. Acknowledgment is deferred until the DB reset
+/// succeeds; ordinary malformed email messages retain their cleanup behavior.
+async fn handle_extraction_error(
+    db: &sqlx::PgPool,
+    message: &aws_sdk_sqs::types::Message,
+    error: anyhow::Error,
+    ack: impl Future<Output = anyhow::Result<()>>,
+) -> anyhow::Result<()> {
+    if let Some((link_id, calendar_job_id)) = extract_legacy_calendar_delivery(message) {
+        tracing::warn!(
+            %calendar_job_id,
+            error = %error,
+            "Returning legacy calendar delivery to the calendar outbox"
+        );
+        return reset_legacy_calendar_delivery(db, link_id, calendar_job_id, ack).await;
+    }
+
+    tracing::error!(error = %error, "Failed to extract message, this is non-retryable.");
+    if let Err(cleanup_err) = ack.await {
+        tracing::error!(error = %cleanup_err, "Failed to clean up message after extraction error");
+    }
+    Err(error)
+}
+
+async fn reset_legacy_calendar_delivery(
+    db: &sqlx::PgPool,
+    link_id: Uuid,
+    calendar_job_id: Uuid,
+    ack: impl Future<Output = anyhow::Result<()>>,
+) -> anyhow::Result<()> {
+    // Never acknowledge a published legacy delivery until the matching
+    // calendar-service outbox row can be selected for republishing. Fence
+    // the row by both job ID and the original email link from the envelope.
+    let result = sqlx::query(
+        "UPDATE calendar_sync_outbox outbox SET published_at = NULL \
+         FROM calendar_backfill_jobs job \
+         WHERE outbox.backfill_job_id = job.id AND job.id = $1 \
+           AND job.email_link_id = $2 AND job.kind = 'google_calendar'",
+    )
+    .bind(calendar_job_id)
+    .bind(link_id)
+    .execute(db)
+    .await
+    .context("failed to return legacy calendar delivery to the outbox")?;
+    anyhow::ensure!(
+        result.rows_affected() == 1,
+        "expected one matching calendar outbox row for legacy delivery (job {calendar_job_id}, link {link_id}), updated {}",
+        result.rows_affected()
+    );
+    ack.await
+}
+
+#[cfg(test)]
+mod test;
