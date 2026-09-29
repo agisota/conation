@@ -145,6 +145,42 @@ describe('uploadInputAttachments', () => {
     localStorage.removeItem(persistenceKey);
     localStorage.removeItem(`${persistenceKey}-upload-generation`);
   });
+  it('does not restore an in-flight upload when generation storage rejects the clear', async () => {
+    const persistenceKey = 'attachment-tracker-storage-failure';
+    const generationKey = `${persistenceKey}-upload-generation`;
+    localStorage.setItem(generationKey, 'old-generation');
+    const tracker = createInputAttachmentTracker({ persistenceKey });
+    const { promise: uploadResult, resolve: resolveUpload } =
+      Promise.withResolvers<{
+        failed: false;
+        destination: 'static';
+        id: string;
+      }>();
+    const uploadPromise = uploadInputAttachments({
+      files: [new File(['abc'], 'image.png', { type: 'image/png' })],
+      tracker,
+      uploadFile: () => uploadResult,
+    });
+    await Promise.resolve();
+
+    const originalSetItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (key, value) {
+      if (key === generationKey) throw new DOMException('Full', 'QuotaExceededError');
+      return originalSetItem.call(this, key, value);
+    });
+    tracker.clearAttachments();
+    resolveUpload({
+      failed: false,
+      destination: 'static',
+      id: 'uploaded-after-clear',
+    });
+    await uploadPromise;
+
+    expect(tracker.attachments()).toEqual([]);
+    expect(localStorage.getItem(generationKey)).toBe('old-generation');
+    localStorage.removeItem(generationKey);
+    localStorage.removeItem(persistenceKey);
+  });
 
   it.each([
     {

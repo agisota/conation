@@ -9,7 +9,7 @@ import {
   waitFor,
   within,
 } from '@solidjs/testing-library';
-import type { JSX } from 'solid-js';
+import { createSignal, type JSX } from 'solid-js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAgentRoster, type PersistedAgentLike } from '../core/roster';
 import { AgentPicker } from './AgentPicker';
@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   recentUrls: [] as string[],
   preferredInmemModel: undefined as string | undefined,
   userId: 'user',
+  setUserId: undefined as ((id: string) => void) | undefined,
   rememberInmemModel: vi.fn((id: string) => {
     mocks.preferredInmemModel = id;
   }),
@@ -41,7 +42,11 @@ vi.mock('@channel/Input', async () => ({
     }),
 }));
 vi.mock('@core/context/user', () => ({
-  useUserId: () => () => mocks.userId,
+  useUserId: () => {
+    const [id, setId] = createSignal(mocks.userId);
+    mocks.setUserId = setId;
+    return id;
+  },
 }));
 vi.mock('@core/constant/SettingsState', () => ({
   useSettingsState: () => ({ openSettings: mocks.openSettings }),
@@ -242,6 +247,7 @@ describe('agent-led new conversation', () => {
   let motionStyles: HTMLStyleElement;
   beforeEach(() => {
     mocks.userId = 'user';
+    mocks.setUserId = undefined;
     mocks.attachments = [];
     mocks.recentIds = [MACRO_CODER_BOT_ID];
     mocks.recentUrls = [];
@@ -288,6 +294,35 @@ describe('agent-led new conversation', () => {
       (screen.getByRole('textbox', { name: 'Draft' }) as HTMLInputElement).value
     ).toBe('Account A draft');
     expect(screen.getByText('account.md')).toBeTruthy();
+  });
+  it('rebinds drafts and attachments when the signed-in account changes without unmounting', () => {
+    mocks.userId = 'account-a';
+    page();
+    fireEvent.input(screen.getByRole('textbox', { name: 'Draft' }), {
+      target: { value: 'Account A draft' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
+    expect(screen.getByText('account.md')).toBeTruthy();
+
+    mocks.setUserId?.('account-b');
+    expect(
+      (screen.getByRole('textbox', { name: 'Draft' }) as HTMLInputElement).value
+    ).toBe('');
+    expect(screen.queryByText('account.md')).toBeNull();
+    fireEvent.input(screen.getByRole('textbox', { name: 'Draft' }), {
+      target: { value: 'Account B draft' },
+    });
+
+    mocks.setUserId?.('account-a');
+    expect(
+      (screen.getByRole('textbox', { name: 'Draft' }) as HTMLInputElement).value
+    ).toBe('Account A draft');
+    expect(screen.getByText('account.md')).toBeTruthy();
+    mocks.setUserId?.('account-b');
+    expect(
+      (screen.getByRole('textbox', { name: 'Draft' }) as HTMLInputElement).value
+    ).toBe('Account B draft');
+    expect(screen.queryByText('account.md')).toBeNull();
   });
   it('offers both kinds without a mode or model control and starts with the agent default', async () => {
     const send = page();
