@@ -95,3 +95,44 @@ tracked paths.
 - Main and backup must still match the captured baseline. PR #6709's remote
   Biome and Web Status checks remain red at its older draft head. These local
   commits do not release or override RUS-1508's main-update safety gate.
+
+## Live diagnosis and next owners — 2026-09-29
+
+The live Fusion task records still match the dated inventory: 2,584 RUS/CTN
+cards, of which 2,333 are archived. Of the 251 non-archived cards, 21 are
+`done`, 72 `in-review`, 157 `todo`, and CTN-184 alone is `in-progress`.
+Thus 230 board cards are not done, but they are not 230 independently
+merge-ready patches, nor must all 230 finish before these five candidate
+changes can be considered. `done` can mean a PR review or plan was completed,
+not that code landed on this local `main`.
+
+The candidate is a descendant of `main` and has no deleted tracked paths.
+The local `main` and its retained pre-integration backup still point to
+`484c8708a901f74cf34fd74e99df2111f8ceba23`; remote-tracking
+`origin/main` differs by eight local and 45 upstream commits. This is a
+separate reconciliation problem for publication, not a technical inability
+to fast-forward local `main`. Original CTN-176 draft PR #6709 remains on its
+older head `e7e387844dec61583579ed6faf4ed107a1670a7c`, with failing
+Biome Check and Web App Status Check; this local candidate does not fix that
+remote PR.
+
+The installed reference-transaction hook and tracked Python gate have matching
+Git object hashes. Nineteen direct-Git gate tests pass, including old-commit
+backups and rejected updates in disposable repositories. This proves the
+hook's tested behavior, **not** Fusion's installed end-to-end update route.
+Independent source review found additional RUS-1508 gaps: a persisted
+`aiMergeReviewReconciliation.candidateSha` can be reused after a fresh backup
+reservation without rebuilding its older candidate; the pre-land squash guard
+checks file scope but not a single direct parent equal to the reserved old;
+the Fusion gate hardcodes the live CTN root so a different disposable repo
+cannot exercise the CTN-specific path. The separate integrator lock and
+effective configured runtime/bypass-denial evidence also remain unproven.
+Keep the product merge hold; the Git hook alone does not release it.
+
+| Owner / task | Required artifact | Release check |
+| --- | --- | --- |
+| Fusion merge owner — RUS-1508 | Map the configured entry and every enabled main writer; install a separately held integrator lock; invalidate pre-reservation stored candidates; verify direct-parent, tree and source provenance before old-OID CAS. Add a controlled disposable-repo test seam without changing the production CTN identity. | Invoke the actual configured entry in a disposable repo; observe backup before candidate, unique old-based squash, expected-old CAS, and missing/substituted hook, stale candidate, failed backup and race denial without a main/upstream update. |
+| CTN gate owner — RUS-1508 | Preserve the sole durable backup writer and exact receipt/effective-hook binding; document installation, rollback and ordinary Git fallback. | Test normal Git FF, squash, update-ref, packed/linked worktrees and negative controls; obtain the Fusion real-route evidence above before an explicit release decision. |
+| Individual RUS/CTN PR owners | Finish incomplete consumers, review and CI on their own task/PR heads; never copy the 5,000-plus missing tracked paths from damaged Fusion trees. Start with held RUS-1442/161 and CTN-007/014/013/518/283/759/944/058 while leaving the already-owned CTN-184 to its owner. | Per-card behavior and dependencies accepted on the actual final head, with code provenance separate from imported upstream changes. |
+| Candidate integrator | Retain RUS-1436/1443 and CTN-009/011/176 in the isolated branch; investigate and repair independent review findings, including physical calendar addresses containing meeting words. | Focused component/SDK checks and relevant UI smoke on the final candidate; no tracked deletions, reviewed task scope, no new source PR assumed green. |
+| Release integrator (only after gate release) | Reconcile the eight-versus-45 local/upstream divergence without resetting user work; capture another old-main backup, recheck candidate and approvals, then use the controlled main update route. | Main and backup OIDs and resulting tree verified; no automatic corporate-origin push or silent branch deletion. |

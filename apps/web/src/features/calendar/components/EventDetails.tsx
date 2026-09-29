@@ -359,7 +359,7 @@ function EventLocationItem(props: { location: string }) {
       .replace(/[,\s]+$/, '');
     if (!physicalText) return;
     if (
-      /\b(?:zoom|teams|meet|webex|conference|dial[\s-]?in|call|meeting|online|virtual|remote|passcode|password|pin|code|ext(?:ension)?|room|access|join code)\b/i.test(
+      /\b(?:zoom|teams|meet|webex|dial[\s-]?in|online|virtual|remote|passcode|password|pin|code|ext(?:ension)?|access|join code)\b/i.test(
         physicalText
       )
     )
@@ -375,6 +375,12 @@ function EventLocationItem(props: { location: string }) {
       );
     const isSingleNamedPlace =
       words.length === 1 && /^[\p{Lu}][\p{L}'’-]{2,}$/u.test(physicalText);
+    if (
+      /\b(?:conference|call|meeting|room)\b/i.test(physicalText) &&
+      !hasStreetAddress &&
+      !isNamedPlace
+    )
+      return;
     return hasStreetAddress || isNamedPlace || isSingleNamedPlace
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(physicalText)}`
       : undefined;

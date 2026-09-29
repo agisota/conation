@@ -75,8 +75,26 @@ it('keeps an address-and-phone location dialable without searching for the phone
 });
 
 it.each([
+  ['Meeting at 10 Main Street', 'Meeting%20at%2010%20Main%20Street'],
+  ['Hilton Hotel Conference Center', 'Hilton%20Hotel%20Conference%20Center'],
+])(
+  'keeps a physical destination available when its name includes meeting words: %s',
+  (location, query) => {
+    render(() => (
+      <EventDetails event={eventWithLocation(location)} timeFormat="12-hour" />
+    ));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open in Maps' }));
+    expect(open).toHaveBeenCalledWith(
+      `https://www.google.com/maps/search/?api=1&query=${query}`
+    );
+  }
+);
+
+it.each([
   '555-123-4567',
   'Join Zoom meeting 123 456 7890, passcode 123456',
+  'Zoom Conference Center',
   'https://meet.google.com/abc-defg-hij',
   'Room 123456, access code 998877',
   '2026-09-25',
