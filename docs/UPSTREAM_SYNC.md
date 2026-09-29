@@ -56,3 +56,19 @@ On 2026-09-29, a local source-built Fusion `0.78.0-beta.5` dashboard (compatible
 | CONV-04 direct-main gate | Separate control; not changed or claimed complete by this runbook. |
 
 The existing routine's enabled configuration is not proof that a scheduler process will be running at its next due time or that dirty production `main` can sync. Fixture passes prove the script's behavior only; production execution remains separately unverified.
+
+## Runtime isolation follow-up, 2026-09-29
+
+A read-only inspection of the compatible Fusion source found that `serve` and
+`daemon` start every active registered project. `--project` selects the primary
+HTTP project; it does not isolate the routine. `--paused` blocks routine dispatch
+as well as task execution, and starting the CTN engine also starts its task and
+merge machinery. The inspected source checkout currently has no built
+`packages/cli/dist/bin.js`.
+
+No full engine was started for this follow-up, no live sync was triggered, and
+no second scheduler was created. The existing procedure's enabled read-back above
+remains configuration evidence, not evidence of a persistent process or a later
+successful run. RUS-1507's acceptance separates those facts and forbids a live
+rebase merely for testing; do not widen it into a scheduler replacement or claim
+CONV-04 is complete.
