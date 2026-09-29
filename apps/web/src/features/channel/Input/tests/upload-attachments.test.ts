@@ -164,13 +164,15 @@ describe('uploadInputAttachments', () => {
     await Promise.resolve();
 
     const originalSetItem = Storage.prototype.setItem;
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(
-      function (key, value) {
-        if (key === generationKey)
-          throw new DOMException('Full', 'QuotaExceededError');
-        return originalSetItem.call(this, key, value);
-      }
-    );
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key,
+      value
+    ) {
+      if (key === generationKey)
+        throw new DOMException('Full', 'QuotaExceededError');
+      return originalSetItem.call(this, key, value);
+    });
     tracker.clearAttachments();
     resolveUpload({
       failed: false,
@@ -204,13 +206,15 @@ describe('uploadInputAttachments', () => {
 
     const currentTracker = createInputAttachmentTracker({ persistenceKey });
     const originalSetItem = Storage.prototype.setItem;
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(
-      function (key, value) {
-        if (key === generationKey)
-          throw new DOMException('Full', 'QuotaExceededError');
-        return originalSetItem.call(this, key, value);
-      }
-    );
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key,
+      value
+    ) {
+      if (key === generationKey)
+        throw new DOMException('Full', 'QuotaExceededError');
+      return originalSetItem.call(this, key, value);
+    });
     currentTracker.clearAttachments();
     resolveUpload({
       failed: false,
