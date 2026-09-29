@@ -424,7 +424,6 @@ describe('manual CRM import example', () => {
     expect(requests).toHaveLength(0);
   });
 
-
   test('case-variant UUID rename duplicates fail before any request', async () => {
     configureApply();
     const requests = recordTransport(() => jsonResponse({}));
