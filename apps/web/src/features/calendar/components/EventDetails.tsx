@@ -1,3 +1,4 @@
+import { classifyExternalDestination } from '@core/component/external-destinations';
 import { openDocument } from '@core/component/LexicalMarkdown/component/core/BlockLink';
 import { toast } from '@core/component/Toast/Toast';
 import { UserIcon, type UserIconProps } from '@core/component/UserIcon';
@@ -334,12 +335,51 @@ function formatEventSchedule(
 }
 
 /**
- * The location row. A phone number written into the location becomes a call
- * link, so a dial-in number takes one click instead of being retyped into a
- * phone by hand.
+ * The location row. Phone runs remain dialable, while plausible physical
+ * places gain a user-triggered map search.
  */
 function EventLocationItem(props: { location: string }) {
   const segments = createMemo(() => parseEventLocation(props.location));
+  const mapUrl = createMemo(() => {
+    const value = props.location.trim();
+    if (!value || isPhoneOnlyLocation(segments())) return;
+    const recognized = classifyExternalDestination(value);
+    if (recognized?.kind === 'Maps') return recognized.url;
+    if (/^(?:https?:\/\/|www\.)/i.test(value)) return;
+    const physicalText = segments()
+      .filter((segment) => segment.kind === 'text')
+      .map((segment) => segment.text)
+      .join('')
+      .trim()
+      .replace(/[,\s]+$/, '');
+    if (!physicalText) return;
+    if (
+      /\b(?:zoom|teams|meet|webex|dial[\s-]?in|online|virtual|remote|passcode|password|pin|code|ext(?:ension)?|access|join code)\b/i.test(
+        physicalText
+      )
+    )
+      return;
+    const words = physicalText.match(/[\p{L}\p{N}]+/gu) ?? [];
+    const hasStreetAddress =
+      /\b\d{1,6}\s+[\p{L}][\p{L}'’-]*(?:\s+[\p{L}][\p{L}'’-]*){0,3}\s+\b(?:street|st|road|rd|avenue|ave|boulevard|blvd|lane|ln|drive|dr|way|square|sq|highway|hwy|route|rte)\b/iu.test(
+        physicalText
+      );
+    const isNamedPlace =
+      /\b(?:park|museum|hotel|restaurant|cafe|café|airport|station|library|university|campus|hospital|stadium|arena|garden|plaza|center|centre|hall|theatre|theater|church|temple|beach|harbor|harbour|pier|monument|zoo|mall|market)\b/i.test(
+        physicalText
+      );
+    const isSingleNamedPlace =
+      words.length === 1 && /^[\p{Lu}][\p{L}'’-]{2,}$/u.test(physicalText);
+    if (
+      /\b(?:conference|call|meeting|room)\b/i.test(physicalText) &&
+      !hasStreetAddress &&
+      !isNamedPlace
+    )
+      return;
+    return hasStreetAddress || isNamedPlace || isSingleNamedPlace
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(physicalText)}`
+      : undefined;
+  });
 
   return (
     <div class="contents">
@@ -364,6 +404,18 @@ function EventLocationItem(props: { location: string }) {
           }
         </For>
       </span>
+      <Show when={mapUrl()}>
+        {(url) => (
+          <button
+            type="button"
+            class="text-link hover:text-link-hover hover:underline"
+            aria-label="Open in Maps"
+            onClick={() => openExternalUrl(url())}
+          >
+            Open in Maps
+          </button>
+        )}
+      </Show>
     </div>
   );
 }

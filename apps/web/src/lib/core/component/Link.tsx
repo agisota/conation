@@ -5,6 +5,7 @@ import type { GetUnfurlResponse } from '@service-unfurl/generated/schemas/getUnf
 import { cn } from '@ui';
 import { Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
+import { classifyExternalDestination } from './external-destinations';
 
 function extractDomain(url: string) {
   try {
@@ -23,7 +24,37 @@ type UnfurlLinkProps = {
 
 type LinkHoverCardProps = {
   unfurled: GetUnfurlResponse;
+  showDestinationAction?: boolean;
 };
+
+type ExternalDestinationActionProps = {
+  url: string;
+  class?: string;
+};
+
+/** A keyboard- and touch-reachable action for a recognized external destination. */
+export function ExternalDestinationAction(
+  props: ExternalDestinationActionProps
+) {
+  const destination = () => classifyExternalDestination(props.url);
+  return (
+    <Show when={destination()}>
+      {(value) => (
+        <button
+          type="button"
+          class={cn(
+            'text-link text-xs hover:underline focus-visible:underline',
+            props.class
+          )}
+          aria-label={value().actionLabel}
+          onClick={() => openExternalUrl(value().url)}
+        >
+          {value().actionLabel}
+        </button>
+      )}
+    </Show>
+  );
+}
 
 /**
  * The shared card shown when hovering a link in rendered or editable Markdown.
@@ -31,7 +62,7 @@ type LinkHoverCardProps = {
 export function LinkHoverCard(props: LinkHoverCardProps) {
   const domain = extractDomain(props.unfurled.url);
   const title = () => props.unfurled.title || domain;
-
+  const destination = classifyExternalDestination(props.unfurled.url);
   return (
     <div class="flex w-80 max-w-[calc(100vw-1rem)] items-start gap-1 rounded-xl glass bg-menu-glass p-2 text-left">
       <div class="flex size-6 shrink-0 items-center justify-center">
@@ -60,6 +91,16 @@ export function LinkHoverCard(props: LinkHoverCardProps) {
       <div class="min-w-0 flex-1">
         <div class="truncate text-sm/6 font-medium text-ink">{title()}</div>
         <div class="truncate text-xs text-ink-muted">{domain}</div>
+        <Show when={destination}>
+          {(value) => (
+            <>
+              <div class="text-xs text-ink-muted">{value().kind}</div>
+              <Show when={props.showDestinationAction !== false}>
+                <ExternalDestinationAction url={props.unfurled.url} />
+              </Show>
+            </>
+          )}
+        </Show>
       </div>
     </div>
   );
