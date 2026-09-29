@@ -131,11 +131,19 @@ export function FloatingLinkMenu(props: {
       return;
     }
     if (!link.editAccess) {
-      if (!classifyExternalDestination(link.url ?? '')) return;
+      const destination = classifyExternalDestination(link.url ?? '');
+      if (!destination) return;
       setMenuOpen(true);
       setPreviewHover(false);
       setLinkInfo({ ...link });
       setPendingLinkInfo({ ...link });
+      setTimeout(() => {
+        menuRef
+          ?.querySelector<HTMLButtonElement>(
+            `button[aria-label="${destination.actionLabel}"]`
+          )
+          ?.focus();
+      });
       return;
     }
     setMenuOpen(true);
@@ -274,6 +282,7 @@ export function FloatingLinkMenu(props: {
       editor.focus();
     }
     if (e.key === 'Enter') {
+      if (!linkInfo()?.editAccess) return;
       e.preventDefault();
       handleSubmit();
     }
@@ -305,6 +314,7 @@ export function FloatingLinkMenu(props: {
         KEY_ENTER_COMMAND,
         () => {
           if (menuOpen()) {
+            if (!linkInfo()?.editAccess) return false;
             handleSubmit();
             reset();
             editor.focus();
@@ -527,6 +537,7 @@ export function FloatingLinkMenu(props: {
               'max-h-0 mt-0': !expanded(),
               'max-h-24 mt-1.5': expanded(),
             }}
+            hidden={!linkInfo()?.editAccess}
           >
             <Button
               onClick={handleSubmit}
@@ -534,6 +545,7 @@ export function FloatingLinkMenu(props: {
               size="sm"
               tooltip="Apply link changes"
               disabled={!pendingLinkInfo()?.url && !pendingLinkInfo()?.linkText}
+              tabIndex={expanded() ? 0 : -1}
             >
               <Check /> Apply
             </Button>

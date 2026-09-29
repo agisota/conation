@@ -424,16 +424,19 @@ function registerLinksPlugin(editor: LexicalEditor, props: LinkPluginProps) {
     const link = getLinkFromDom(el);
     if (link === null) return;
 
+    if (e.metaKey || e.ctrlKey || e.shiftKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      openExternalUrl(link.url);
+      return;
+    }
+
     if (editor.isEditable()) {
-      // Editable doc: a plain click edits the link; a modifier-click also opens
-      // it (in a new tab / in-app).
-      if (e.metaKey || e.ctrlKey) {
-        openExternalUrl(link.url);
-      }
+      // A plain click edits the link; modifier-clicks navigate directly.
       onClickLink({
         linkRef: el,
         selection: window.getSelection() || undefined,
-        editAccess: editor.isEditable(),
+        editAccess: true,
         ...link,
       });
       return;
