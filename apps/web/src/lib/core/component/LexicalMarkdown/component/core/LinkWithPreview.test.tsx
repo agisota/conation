@@ -80,3 +80,13 @@ it('keeps the destination action after pointer leave and activates it by keyboar
 
   expect(open).toHaveBeenCalledWith(url);
 });
+
+it('renders only one destination action when the link preview is focused', async () => {
+  const url = 'https://x.com/example/status/123';
+  render(() => <LinkWithPreview url={url}>source link</LinkWithPreview>);
+
+  fireEvent.focus(screen.getByRole('link', { name: 'source link' }));
+  await screen.findByText('X', { exact: true });
+
+  expect(screen.getAllByRole('button', { name: 'Open in X' })).toHaveLength(1);
+});

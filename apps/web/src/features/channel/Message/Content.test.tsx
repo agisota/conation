@@ -52,6 +52,7 @@ it('renders an external conversation action from persisted channel Markdown', as
   const message = {
     id: 'message-1',
     content: `See [discussion](${url})`,
+    sender_id: 'user-1',
   } as MessageData;
   render(() => (
     <MessageProvider value={() => message}>

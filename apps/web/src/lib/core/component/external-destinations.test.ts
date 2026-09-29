@@ -36,6 +36,9 @@ describe('classifyExternalDestination', () => {
     'javascript:alert(1)',
     'data:text/html,hello',
     'not a URL',
+    'https://www.google.com/maps/place/',
+    'https://www.google.com/maps/dir/',
+    'https://www.google.com/maps/search/',
   ])('%s is not trusted', (url) => {
     expect(classifyExternalDestination(url)).toBeUndefined();
   });

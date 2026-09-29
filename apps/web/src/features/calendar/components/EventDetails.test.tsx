@@ -103,6 +103,8 @@ it.each([
   'ext 1234',
   'Conference only',
   'Dial-in ext 1234',
+  'Lunch',
+  'Birthday',
 ])('does not offer a misleading map for %s', (location) => {
   render(() => (
     <EventDetails event={eventWithLocation(location)} timeFormat="12-hour" />
