@@ -9,7 +9,7 @@ import { useSettingsState } from '@core/constant/SettingsState';
 import { useUserId } from '@core/context/user';
 import { uploadFile } from '@core/util/upload';
 import type { PromptAttachment } from '@service-agent-harness/generated/schemas';
-import { createMemo, createSignal } from 'solid-js';
+import { createMemo, createSignal, Show } from 'solid-js';
 import { ChatComposer } from '../components/ChatComposer';
 import type { AgentKind } from '../core/agent-kind';
 import { defaultBranchFor } from '../core/repository';
@@ -54,10 +54,20 @@ export function NewChatPage(props: {
   onOpenRoster: (kind: AgentKind) => void;
 }) {
   const userId = useUserId();
+  return (
+    <Show when={userId()} keyed fallback={<NewChatPageForAccount {...props} />}>
+      {(id) => <NewChatPageForAccount {...props} userId={id} />}
+    </Show>
+  );
+}
+
+function NewChatPageForAccount(
+  props: Parameters<typeof NewChatPage>[0] & { userId?: string }
+) {
   const { openSettings } = useSettingsState();
-  const recentAgents = createRecentAgentSelections(userId());
-  const repositories = createRecentRepositories(userId());
-  const preferredInmem = createPreferredInmemModel(userId());
+  const recentAgents = createRecentAgentSelections(props.userId);
+  const repositories = createRecentRepositories(props.userId);
+  const preferredInmem = createPreferredInmemModel(props.userId);
   const options = () => props.roster;
   const [agentId, setAgentId] = createSignal<string>();
   /** One-shot model from a coding agent's submenu; Macro uses {@link preferredInmem}. */
@@ -66,7 +76,7 @@ export function NewChatPage(props: {
   const [repoUrl, setRepoUrl] = createSignal<string | undefined>();
   const persistedDraft = createPersistedComposerDraft(
     NEW_CONVERSATION_DRAFT_KEY,
-    userId() ?? null
+    props.userId ?? null
   );
   const draft = () => props.draft ?? persistedDraft.draft();
   const setDraft = (text: string) =>
@@ -142,7 +152,7 @@ export function NewChatPage(props: {
       ? undefined
       : createAccountScopedComposerKey(
           NEW_CONVERSATION_ATTACHMENTS_KEY,
-          userId()
+          props.userId
         ),
   });
   const attachFiles = (files: File[]) =>

@@ -42,10 +42,22 @@ export function createInputAttachmentTracker(
   const generationKey = options.persistenceKey
     ? `${options.persistenceKey}-upload-generation`
     : undefined;
+  let fallbackAfterFailedWrite = false;
+  let failedStoredGeneration: string | null | undefined;
   const getUploadGeneration = () => {
     if (generationKey) {
       try {
-        return localStorage.getItem(generationKey) ?? localUploadGeneration;
+        const stored = localStorage.getItem(generationKey);
+        if (fallbackAfterFailedWrite) {
+          if (
+            failedStoredGeneration === undefined ||
+            stored === failedStoredGeneration
+          )
+            return localUploadGeneration;
+          // A different tracker advanced the shared generation afterward.
+          fallbackAfterFailedWrite = false;
+        }
+        return stored ?? localUploadGeneration;
       } catch {
         // In-memory generation still fences uploads if storage is unavailable.
       }
@@ -88,10 +100,15 @@ export function createInputAttachmentTracker(
   const clearAttachments = () => {
     localUploadGeneration = crypto.randomUUID();
     if (generationKey) {
+      let storedBeforeWrite: string | null | undefined;
       try {
+        storedBeforeWrite = localStorage.getItem(generationKey);
         localStorage.setItem(generationKey, localUploadGeneration);
+        fallbackAfterFailedWrite = false;
       } catch {
-        // Clearing must still fence uploads in this tracker if storage fails.
+        // The local token must win over a stale stored token on write failure.
+        failedStoredGeneration = storedBeforeWrite;
+        fallbackAfterFailedWrite = true;
       }
     }
     setAttachments([]);
