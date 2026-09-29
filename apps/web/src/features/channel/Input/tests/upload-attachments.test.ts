@@ -111,7 +111,7 @@ describe('uploadInputAttachments', () => {
   it('does not restore an upload after the composer is cleared while it is in flight', async () => {
     const persistenceKey = 'attachment-tracker-stale-upload';
     localStorage.removeItem(persistenceKey);
-    const tracker = createInputAttachmentTracker({ persistenceKey });
+    const staleTracker = createInputAttachmentTracker({ persistenceKey });
     const file = new File(['abc'], 'image.png', { type: 'image/png' });
     const { promise: uploadResult, resolve: resolveUpload } =
       Promise.withResolvers<{
@@ -122,13 +122,14 @@ describe('uploadInputAttachments', () => {
 
     const uploadPromise = uploadInputAttachments({
       files: [file],
-      tracker,
+      tracker: staleTracker,
       uploadFile: () => uploadResult,
     });
 
     await Promise.resolve();
-    expect(tracker.attachments()).toHaveLength(1);
-    tracker.clearAttachments();
+    expect(staleTracker.attachments()).toHaveLength(1);
+    const currentTracker = createInputAttachmentTracker({ persistenceKey });
+    currentTracker.clearAttachments();
     resolveUpload({
       failed: false,
       destination: 'static',
@@ -136,9 +137,13 @@ describe('uploadInputAttachments', () => {
     });
     await uploadPromise;
 
-    expect(tracker.attachments()).toEqual([]);
-    expect(localStorage.getItem(persistenceKey)).toBeNull();
+    const remountedTracker = createInputAttachmentTracker({ persistenceKey });
+    expect(remountedTracker.attachments()).toEqual([]);
+    expect(
+      JSON.parse(localStorage.getItem(persistenceKey) ?? 'null')
+    ).toEqual([]);
     localStorage.removeItem(persistenceKey);
+    localStorage.removeItem(`${persistenceKey}-upload-generation`);
   });
 
   it.each([

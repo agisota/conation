@@ -76,7 +76,9 @@ export async function uploadInputAttachments(options: {
   tracker: InputAttachmentTracker;
   uploadFile: (file: File) => Promise<UploadResult>;
 }): Promise<void> {
+  const uploadGeneration = options.tracker.getUploadGeneration();
   for (const file of options.files) {
+    if (!options.tracker.isUploadGenerationCurrent(uploadGeneration)) break;
     const uploadSource = createUploadFile(file);
     const pendingId = crypto.randomUUID();
     const pendingKind = getAttachmentKindFromFile(uploadSource);
@@ -100,6 +102,7 @@ export async function uploadInputAttachments(options: {
         pendingKind
       );
       const result = await options.uploadFile(file);
+      if (!options.tracker.isUploadGenerationCurrent(uploadGeneration)) break;
 
       if (result.failed) {
         options.tracker.removeAttachment(pendingId);
@@ -108,6 +111,7 @@ export async function uploadInputAttachments(options: {
       }
 
       const dimensions = await dimensionsPromise;
+      if (!options.tracker.isUploadGenerationCurrent(uploadGeneration)) break;
       const uploaded = buildUploadedAttachment(file, pendingKind, result);
       if (!uploaded) {
         options.tracker.removeAttachment(pendingId);
@@ -127,6 +131,7 @@ export async function uploadInputAttachments(options: {
 
       replacePendingAttachment(options.tracker, pendingId, uploaded);
     } catch (error) {
+      if (!options.tracker.isUploadGenerationCurrent(uploadGeneration)) break;
       console.error('failed to upload attachment', error);
       options.tracker.removeAttachment(pendingId);
       toast.failure(`Failed to upload ${file.name}`);

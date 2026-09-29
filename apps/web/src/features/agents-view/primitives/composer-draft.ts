@@ -19,12 +19,26 @@ export const NEW_CONVERSATION_ATTACHMENTS_KEY = createPersistenceKey(
   0
 );
 
-/** Keep a composer draft after the New conversation page remounts. */
+/** Derive a composer storage key scoped to the current account. */
+export function createAccountScopedComposerKey(
+  name: string,
+  userId: string | undefined
+): string | undefined {
+  return userId ? `${name}-user-${encodeURIComponent(userId)}` : undefined;
+}
+
 export function createPersistedComposerDraft(
-  name = NEW_CONVERSATION_DRAFT_KEY
+  name = NEW_CONVERSATION_DRAFT_KEY,
+  userId?: string | null
 ) {
   const raw = createSignal<string | undefined>(undefined);
-  const [persisted, setPersisted] = makePersisted(raw, { name });
+  const persistenceKey =
+    userId === undefined
+      ? name
+      : createAccountScopedComposerKey(name, userId ?? undefined);
+  const [persisted, setPersisted] = persistenceKey
+    ? makePersisted(raw, { name: persistenceKey })
+    : raw;
   return {
     draft: () => persisted() ?? '',
     setDraft: (value: string) => setPersisted(value || undefined),

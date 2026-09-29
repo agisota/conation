@@ -10,6 +10,8 @@ export type InputAttachmentTracker = {
   setAttachmentPending: (attachmentId: string, pending: boolean) => void;
   setAttachments: (attachments: InputAttachmentData[]) => void;
   clearAttachments: () => void;
+  getUploadGeneration: () => string;
+  isUploadGenerationCurrent: (generation: string) => boolean;
 };
 
 type CreateInputAttachmentTrackerOptions = {
@@ -36,6 +38,22 @@ export function createInputAttachmentTracker(
     : raw;
 
   const maxAttachments = options.maxAttachments ?? 10;
+  let localUploadGeneration = 'initial';
+  const generationKey = options.persistenceKey
+    ? `${options.persistenceKey}-upload-generation`
+    : undefined;
+  const getUploadGeneration = () => {
+    if (generationKey) {
+      try {
+        return localStorage.getItem(generationKey) ?? localUploadGeneration;
+      } catch {
+        // In-memory generation still fences uploads if storage is unavailable.
+      }
+    }
+    return localUploadGeneration;
+  };
+  const isUploadGenerationCurrent = (generation: string) =>
+    generation === getUploadGeneration();
 
   const hasPending = createMemo(() =>
     attachments().some((attachment) => attachment.pending === true)
@@ -68,6 +86,14 @@ export function createInputAttachmentTracker(
   };
 
   const clearAttachments = () => {
+    localUploadGeneration = crypto.randomUUID();
+    if (generationKey) {
+      try {
+        localStorage.setItem(generationKey, localUploadGeneration);
+      } catch {
+        // Clearing must still fence uploads in this tracker if storage fails.
+      }
+    }
     setAttachments([]);
   };
 
@@ -79,5 +105,7 @@ export function createInputAttachmentTracker(
     setAttachmentPending,
     setAttachments: replaceAttachments,
     clearAttachments,
+    getUploadGeneration,
+    isUploadGenerationCurrent,
   };
 }
