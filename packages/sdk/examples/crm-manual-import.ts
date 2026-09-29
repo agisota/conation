@@ -43,6 +43,10 @@ const RESERVED_DOMAIN_SUFFIXES = [
   '.example',
 ];
 
+function rustTrim(value: string): string {
+  return value.replace(/^\p{White_Space}+|\p{White_Space}+$/gu, '');
+}
+
 function normalizedDomain(domain: string): string {
   return domain.trim().replace(/\.+$/, '').toLowerCase();
 }
@@ -54,6 +58,9 @@ function validatedDisplayName(
   label: string,
 ): string | undefined {
   const name = raw?.trim();
+  if (raw !== undefined && rustTrim(raw) !== name) {
+    throw new Error(`${label} must not start or end with whitespace`);
+  }
   if (!name) return name;
 
   let characterCount = 0;
@@ -74,7 +81,7 @@ function isBareDomain(domain: string): boolean {
     normalized.includes('.') &&
     !normalized.startsWith('.') &&
     !normalized.includes('..') &&
-    !/[\s/:@?#]/u.test(normalized)
+    !/[\p{White_Space}/:@?#]/u.test(normalized)
   );
 }
 
@@ -309,7 +316,7 @@ function validate(
       Buffer.byteLength(email) > 320 ||
       emailParts?.length !== 2 ||
       !emailParts[0] ||
-      /\s/u.test(emailParts[0]) ||
+      /[\p{White_Space}]/u.test(emailParts[0]) ||
       !emailParts[1] ||
       !isBareDomain(companyDomain) ||
       !isBareDomain(emailParts[1])
