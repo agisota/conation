@@ -317,7 +317,7 @@ export class Doc implements DocReader, DocWriter {
   }
 
   private removeText(node: NodeRef, at: Offset, len: number): void {
-    this.tx(() => removeTextAt(this.block(node), at, len));
+    this.tx(() => removeTextAt(this.textBlock(node), at, len));
   }
 
   /**
@@ -640,12 +640,22 @@ export class Doc implements DocReader, DocWriter {
   }
 
   private mergeBlocks(nodes: NodeRef[], separator: string): void {
-    this.tx(() =>
-      blocks.$mergeBlocks(
-        nodes.map((n) => locate.$byId(this.session, n)),
-        separator
-      )
-    );
+    this.tx(() => {
+      const resolved = nodes.map((n) => locate.$byId(this.session, n));
+      if (
+        resolved.some(
+          (node) =>
+            $isTableNode(node) ||
+            $isTableRowNode(node) ||
+            $isTableCellNode(node)
+        )
+      ) {
+        throw new EditError(
+          'mergeBlocks cannot target a table, row, or cell — target paragraph or list item ids instead.'
+        );
+      }
+      blocks.$mergeBlocks(resolved, separator);
+    });
   }
 
   private insertListItemAfter(
