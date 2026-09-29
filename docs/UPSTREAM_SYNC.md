@@ -40,19 +40,19 @@ The fixture suite uses no network. It creates independent bare `upstream` and `o
 
 ## Host installation and existing schedule
 
-The source file is not the installed host copy. Deployment is a separate authorized operation and has **not** been performed as part of this isolated source task. Once reviewed and validated, an operator with host access should preserve any materially different installed copy, stage the canonical content beside `/Users/t/Projects/CTN/.fusion/sync-upstream.sh`, install atomically, set executable permissions, and read back the installed bytes/hash, shebang, and mode. Never test deployment by executing against live `main`; use fixture mode or compare the installed file byte-for-byte with the tested canonical source.
+Deployment was performed without executing the script against live `main`. The previous 56-line `/bin/sh` implementation is retained as `/Users/t/Projects/CTN/.fusion/sync-upstream.sh.bak-2026-09-29T0956Z` (SHA-256 `de6d4e16cc4d38e41081ca1e785a449727323592deb38a4c2120c7fb6f47f9b3`). The installed executable copy has the same SHA-256 as the fixture-tested source (`761ee46329bd7bdcbb4ac8f03d31079c16e0381f8fd3e8047096f4b61ab95ba9`); Bash syntax passes. The root worktree still has the user's modified `.gitignore` and deleted `.agents/skills/live-debug`, which the new script refuses before fetching.
 
-The existing Fusion procedure is also external scheduler state. Its record, identity, owner, enabled flag, timezone, exact schedule, absolute command, and execution/error history have **not been read back here**. The ticket expects the existing procedure at `0 */3 * * *` to target `/Users/t/Projects/CTN/.fusion/sync-upstream.sh`; this expected value is not evidence that the procedure is enabled or has run. Do not create a second schedule. Read the existing record through its supported interface and document the actual values before claiming operational acceptance.
+On 2026-09-29, a local source-built Fusion `0.78.0-beta.5` dashboard (matching the existing schema revision 0085) was started on loopback with its engine disabled. Its supported API returned `[]` for project CTN (`projectId=proj_8553ff60563e4c91`, `scope=project`), for `scope=global`, and for the unscoped list. The old installed `fusion` 0.77.0 could not open this newer database, so its startup failure is not schedule evidence. **No existing automation record, enabled flag, effective command, cron expression, timezone, next run or run history was found/read back.** Do not claim that the three-hour schedule is configured, enabled or running, and do not create a duplicate scheduler based on the historical card. The scheduling acceptance remains open until a procedure record is located or an explicit first-record provisioning path is established and verified.
 
 ## Verification ledger
 
 | Item | Evidence/status |
 |---|---|
-| Canonical script and fixture source | Added in isolated branch `operator/w00-rus-1507`; not yet run or parent-reviewed. |
-| Production root and branch behavior | Source requires `/Users/t/Projects/CTN`, local branch `main`; fixture override is temporary-directory-only. |
-| Installed `/Users/t/Projects/CTN/.fusion/sync-upstream.sh` | Not changed or deployed. Existing script was read-only inspected; it fetches before dirty checking and excludes `.gitignore` dirt, so it is not equivalent to the fail-closed source. |
-| Fusion procedure enabled state / schedule / timezone / command | Pending authorized external read-back; no enabled-state or successful-run claim. |
-| Live rebase / push | Not performed. The script has no push command; fixtures are designed to verify the independent origin does not move. |
+| Canonical script and fixture source | `operator/w00-rus-1507` commit `1cd31394a`; fixture suite passed equal/ahead/behind/diverged, dirty staged/unstaged/untracked, preexisting operation, conflict, fetch failure, backup collision, overlapping runs, ref race and direct-main negative. `bash -n`, `just check`, `git diff --check` passed. |
+| Production root and branch behavior | Fixed `/Users/t/Projects/CTN` on `main`; temporary-directory-only fixture override. Root remains dirty with user-owned `.gitignore` modification and deleted `.agents/skills/live-debug`; no live sync run. |
+| Installed `/Users/t/Projects/CTN/.fusion/sync-upstream.sh` | Installed SHA-256 `761ee46329bd7bdcbb4ac8f03d31079c16e0381f8fd3e8047096f4b61ab95ba9`, executable `-rwxr-xr-x`, matching tested source; old SHA `de6d4e16cc4d38e41081ca1e785a449727323592deb38a4c2120c7fb6f47f9b3` retained at `.fusion/sync-upstream.sh.bak-2026-09-29T0956Z`. |
+| Fusion procedure enabled state / schedule / timezone / command | API readback returned empty project, global and unscoped lists; no record or enabled-state claim. Scheduling acceptance remains open. |
+| Live rebase / push | Not performed. Fixture used distinct local origin and upstream and asserted no origin push. |
 | CONV-04 direct-main gate | Separate control; not changed or claimed complete by this runbook. |
 
 A passing fixture run and a scheduler record read-back are separate evidence. An enabled schedule alone does not prove a successful historical run; a fixture run does not prove deployment or scheduler enablement.
