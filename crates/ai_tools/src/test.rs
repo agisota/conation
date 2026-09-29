@@ -33,6 +33,35 @@ fn every_host_toolset_passes_schema_validation() {
 }
 
 #[test]
+fn every_host_registers_list_entities_ast_filters_as_objects() {
+    for host in [
+        AiHost::Chat,
+        AiHost::AgentSession,
+        AiHost::ChannelBot,
+        AiHost::Mcp,
+    ] {
+        let tools = tools_for(host);
+        let list_entities = tools
+            .toolset
+            .tools
+            .get("ListEntities")
+            .unwrap_or_else(|| panic!("{host:?} must register ListEntities"));
+
+        for name in [
+            "df", "pf", "propf", "ef", "cf", "chanf", "cthf", "callf", "fef",
+        ] {
+            let property = &list_entities.input_schema["properties"][name];
+            assert!(
+                property["type"]
+                    .as_array()
+                    .is_some_and(|types| types.iter().any(|kind| kind == "object")),
+                "{host:?} must advertise {name} as an object-capable filter: {property}"
+            );
+        }
+    }
+}
+
+#[test]
 fn project_workflows_are_available_in_every_host_alongside_folder_and_property_tools() {
     let names = [
         "ListInitiatives",

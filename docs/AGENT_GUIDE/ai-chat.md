@@ -33,6 +33,17 @@ bytes reached storage; previews, DOCX conversion, Markdown initialization, and
 indexing may finish asynchronously. Invalid contents, oversized files, and folder
 permission failures should display a failed tool call without a successful result.
 
+## Browsing workspace entities with tools
+
+`ListEntities` accepts structured JSON objects for its nine optional AST filters:
+`df`, `pf`, `propf`, `ef`, `cf`, `chanf`, `cthf`, `callf`, and `fef`.
+For example, use `{"df":{"l":{"dst":"task"}}}` to restrict documents to
+tasks. Send the nested filter as an object, not a string containing JSON.
+Omit a filter or pass `null` to leave it inactive. Filtering runs on the
+server before the result limit; typed filters such as `includeTypes` remain
+available. The advertised MCP schema now identifies these fields as nullable
+objects; it does not make arbitrary string values valid filters.
+
 ## Where chats live
 
 The Agents conversation list shows row skeletons after a short delay on first

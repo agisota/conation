@@ -42,6 +42,12 @@ use std::sync::Arc;
 
 use super::SoupToolContext;
 
+/// `LiteralTree` remains the deserialization type; schemars cannot infer its JSON object shape
+/// through `serde_json::Value`.
+fn optional_ast_object_schema(_generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({"type": ["object", "null"]})
+}
+
 /// Internal limit for results - not exposed to agents
 const RESULT_LIMIT: u16 = 50;
 const MAX_RESULT_LIMIT: u16 = 500;
@@ -412,7 +418,7 @@ pub struct ListEntities {
     /// Document entity AST filter.
     #[schemars(
         description = "Full soup AST document filter (df). Use the same shape as /items/soup/ast, e.g. {\"l\":{\"id\":\"...\"}}. For Macro tasks, use {\"l\":{\"dst\":\"task\"}}; for skills, {\"l\":{\"dst\":\"skill\"}}. For \"completed yesterday\", AND the task subtype with updatedAt bounds, e.g. {\"&\":[{\"l\":{\"dst\":\"task\"}},{\"&\":[{\"l\":{\"ua\":{\"gte\":\"<start>\"}}},{\"l\":{\"ua\":{\"lt\":\"<end>\"}}}]}]} using ISO timestamps.",
-        with = "Option<serde_json::Value>"
+        schema_with = "optional_ast_object_schema"
     )]
     #[serde(default, rename = "df")]
     pub document_filter: LiteralTree<DocumentLiteral>,
@@ -420,7 +426,7 @@ pub struct ListEntities {
     /// Project entity AST filter.
     #[schemars(
         description = "Full soup AST project filter (pf).",
-        with = "Option<serde_json::Value>"
+        schema_with = "optional_ast_object_schema"
     )]
     #[serde(default, rename = "pf")]
     pub project_filter: LiteralTree<ProjectLiteral>,
@@ -428,7 +434,7 @@ pub struct ListEntities {
     /// AI chat entity AST filter.
     #[schemars(
         description = "Full soup AST AI chat filter (cf).",
-        with = "Option<serde_json::Value>"
+        schema_with = "optional_ast_object_schema"
     )]
     #[serde(default, rename = "cf")]
     pub chat_filter: LiteralTree<ChatLiteral>,
@@ -443,7 +449,7 @@ pub struct ListEntities {
     /// Email entity AST filter.
     #[schemars(
         description = "Advanced full soup AST email filter (ef). Prefer emailPreset=\"signal\" for common requests. Signal emails and important emails are synonymous; they use {\"&\":[{\"l\":{\"Importance\":true}},{\"l\":{\"Shared\":\"exclude\"}}]}. Supports filtering by thread timestamp: {\"l\":{\"ca\":{\"gte\":\"<start>\"}}} matches created_at, {\"l\":{\"ua\":{\"gte\":\"<start>\",\"lt\":\"<end>\"}}} matches updated_at, using ISO timestamps with gt/lt/gte/lte comparators. For \"emails from the last 7 days\", AND a ua (or ca) gte bound set to 7 days before now, e.g. {\"l\":{\"ua\":{\"gte\":\"<7-days-ago-ISO>\"}}}.",
-        with = "Option<serde_json::Value>"
+        schema_with = "optional_ast_object_schema"
     )]
     #[serde(default, rename = "ef")]
     pub email_filter: LiteralTree<EmailLiteral>,
@@ -451,7 +457,7 @@ pub struct ListEntities {
     /// Channel entity AST filter.
     #[schemars(
         description = "Full soup AST channel filter (chanf).",
-        with = "Option<serde_json::Value>"
+        schema_with = "optional_ast_object_schema"
     )]
     #[serde(default, rename = "chanf")]
     pub channel_filter: LiteralTree<ChannelLiteral>,
@@ -459,7 +465,7 @@ pub struct ListEntities {
     /// Channel thread entity AST filter.
     #[schemars(
         description = "Full soup AST channel thread filter (cthf).",
-        with = "Option<serde_json::Value>"
+        schema_with = "optional_ast_object_schema"
     )]
     #[serde(default, rename = "cthf")]
     pub channel_thread_filter: LiteralTree<ChannelThreadLiteral>,
@@ -467,7 +473,7 @@ pub struct ListEntities {
     /// Call entity AST filter.
     #[schemars(
         description = "Full soup AST call filter (callf).",
-        with = "Option<serde_json::Value>"
+        schema_with = "optional_ast_object_schema"
     )]
     #[serde(default, rename = "callf")]
     pub call_filter: LiteralTree<CallLiteral>,
@@ -475,7 +481,7 @@ pub struct ListEntities {
     /// Foreign entity AST filter.
     #[schemars(
         description = "Full soup AST foreign entity filter (fef).",
-        with = "Option<serde_json::Value>"
+        schema_with = "optional_ast_object_schema"
     )]
     #[serde(default, rename = "fef")]
     pub foreign_entity_filter: LiteralTree<ForeignEntityLiteral>,
@@ -483,7 +489,7 @@ pub struct ListEntities {
     /// Entity property AST filter.
     #[schemars(
         description = "Full soup AST property filter (propf). Use this for Macro task Status, Assignees, Priority, and other entity properties. For task Status Completed: {\"l\":{\"pd\":\"00000001-0000-0000-0000-000000000002\",\"et\":\"TASK\",\"v\":{\"so\":\"00000001-0000-0000-0002-000000000004\"}}}. For tasks assigned to the current user: {\"l\":{\"pd\":\"00000001-0000-0000-0000-000000000001\",\"et\":\"TASK\",\"v\":{\"er\":\"macro|user@example.com\"}}}. Combine both with &: {\"&\":[statusCompleted, assignedToMe]}. Prefer this over Linear tools for unqualified task requests.",
-        with = "Option<serde_json::Value>"
+        schema_with = "optional_ast_object_schema"
     )]
     #[serde(default, rename = "propf")]
     pub properties_filter: LiteralTree<PropertiesLiteral>,
