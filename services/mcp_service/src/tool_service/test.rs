@@ -27,6 +27,37 @@ async fn server_info_advertises_macro_tools() {
     assert!(info.capabilities.tools.is_some());
 }
 
+#[test]
+fn mcp_registration_advertises_list_entities_ast_filters_as_objects() {
+    let tools = ai_tools::tools_for(ai_tools::AiHost::Mcp);
+    let advertised = mcp_tool_definitions(&tools.toolset);
+    let list_entities = advertised
+        .iter()
+        .find(|tool| tool.name == "ListEntities")
+        .expect("the MCP server exposes ListEntities");
+    let advertised_schema =
+        serde_json::to_value(list_entities).expect("serialize the MCP tool")["inputSchema"].clone();
+    let properties = advertised_schema["properties"]
+        .as_object()
+        .expect("ListEntities MCP wire schema has properties");
+
+    for name in [
+        "df", "pf", "propf", "ef", "cf", "chanf", "cthf", "callf", "fef",
+    ] {
+        let property = &properties[name];
+        assert!(
+            property["type"]
+                .as_array()
+                .is_some_and(|types| types.iter().any(|kind| kind == "object")),
+            "the registered MCP schema must advertise {name} as an object: {property}"
+        );
+        assert!(
+            property["description"].is_string(),
+            "the registered MCP schema must retain {name} guidance"
+        );
+    }
+}
+
 #[tokio::test]
 async fn server_info_advertises_the_web_app_favicon() {
     let info = empty_service().get_info();
@@ -107,7 +138,7 @@ async fn server_instructions_link_items_as_urls_not_mention_tags() {
 
 #[tokio::test]
 async fn empty_toolset_lists_no_tools() {
-    assert!(empty_service().tool_definitions().is_empty());
+    assert!(mcp_tool_definitions(&empty_service().toolset).is_empty());
 }
 
 /// Anthropic's connector directory rejects any tool missing a display title or

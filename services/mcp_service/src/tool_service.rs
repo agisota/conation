@@ -24,6 +24,22 @@ fn mcp_annotations(annotations: &ai_toolset::ToolAnnotations) -> ToolAnnotations
         .open_world(annotations.open_world)
 }
 
+fn mcp_tool_definitions<Context>(toolset: &AsyncToolCollection<Context>) -> Vec<Tool> {
+    toolset
+        .tools
+        .iter()
+        .map(|(key, value)| {
+            Tool::new(
+                key.to_owned(),
+                value.description.to_owned(),
+                Arc::new(value.input_schema.clone()),
+            )
+            .with_title(value.annotations.title)
+            .annotate(mcp_annotations(&value.annotations))
+        })
+        .collect()
+}
+
 /// MCP server handler that extracts authenticated user identity from HTTP
 /// request parts injected by rmcp's `StreamableHttpService`.
 #[allow(
@@ -55,22 +71,6 @@ impl<Context> AuthenticatedToolService<Context> {
             item_base_url,
             static_file_base_url,
         }
-    }
-
-    fn tool_definitions(&self) -> Vec<Tool> {
-        self.toolset
-            .tools
-            .iter()
-            .map(|(key, value)| {
-                Tool::new(
-                    key.to_owned(),
-                    value.description.to_owned(),
-                    Arc::new(value.input_schema.clone()),
-                )
-                .with_title(value.annotations.title)
-                .annotate(mcp_annotations(&value.annotations))
-            })
-            .collect()
     }
 
     fn authenticated_user_id(
@@ -136,7 +136,7 @@ where
         Self::authenticated_user_id(&context.extensions)?;
 
         Ok(ListToolsResult {
-            tools: self.tool_definitions(),
+            tools: mcp_tool_definitions(&self.toolset),
             ..Default::default()
         })
     }

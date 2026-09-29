@@ -26,6 +26,35 @@ fn test_list_entities_schema_validation() {
 }
 
 #[test]
+fn list_entities_advertises_all_ast_filters_as_nullable_objects() {
+    let validated = generate_validated_input_schema::<ListEntities>().unwrap();
+    let schema = serde_json::to_value(validated.schema).unwrap();
+    let properties = schema["properties"].as_object().unwrap();
+
+    for name in [
+        "df", "pf", "propf", "ef", "cf", "chanf", "cthf", "callf", "fef",
+    ] {
+        let property = &properties[name];
+        let types = property["type"]
+            .as_array()
+            .unwrap_or_else(|| panic!("{name} should advertise object and null"));
+
+        assert!(
+            types.iter().any(|kind| kind == "object"),
+            "{name} should accept object-valued AST filters: {property}"
+        );
+        assert!(
+            types.iter().any(|kind| kind == "null"),
+            "{name} should advertise its accepted explicit null value: {property}"
+        );
+        assert!(
+            property["description"].is_string(),
+            "{name} should retain its filter guidance"
+        );
+    }
+}
+
+#[test]
 fn test_list_entities_schema_guides_macro_task_queries() {
     let validated = generate_validated_input_schema::<ListEntities>().unwrap();
     let schema_json = serde_json::to_string(&validated.schema).unwrap();
@@ -104,6 +133,7 @@ fn test_full_ast_input_deserializes() {
         "callf": {"l": {"CallId": "00000000-0000-0000-0000-000000000000"}},
         "cf": {"l": {"cid": "00000000-0000-0000-0000-000000000000"}},
         "chanf": {"l": {"ChannelId": "00000000-0000-0000-0000-000000000000"}},
+        "cthf": {"l": {"ThreadId": "00000000-0000-0000-0000-000000000000"}},
         "df": {"l": {"id": "00000000-0000-0000-0000-000000000000"}},
         "ef": {"&": [
             {"l": {"Importance": true}},
@@ -111,6 +141,11 @@ fn test_full_ast_input_deserializes() {
         ]},
         "emailView": "inbox",
         "fef": {"l": {"feid": "github:123"}},
+        "propf": {"l": {
+            "pd": "00000001-0000-0000-0000-000000000002",
+            "et": "TASK",
+            "v": {"so": "00000001-0000-0000-0002-000000000004"}
+        }},
         "limit": 100,
         "pf": {"l": {"pid": "00000000-0000-0000-0000-000000000000"}},
         "sortBy": "recently_updated"
@@ -123,10 +158,133 @@ fn test_full_ast_input_deserializes() {
     assert!(matches!(list.sort_by, SortBy::RecentlyUpdated));
     assert!(!ast.is_empty());
     assert!(ast.foreign_entity_filter.is_some());
+    assert!(ast.document_filter.is_some());
+    assert!(ast.project_filter.is_some());
+    assert!(ast.chat_filter.is_some());
+    assert!(ast.email_filter.tree.is_some());
+    assert!(ast.channel_filter.is_some());
+    assert!(ast.channel_thread_filter.is_some());
+    assert!(ast.call_filter.is_some());
+    assert!(ast.properties_filter.is_some());
     assert_eq!(
         list.email_view().unwrap(),
         email::domain::models::PreviewView::default()
     );
+}
+
+#[test]
+fn optional_ast_filters_accept_objects_and_null_but_reject_strings() {
+    let list: ListEntities = serde_json::from_value(serde_json::json!({
+        "df": {
+            "&": [
+                { "l": { "dst": "task" } },
+                {
+                    "&": [
+                        { "l": { "ua": { "gte": "2026-06-11T04:00:00Z" } } },
+                        { "l": { "ua": { "lt": "2026-06-12T04:00:00Z" } } }
+                    ]
+                }
+            ]
+        },
+        "ef": {
+            "&": [
+                { "l": { "ca": { "gte": "2026-06-11T04:00:00Z" } } },
+                { "l": { "ua": { "lt": "2026-06-12T04:00:00Z" } } }
+            ]
+        },
+        "propf": {
+            "l": {
+                "pd": "00000001-0000-0000-0000-000000000002",
+                "et": "TASK",
+                "v": { "so": "00000001-0000-0000-0002-000000000004" }
+            }
+        }
+    }))
+    .unwrap();
+    let filters = list.entity_filter_ast(None);
+
+    assert_eq!(
+        serde_json::to_value(filters.document_filter.as_ref().unwrap()).unwrap(),
+        serde_json::json!({
+            "&": [
+                { "l": { "dst": "task" } },
+                {
+                    "&": [
+                        { "l": { "ua": { "gte": "2026-06-11T04:00:00Z" } } },
+                        { "l": { "ua": { "lt": "2026-06-12T04:00:00Z" } } }
+                    ]
+                }
+            ]
+        })
+    );
+    assert_eq!(
+        serde_json::to_value(filters.email_filter.tree.as_ref().unwrap()).unwrap(),
+        serde_json::json!({
+            "&": [
+                { "l": { "ca": { "gte": "2026-06-11T04:00:00Z" } } },
+                { "l": { "ua": { "lt": "2026-06-12T04:00:00Z" } } }
+            ]
+        })
+    );
+    assert_eq!(
+        serde_json::to_value(filters.properties_filter.as_ref().unwrap()).unwrap(),
+        serde_json::json!({
+            "l": {
+                "pd": "00000001-0000-0000-0000-000000000002",
+                "et": "TASK",
+                "v": { "so": "00000001-0000-0000-0002-000000000004" }
+            }
+        })
+    );
+
+    let omitted: ListEntities = serde_json::from_value(serde_json::json!({})).unwrap();
+    let omitted_filters = omitted.entity_filter_ast(None);
+    assert!(omitted_filters.document_filter.is_none());
+    assert!(omitted_filters.project_filter.is_none());
+    assert!(omitted_filters.properties_filter.is_none());
+    assert!(omitted_filters.email_filter.tree.is_none());
+    assert!(omitted_filters.chat_filter.is_none());
+    assert!(omitted_filters.channel_filter.is_none());
+    assert!(omitted_filters.channel_thread_filter.is_none());
+    assert!(omitted_filters.call_filter.is_none());
+    assert!(omitted_filters.foreign_entity_filter.is_none());
+
+    let nulls: ListEntities = serde_json::from_value(serde_json::json!({
+        "df": null,
+        "pf": null,
+        "propf": null,
+        "ef": null,
+        "cf": null,
+        "chanf": null,
+        "cthf": null,
+        "callf": null,
+        "fef": null
+    }))
+    .unwrap();
+    let null_filters = nulls.entity_filter_ast(None);
+    assert!(null_filters.document_filter.is_none());
+    assert!(null_filters.project_filter.is_none());
+    assert!(null_filters.properties_filter.is_none());
+    assert!(null_filters.email_filter.tree.is_none());
+    assert!(null_filters.chat_filter.is_none());
+    assert!(null_filters.channel_filter.is_none());
+    assert!(null_filters.channel_thread_filter.is_none());
+    assert!(null_filters.call_filter.is_none());
+    assert!(null_filters.foreign_entity_filter.is_none());
+
+    for name in [
+        "df", "pf", "propf", "ef", "cf", "chanf", "cthf", "callf", "fef",
+    ] {
+        let mut input = serde_json::Map::new();
+        input.insert(
+            name.to_owned(),
+            serde_json::json!("{\"l\":{\"dst\":\"task\"}}"),
+        );
+        assert!(
+            serde_json::from_value::<ListEntities>(serde_json::Value::Object(input)).is_err(),
+            "{name} must reject JSON strings instead of parsing them as AST filters"
+        );
+    }
 }
 
 #[test]

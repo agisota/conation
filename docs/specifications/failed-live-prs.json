@@ -1,0 +1,391 @@
+{
+  "observedAt": "2026-09-29T06:02:31.670Z",
+  "repository": "macro-inc/macro",
+  "fetchedOriginMain": "6efb9d2ade28dd5639265c1ac88e8dc46ea377f8",
+  "source": "GitHub GraphQL API via gh api graphql",
+  "cardRefs": [
+    {
+      "id": "CTN-002",
+      "prs": []
+    },
+    {
+      "id": "CTN-003",
+      "prs": []
+    },
+    {
+      "id": "CTN-007",
+      "prs": []
+    },
+    {
+      "id": "CTN-009",
+      "prs": []
+    },
+    {
+      "id": "CTN-011",
+      "prs": []
+    },
+    {
+      "id": "CTN-013",
+      "prs": []
+    },
+    {
+      "id": "CTN-014",
+      "prs": []
+    },
+    {
+      "id": "CTN-022",
+      "prs": []
+    },
+    {
+      "id": "CTN-035",
+      "prs": []
+    },
+    {
+      "id": "CTN-061",
+      "prs": [
+        6825
+      ]
+    },
+    {
+      "id": "CTN-063",
+      "prs": [
+        6823
+      ]
+    },
+    {
+      "id": "CTN-065",
+      "prs": [
+        6820
+      ]
+    },
+    {
+      "id": "CTN-067",
+      "prs": [
+        6819
+      ]
+    },
+    {
+      "id": "CTN-086",
+      "prs": [
+        6800
+      ]
+    },
+    {
+      "id": "CTN-093",
+      "prs": [
+        6792
+      ]
+    },
+    {
+      "id": "CTN-107",
+      "prs": [
+        6779
+      ]
+    },
+    {
+      "id": "CTN-113",
+      "prs": [
+        6773
+      ]
+    },
+    {
+      "id": "CTN-124",
+      "prs": [
+        6762
+      ]
+    },
+    {
+      "id": "CTN-128",
+      "prs": [
+        6758
+      ]
+    },
+    {
+      "id": "CTN-143",
+      "prs": [
+        6743
+      ]
+    },
+    {
+      "id": "CTN-147",
+      "prs": [
+        6739
+      ]
+    },
+    {
+      "id": "CTN-160",
+      "prs": [
+        6725
+      ]
+    },
+    {
+      "id": "CTN-165",
+      "prs": [
+        6720
+      ]
+    },
+    {
+      "id": "CTN-207",
+      "prs": [
+        6677
+      ]
+    },
+    {
+      "id": "CTN-210",
+      "prs": [
+        6674
+      ]
+    },
+    {
+      "id": "CTN-256",
+      "prs": [
+        6627
+      ]
+    },
+    {
+      "id": "CTN-320",
+      "prs": [
+        6561
+      ]
+    },
+    {
+      "id": "CTN-518",
+      "prs": [
+        6359
+      ]
+    },
+    {
+      "id": "CTN-563",
+      "prs": [
+        6310
+      ]
+    },
+    {
+      "id": "RUS-161",
+      "prs": [
+        5582
+      ]
+    },
+    {
+      "id": "RUS-1437",
+      "prs": [
+        4280
+      ]
+    },
+    {
+      "id": "RUS-1441",
+      "prs": [
+        6856
+      ]
+    }
+  ],
+  "prs": {
+    "4280": {
+      "number": 4280,
+      "state": "MERGED",
+      "mergedAt": "2026-06-29T15:01:36Z",
+      "isDraft": false,
+      "headRefOid": "c1efbba360aa815aae69fcf2cee918d5b3677f80",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/4280"
+    },
+    "5582": {
+      "number": 5582,
+      "state": "OPEN",
+      "mergedAt": null,
+      "isDraft": false,
+      "headRefOid": "0722041bb12ff924146e15ac4df7baf541fa9a00",
+      "reviewDecision": "CHANGES_REQUESTED",
+      "url": "https://github.com/macro-inc/macro/pull/5582"
+    },
+    "6310": {
+      "number": 6310,
+      "state": "CLOSED",
+      "mergedAt": null,
+      "isDraft": false,
+      "headRefOid": "7df66b546b3ffe0399deccaa2904353daa8d1fcb",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6310"
+    },
+    "6359": {
+      "number": 6359,
+      "state": "OPEN",
+      "mergedAt": null,
+      "isDraft": false,
+      "headRefOid": "a04fb89f44dab8541251cf7f10c96281cab33fce",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6359"
+    },
+    "6561": {
+      "number": 6561,
+      "state": "OPEN",
+      "mergedAt": null,
+      "isDraft": false,
+      "headRefOid": "2bd38227445812becc7b7180013aa48328b2ccf0",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6561"
+    },
+    "6627": {
+      "number": 6627,
+      "state": "CLOSED",
+      "mergedAt": null,
+      "isDraft": false,
+      "headRefOid": "9c08b829bbd8e9e18114a28aae6bf1b577aff3fa",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6627"
+    },
+    "6674": {
+      "number": 6674,
+      "state": "OPEN",
+      "mergedAt": null,
+      "isDraft": false,
+      "headRefOid": "ee2b8048d91968fec6fce6ab367b4784d3362d3e",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6674"
+    },
+    "6677": {
+      "number": 6677,
+      "state": "MERGED",
+      "mergedAt": "2026-09-25T16:49:01Z",
+      "isDraft": false,
+      "headRefOid": "6b75ab1e243508d215de3334b8aec8bd0211c29c",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6677"
+    },
+    "6720": {
+      "number": 6720,
+      "state": "OPEN",
+      "mergedAt": null,
+      "isDraft": false,
+      "headRefOid": "55fc71313745a8a2981d9f7f7bacdb26062df012",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6720"
+    },
+    "6725": {
+      "number": 6725,
+      "state": "OPEN",
+      "mergedAt": null,
+      "isDraft": false,
+      "headRefOid": "77dd56b64d8f3710311f14f8342eebcb705d2e3d",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6725"
+    },
+    "6739": {
+      "number": 6739,
+      "state": "OPEN",
+      "mergedAt": null,
+      "isDraft": false,
+      "headRefOid": "48f9465da7677cf9b0a12c2f80c0667e170afe7c",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6739"
+    },
+    "6743": {
+      "number": 6743,
+      "state": "CLOSED",
+      "mergedAt": null,
+      "isDraft": false,
+      "headRefOid": "a8c9735fb10e7f46a1e69f872eaf76051dae4960",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6743"
+    },
+    "6758": {
+      "number": 6758,
+      "state": "CLOSED",
+      "mergedAt": null,
+      "isDraft": false,
+      "headRefOid": "7d9aa8f5de7eac8bba5c2f4cfaa7028ac1c57b8b",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6758"
+    },
+    "6762": {
+      "number": 6762,
+      "state": "MERGED",
+      "mergedAt": "2026-09-24T15:08:07Z",
+      "isDraft": false,
+      "headRefOid": "2cc4be5afeea4d3d11e84be67a76e4cfd22f3c2f",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6762"
+    },
+    "6773": {
+      "number": 6773,
+      "state": "MERGED",
+      "mergedAt": "2026-09-23T15:01:15Z",
+      "isDraft": false,
+      "headRefOid": "ff4592faca876e340a63fe58b100b70cbbd8024b",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6773"
+    },
+    "6779": {
+      "number": 6779,
+      "state": "MERGED",
+      "mergedAt": "2026-09-24T01:18:27Z",
+      "isDraft": false,
+      "headRefOid": "dd8ca7aeabc37e94ea78e5a6fe8e9e6bdfed8240",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6779"
+    },
+    "6792": {
+      "number": 6792,
+      "state": "CLOSED",
+      "mergedAt": null,
+      "isDraft": true,
+      "headRefOid": "afc52035e56b90f03039f7aa86e1a1ca2131d006",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6792"
+    },
+    "6800": {
+      "number": 6800,
+      "state": "CLOSED",
+      "mergedAt": null,
+      "isDraft": false,
+      "headRefOid": "7e3814f2d974c8ec1f0a7127fbc2c232035b6621",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6800"
+    },
+    "6819": {
+      "number": 6819,
+      "state": "MERGED",
+      "mergedAt": "2026-09-23T16:08:35Z",
+      "isDraft": false,
+      "headRefOid": "9e17f6e646589a2ee0259f0f4644582f2a18dac6",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6819"
+    },
+    "6820": {
+      "number": 6820,
+      "state": "MERGED",
+      "mergedAt": "2026-09-23T19:12:43Z",
+      "isDraft": false,
+      "headRefOid": "d89e8e73b4058850effd05e3542cf252b0cd0755",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6820"
+    },
+    "6823": {
+      "number": 6823,
+      "state": "MERGED",
+      "mergedAt": "2026-09-23T14:27:46Z",
+      "isDraft": false,
+      "headRefOid": "92b7564e7e869a380e8ec1410d8c03ec4780a3d7",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6823"
+    },
+    "6825": {
+      "number": 6825,
+      "state": "MERGED",
+      "mergedAt": "2026-09-23T14:40:16Z",
+      "isDraft": false,
+      "headRefOid": "41227a14de6b0a8c30cab0394d7463c99c403ba7",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6825"
+    },
+    "6856": {
+      "number": 6856,
+      "state": "MERGED",
+      "mergedAt": "2026-09-23T19:06:16Z",
+      "isDraft": false,
+      "headRefOid": "99836b2d7b5271e07f0052ca4f8e85eef48fafbc",
+      "reviewDecision": null,
+      "url": "https://github.com/macro-inc/macro/pull/6856"
+    }
+  }
+}
