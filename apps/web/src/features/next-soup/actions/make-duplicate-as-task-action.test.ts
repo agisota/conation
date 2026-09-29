@@ -77,6 +77,32 @@ describe('makeDuplicateAsTaskAction', () => {
     expect(clear).toHaveBeenCalledOnce();
   });
 
+  it('keeps the source selected when task creation returns no task', async () => {
+    const clear = vi.fn();
+    mocks.createTask.mockResolvedValue(undefined);
+    await makeDuplicateAsTaskAction().executeWithSoup([document], {
+      selection: { clear },
+    } as never);
+    expect(clear).not.toHaveBeenCalled();
+    expect(mocks.failure).toHaveBeenCalledExactlyOnceWith(
+      'Failed to create task'
+    );
+  });
+
+  it('keeps the source selected when its editor state cannot be parsed', async () => {
+    const clear = vi.fn();
+    mocks.parseEditorState.mockImplementation(() => {
+      throw new Error('invalid state');
+    });
+    await makeDuplicateAsTaskAction().executeWithSoup([document], {
+      selection: { clear },
+    } as never);
+    expect(clear).not.toHaveBeenCalled();
+    expect(mocks.failure).toHaveBeenCalledExactlyOnceWith(
+      'Failed to read document content'
+    );
+  });
+
   it('does not fetch/create when the selection is ineligible or stale', async () => {
     const action = makeDuplicateAsTaskAction();
     const task = { ...document, subType: { type: 'task' as const } };
