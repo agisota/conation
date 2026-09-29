@@ -155,9 +155,9 @@ describe('Duplicate as Task menu eligibility', () => {
   });
 
   it('accepts a Markdown document with an absent subtype', () => {
-    expect(actionIds([{ ...markdownDocument, subType: undefined }])).toContain(
-      'duplicate-as-task'
-    );
+    const withoutSubtype = { ...markdownDocument };
+    Reflect.deleteProperty(withoutSubtype, 'subType');
+    expect(actionIds([withoutSubtype])).toContain('duplicate-as-task');
   });
 
   it('excludes the action for empty and multi-selections without losing ordinary Duplicate', () => {
