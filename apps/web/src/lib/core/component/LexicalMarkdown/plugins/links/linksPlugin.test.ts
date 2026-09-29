@@ -1,6 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import type { LexicalEditor } from 'lexical';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  findNextAutoLinkMatch,
+  linksPlugin,
+  normalizeLinkUrl,
+} from './linksPlugin';
 
-import { findNextAutoLinkMatch, normalizeLinkUrl } from './linksPlugin';
+const open = vi.hoisted(() => vi.fn());
+vi.mock('@core/util/url', () => ({ openExternalUrl: open }));
+
+afterEach(() => vi.clearAllMocks());
 
 describe('normalizeLinkUrl', () => {
   it('normalizes bare hosts to HTTPS', () => {
@@ -70,3 +79,101 @@ describe('findNextAutoLinkMatch', () => {
     );
   });
 });
+
+it('routes trusted read-only links to the destination menu instead of navigating', () => {
+  const url = 'https://www.openstreetmap.org/#map=14/56.8139/-5.0650&layers=C';
+  const root = document.createElement('div');
+  root.innerHTML = `<a href="${url}">map</a>`;
+  let attachRoot:
+    | ((root: HTMLElement | null, previousRoot: HTMLElement | null) => void)
+    | undefined;
+  const editor = {
+    isEditable: () => false,
+    registerRootListener: (listener: typeof attachRoot) => {
+      attachRoot = listener;
+      return () => {};
+    },
+    registerNodeTransform: () => () => {},
+    registerCommand: () => () => {},
+  } as unknown as LexicalEditor;
+  const onClickLink = vi.fn();
+  const cleanupPlugin = linksPlugin({ onClickLink })(editor);
+  attachRoot?.(root, null);
+  const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+  root.querySelector('a')?.dispatchEvent(event);
+
+  expect(event.defaultPrevented).toBe(true);
+  expect(onClickLink).toHaveBeenCalledWith(
+    expect.objectContaining({ editAccess: false, url, linkText: 'map' })
+  );
+  expect(open).not.toHaveBeenCalled();
+  cleanupPlugin();
+});
+
+it('keeps ordinary read-only links directly openable', () => {
+  const url = 'https://example.com/document';
+  const root = document.createElement('div');
+  root.innerHTML = `<a href="${url}">document</a>`;
+  let attachRoot:
+    | ((root: HTMLElement | null, previousRoot: HTMLElement | null) => void)
+    | undefined;
+  const editor = {
+    isEditable: () => false,
+    registerRootListener: (listener: typeof attachRoot) => {
+      attachRoot = listener;
+      return () => {};
+    },
+    registerNodeTransform: () => () => {},
+    registerCommand: () => () => {},
+  } as unknown as LexicalEditor;
+  const onClickLink = vi.fn();
+  const cleanupPlugin = linksPlugin({ onClickLink })(editor);
+  attachRoot?.(root, null);
+  const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+  root.querySelector('a')?.dispatchEvent(event);
+
+  expect(event.defaultPrevented).toBe(true);
+  expect(onClickLink).not.toHaveBeenCalled();
+  expect(open).toHaveBeenCalledWith(url);
+  cleanupPlugin();
+});
+
+it.each([
+  ['Meta', { metaKey: true }],
+  ['Control', { ctrlKey: true }],
+  ['Shift', { shiftKey: true }],
+])(
+  'opens a link directly on %s-click instead of showing the menu',
+  (_, modifiers) => {
+    const url =
+      'https://www.openstreetmap.org/#map=14/56.8139/-5.0650&layers=C';
+    const root = document.createElement('div');
+    root.innerHTML = `<a href="${url}">map</a>`;
+    let attachRoot:
+      | ((root: HTMLElement | null, previousRoot: HTMLElement | null) => void)
+      | undefined;
+    const editor = {
+      isEditable: () => false,
+      registerRootListener: (listener: typeof attachRoot) => {
+        attachRoot = listener;
+        return () => {};
+      },
+      registerNodeTransform: () => () => {},
+      registerCommand: () => () => {},
+    } as unknown as LexicalEditor;
+    const onClickLink = vi.fn();
+    const cleanupPlugin = linksPlugin({ onClickLink })(editor);
+    attachRoot?.(root, null);
+    const event = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      ...modifiers,
+    });
+    root.querySelector('a')?.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(onClickLink).not.toHaveBeenCalled();
+    expect(open).toHaveBeenCalledWith(url);
+    cleanupPlugin();
+  }
+);

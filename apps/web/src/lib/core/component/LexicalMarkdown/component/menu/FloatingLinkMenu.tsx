@@ -1,4 +1,5 @@
-import { LinkHoverCard } from '@core/component/Link';
+import { classifyExternalDestination } from '@core/component/external-destinations';
+import { ExternalDestinationAction, LinkHoverCard } from '@core/component/Link';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import { toast } from '@core/component/Toast/Toast';
 import clickOutside from '@core/directive/clickOutside';
@@ -129,7 +130,22 @@ export function FloatingLinkMenu(props: {
       reset();
       return;
     }
-    if (!link.editAccess) return;
+    if (!link.editAccess) {
+      const destination = classifyExternalDestination(link.url ?? '');
+      if (!destination) return;
+      setMenuOpen(true);
+      setPreviewHover(false);
+      setLinkInfo({ ...link });
+      setPendingLinkInfo({ ...link });
+      setTimeout(() => {
+        menuRef
+          ?.querySelector<HTMLButtonElement>(
+            `button[aria-label="${destination.actionLabel}"]`
+          )
+          ?.focus();
+      });
+      return;
+    }
     setMenuOpen(true);
     setPreviewHover(false);
     setLinkInfo({ ...link });
@@ -266,6 +282,7 @@ export function FloatingLinkMenu(props: {
       editor.focus();
     }
     if (e.key === 'Enter') {
+      if (!linkInfo()?.editAccess) return;
       e.preventDefault();
       handleSubmit();
     }
@@ -297,6 +314,7 @@ export function FloatingLinkMenu(props: {
         KEY_ENTER_COMMAND,
         () => {
           if (menuOpen()) {
+            if (!linkInfo()?.editAccess) return false;
             handleSubmit();
             reset();
             editor.focus();
@@ -397,10 +415,16 @@ export function FloatingLinkMenu(props: {
                         url: link().url ?? '',
                         title: link().linkText ?? '',
                       }}
+                      showDestinationAction={false}
                     />
                   }
                 >
-                  {(details) => <LinkHoverCard unfurled={details()} />}
+                  {(details) => (
+                    <LinkHoverCard
+                      unfurled={details()}
+                      showDestinationAction={false}
+                    />
+                  )}
                 </Show>
               </div>
             </ScopedPortal>
@@ -409,7 +433,10 @@ export function FloatingLinkMenu(props: {
       </Match>
       <Match when={menuOpen()}>
         <MenuWrapper>
-          <div class="flex items-center gap-1.5">
+          <div
+            class="flex items-center gap-1.5"
+            hidden={!linkInfo()?.editAccess}
+          >
             <div class="flex h-8 min-w-0 grow items-center gap-2 rounded-md border border-edge-muted bg-surface px-2 focus-within:border-accent">
               <Link class="size-4 shrink-0 text-ink-extra-muted" />
               <input
@@ -469,12 +496,21 @@ export function FloatingLinkMenu(props: {
               </div>
             </div>
           </div>
+          <Show when={pendingLinkInfo()?.url}>
+            {(url) => (
+              <div class="flex justify-end pt-1">
+                <ExternalDestinationAction url={url()} />
+              </div>
+            )}
+          </Show>
+
           <div
             class="flex overflow-hidden ease-in-out"
             classList={{
               'max-h-0 mt-0': !expanded(),
               'max-h-24 mt-1.5': expanded(),
             }}
+            hidden={!linkInfo()?.editAccess}
           >
             <div class="flex h-8 min-w-0 grow items-center gap-2 rounded-md border border-edge-muted bg-surface px-2 focus-within:border-accent">
               <LinkText class="size-4 shrink-0 text-ink-extra-muted" />
@@ -501,6 +537,7 @@ export function FloatingLinkMenu(props: {
               'max-h-0 mt-0': !expanded(),
               'max-h-24 mt-1.5': expanded(),
             }}
+            hidden={!linkInfo()?.editAccess}
           >
             <Button
               onClick={handleSubmit}
@@ -508,6 +545,7 @@ export function FloatingLinkMenu(props: {
               size="sm"
               tooltip="Apply link changes"
               disabled={!pendingLinkInfo()?.url && !pendingLinkInfo()?.linkText}
+              tabIndex={expanded() ? 0 : -1}
             >
               <Check /> Apply
             </Button>

@@ -1,4 +1,4 @@
-import { LinkHoverCard } from '@core/component/Link';
+import { ExternalDestinationAction, LinkHoverCard } from '@core/component/Link';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { useUnfurl } from '@core/signal/unfurl';
@@ -41,6 +41,12 @@ export function LinkWithPreview(props: LinkWithPreviewProps) {
           e.preventDefault();
           openExternalUrl(props.url);
         }}
+        onFocus={() => {
+          debouncedSetPreviewOpen(true);
+        }}
+        onBlur={() => {
+          debouncedSetPreviewOpen(false);
+        }}
         onMouseEnter={() => {
           if (isTouchDevice()) return;
           debouncedSetPreviewOpen(true);
@@ -54,6 +60,10 @@ export function LinkWithPreview(props: LinkWithPreviewProps) {
       >
         {props.children}
       </a>
+      <ExternalDestinationAction
+        url={props.url}
+        class="ml-1 inline underline-offset-2"
+      />
       <Show when={previewOpen()}>
         <ScopedPortal>
           <div
@@ -66,7 +76,12 @@ export function LinkWithPreview(props: LinkWithPreviewProps) {
             {(() => {
               const data = unfurlData();
               if (data?.type === 'success') {
-                return <LinkHoverCard unfurled={data.data} />;
+                return (
+                  <LinkHoverCard
+                    unfurled={data.data}
+                    showDestinationAction={false}
+                  />
+                );
               }
               return (
                 <LinkHoverCard
@@ -74,6 +89,7 @@ export function LinkWithPreview(props: LinkWithPreviewProps) {
                     url: props.url,
                     title: props.title ?? '',
                   }}
+                  showDestinationAction={false}
                 />
               );
             })()}
