@@ -432,6 +432,9 @@ If a background refresh fails, cached cron routines stay listed and their editor
 and queued autosave remain available. An initial load failure without cached data
 shows **Unable to load automation** instead. Cached event routines remain
 backend-managed even after a refresh failure.
+When editing the time, minute digits can be entered or erased one at a time;
+the field keeps partial input while focused and pads it on blur. The composer
+and editor save the canonical `HH:MM` schedule value, not partial field text.
 
 Event-triggered routines are backend-managed through the scheduled-action API.
 They do not appear in the frontend's cron-only automation lists. Opening an
