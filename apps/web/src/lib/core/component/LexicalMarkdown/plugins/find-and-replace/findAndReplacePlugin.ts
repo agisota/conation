@@ -4,6 +4,7 @@ import {
   $createNodeSelection,
   $getNodeByKey,
   $getRoot,
+  $isDecoratorNode,
   $isElementNode,
   $isTextNode,
   $setSelection,
@@ -85,13 +86,22 @@ function collectTextSegments(root: ElementNode): {
   let text = '';
   const segments: TextSegment[] = [];
   const visit = (node: LexicalNode) => {
-    if (shouldIgnoreNodeType(node.getType())) return;
+    if (shouldIgnoreNodeType(node.getType())) {
+      // Ignored content still interrupts adjacent text; it is not a bridge
+      // across which two otherwise separate text nodes can be replaced.
+      if (text.length > 0 && !text.endsWith('\n')) text += '\n';
+      return;
+    }
     if ($isElementNode(node)) {
       const isBlock = !node.isInline();
       if (isBlock && text.length > 0 && !text.endsWith('\n')) text += '\n';
       for (const child of node.getChildren()) visit(child);
       if (isBlock) text += '\n';
       return;
+    }
+    const isBlockDecorator = $isDecoratorNode(node) && !node.isInline();
+    if (isBlockDecorator && text.length > 0 && !text.endsWith('\n')) {
+      text += '\n';
     }
     const content = node.getTextContent();
     if (content.length > 0) {
@@ -102,7 +112,7 @@ function collectTextSegments(root: ElementNode): {
       });
       text += content;
     }
-    if (notReallyInlineTypes(node.getType())) text += '\n';
+    if (isBlockDecorator || notReallyInlineTypes(node.getType())) text += '\n';
   };
   visit(root);
   return { text, segments };
@@ -126,13 +136,25 @@ function findMatchOffsets(
     const matchStart = found.index;
     const matchEnd = matchStart + found[0].length;
     if (matchEnd === matchStart) break;
-    pairKey += 1;
     while (
       segmentIndex < segments.length &&
       segments[segmentIndex].end <= matchStart
     ) {
       segmentIndex += 1;
     }
+    // A separator has no owning segment. A match containing one cannot be
+    // highlighted or replaced, even if the query explicitly includes '\n'.
+    let coveredUntil = matchStart;
+    for (
+      let i = segmentIndex;
+      i < segments.length && segments[i].start < matchEnd;
+      i++
+    ) {
+      if (segments[i].start > coveredUntil) break;
+      coveredUntil = Math.max(coveredUntil, segments[i].end);
+    }
+    if (coveredUntil < matchEnd) continue;
+    pairKey += 1;
     let isReplace = true;
     for (
       let i = segmentIndex;

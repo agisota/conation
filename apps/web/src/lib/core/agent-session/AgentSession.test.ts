@@ -14,6 +14,18 @@ import type {
 import { err, ok, type Result } from 'neverthrow';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const telemetry = vi.hoisted(() => ({
+  setAttr: vi.fn(),
+  event: vi.fn(),
+  end: vi.fn(),
+  error: vi.fn(),
+  run: vi.fn(<T>(operation: () => T) => operation()),
+  span: vi.fn(),
+}));
+vi.mock('@macro-inc/observability', () => ({
+  Telemetry: { span: vi.fn(() => telemetry) },
+}));
+
 const fold = vi.hoisted(() => ({
   pushSession: vi.fn(),
   readSession: vi.fn(),
@@ -44,7 +56,9 @@ import {
   AgentSession,
   AgentSessionAccessDenied,
   AgentSessionReleased,
+  type IssueResult,
 } from './AgentSession';
+import { resetSendTraces, sendTraceFor, startSend } from './send-telemetry';
 import { resetSessionTurns, sessionTurn } from './session-turn';
 
 const SESSION = '01a0abed-279f-724c-9f49-60dbedc79b6e';
@@ -82,6 +96,7 @@ function deferred<T>() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  resetSendTraces();
   resetSessionTurns();
   socket.listeners.clear();
   // Instances are shared and refcounted, so a test that fails before its
@@ -502,6 +517,198 @@ describe('AgentSession', () => {
     expect(harness.getLog).toHaveBeenCalledTimes(2);
     await live.load();
     expect(harness.getLog).toHaveBeenCalledTimes(2);
+    live.release();
+  });
+
+  it.each(['socket-before-response', 'response-before-socket'] as const)(
+    'correlates issue and apply when accepted-id prompt arrives %s',
+    async (ordering) => {
+      const oldUser = {
+        turn: 0,
+        requestId: 'old-id',
+        author: { kind: 'user' },
+        parts: [{ kind: 'text', text: 'old' }],
+      };
+      const oldAgent = {
+        turn: 0,
+        requestId: null,
+        author: { kind: 'agent' },
+        parts: [],
+      };
+      const live = AgentSession.acquire(SESSION);
+      await live.load();
+      const trace = startSend(SESSION, {
+        surface: 'session',
+        promptChars: 2,
+        attachmentCount: 0,
+      });
+      const control = deferred<IssueResult>();
+      harness.control.mockReturnValueOnce(control.promise);
+      const acceptedPrompt = {
+        turn: 1,
+        requestId: 'accepted-id',
+        author: { kind: 'user' },
+        parts: [{ kind: 'text', text: 'hi' }],
+      };
+      fold.pushSession.mockImplementation(
+        async (_id: string, batch: FoldInput[]) => {
+          if (batch.some((input) => input.kind === 'confirmed'))
+            return [
+              { kind: 'update', message: oldUser },
+              { kind: 'replace', messages: [oldUser, oldAgent] },
+            ];
+          const speculation = batch.find(
+            (input) => input.kind === 'speculated'
+          );
+          if (!speculation) return [];
+          // No speculative fold output: only the accepted-id socket prompt can
+          // establish the turn, so this test cannot pass via the client id.
+          return [];
+        }
+      );
+
+      const sending = live.issue({ type: 'prompt', prompt: 'hi' });
+      await settle();
+      const clientId = (
+        inputs().find((input) => input.kind === 'speculated') as {
+          actionId: string;
+        }
+      ).actionId;
+      if (ordering === 'socket-before-response') {
+        fold.pushSession.mockResolvedValueOnce([
+          { kind: 'new', message: acceptedPrompt },
+        ]);
+        await AgentSession.ingest({
+          agentSessionId: SESSION,
+          entries: [row(2)],
+        });
+        await settle();
+        expect(sendTraceFor(SESSION)).toBe(trace);
+        fold.pushSession.mockResolvedValueOnce([
+          { kind: 'update', message: oldUser },
+          { kind: 'replace', messages: [oldUser, oldAgent, acceptedPrompt] },
+        ]);
+        await AgentSession.ingest({
+          agentSessionId: SESSION,
+          entries: [row(3)],
+        });
+        await settle();
+        expect(sendTraceFor(SESSION)).toBe(trace);
+        fold.pushSession.mockResolvedValueOnce([
+          {
+            kind: 'new',
+            message: {
+              turn: 1,
+              requestId: null,
+              author: { kind: 'agent' },
+              parts: [],
+            },
+          },
+        ]);
+        await AgentSession.ingest({
+          agentSessionId: SESSION,
+          entries: [row(4)],
+        });
+        await settle();
+        expect(sendTraceFor(SESSION)).toBe(trace);
+        expect(telemetry.setAttr).not.toHaveBeenCalledWith(
+          'agent.send.outcome',
+          'responded'
+        );
+      }
+      control.resolve(ok({ actionId: 'accepted-id', status: 'sent' }));
+      await sending;
+      trace.prompted('accepted-id');
+      await settle();
+      expect(clientId).toBeTruthy();
+      expect(telemetry.event).toHaveBeenCalledWith('prompt.accepted');
+      if (ordering === 'socket-before-response') {
+        expect(sendTraceFor(SESSION)).toBeUndefined();
+        expect(telemetry.setAttr).toHaveBeenCalledWith(
+          'agent.send.outcome',
+          'responded'
+        );
+        const acceptance = telemetry.event.mock.calls.findIndex(
+          ([name]) => name === 'prompt.accepted'
+        );
+        const acceptedAt = telemetry.event.mock.invocationCallOrder[acceptance];
+        const outcome = telemetry.setAttr.mock.calls.findIndex(
+          ([name]) => name === 'agent.send.outcome'
+        );
+        expect(acceptedAt).toBeLessThan(
+          telemetry.setAttr.mock.invocationCallOrder[outcome]
+        );
+        live.release();
+        return;
+      }
+      expect(sendTraceFor(SESSION)).toBe(trace);
+
+      if (ordering === 'response-before-socket') {
+        fold.pushSession.mockResolvedValueOnce([
+          { kind: 'new', message: acceptedPrompt },
+        ]);
+        await AgentSession.ingest({
+          agentSessionId: SESSION,
+          entries: [row(2)],
+        });
+        await settle();
+      }
+      // Historical update/resync content cannot finish the newer action.
+      fold.pushSession.mockResolvedValueOnce([
+        { kind: 'update', message: oldUser },
+        { kind: 'replace', messages: [oldUser, oldAgent] },
+      ]);
+      await AgentSession.ingest({ agentSessionId: SESSION, entries: [row(3)] });
+      await settle();
+      expect(sendTraceFor(SESSION)).toBe(trace);
+
+      fold.pushSession.mockResolvedValueOnce([
+        {
+          kind: 'new',
+          message: {
+            turn: 1,
+            requestId: null,
+            author: { kind: 'agent' },
+            parts: [],
+          },
+        },
+      ]);
+      await AgentSession.ingest({ agentSessionId: SESSION, entries: [row(4)] });
+      await settle();
+      expect(sendTraceFor(SESSION)).toBeUndefined();
+      expect(telemetry.setAttr).toHaveBeenCalledWith(
+        'agent.send.outcome',
+        'responded'
+      );
+      live.release();
+    }
+  );
+
+  it('feeds fold events to an open send so the first agent reply can close it', async () => {
+    const live = AgentSession.acquire(SESSION);
+    await live.load();
+    const send = startSend(SESSION, {
+      surface: 'session',
+      promptChars: 2,
+      attachmentCount: 0,
+    });
+    const observe = vi.spyOn(send, 'observe');
+    fold.pushSession.mockResolvedValueOnce([
+      {
+        kind: 'new',
+        message: { turn: 0, author: { kind: 'user' }, parts: [] },
+      },
+    ]);
+
+    await live.issue({ type: 'prompt', prompt: 'hi' });
+    await settle();
+
+    expect(observe).toHaveBeenCalledWith([
+      {
+        kind: 'new',
+        message: { turn: 0, author: { kind: 'user' }, parts: [] },
+      },
+    ]);
     live.release();
   });
 });

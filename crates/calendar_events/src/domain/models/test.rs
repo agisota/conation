@@ -131,6 +131,12 @@ fn watch_renewal_skips_calendars_that_recently_refused_push() {
     };
     assert!(!refused.needs_watch_renewal(now));
 
+    let refusal_at_boundary = StoredGoogleCalendar {
+        watch_unsupported_at: Some(now - chrono::Duration::days(7)),
+        ..calendar.clone()
+    };
+    assert!(refusal_at_boundary.needs_watch_renewal(now));
+
     let refusal_aged_out = StoredGoogleCalendar {
         watch_unsupported_at: Some(now - chrono::Duration::days(8)),
         ..calendar

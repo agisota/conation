@@ -1,8 +1,27 @@
 # Documents
 
+## Document header
+
 The document header has separate Share, Copy Share Link, and Side Panel buttons.
 They are borderless with a soft rounded background on hover. Share opens the
 sharing dialog; copying a link is a separate action.
+
+## Markdown find and replace
+
+In the Markdown editor, use Cmd/Ctrl+F to find text within formatted text and
+multiline code blocks, including matches that occur after a code block. Search
+keeps nested list items and document cards as block boundaries: text on either
+side cannot combine into a match or become a replacement. Find next navigates
+real matches; replace-once and replace-all should alter only the matched text.
+
+Practical check: open a Markdown document containing a fenced code block followed
+by `fan-out`, a nested list whose parent ends in `alpha` and child begins in
+`beta`, and paragraphs containing `alpha`, a document card, then `beta`. Search
+for `fan-out` (one result), `alphabeta` (no result across either boundary), and
+`alpha`/`beta` (real results on each side). Test Find next and replacement on a
+valid result, then repeat at desktop and narrow/mobile widths; the count and
+match sequence should be the same even when the find controls are arranged
+narrowly.
 
 ## Spreadsheets
 

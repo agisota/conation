@@ -528,6 +528,10 @@ delete, attach, format, schedule, and send. Touch compose uses its header toolba
 or the latest message when none is selected. `F` opens a forward and focuses To.
 While an editable field is focused, Escape is handled by that field before the
 close-reply shortcut.
+Reply and Reply All show `Re:` when the original email has no subject; Forward
+shows `Fwd:`. Existing nonempty subjects retain their composer prefix behavior.
+These generated composer subjects do not change how subjects appear in the thread.
+
 An edited reply remains a draft when navigating away and returning. Standalone
 compose also flushes pending edits when leaving through app navigation. During
 send or discard, its sender and scheduling controls cannot change the operation.

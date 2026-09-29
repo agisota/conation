@@ -21,6 +21,8 @@
  */
 
 import { AgentSession } from '@core/agent-session/AgentSession';
+import { startSend } from '@core/agent-session/send-telemetry';
+import { markMessageSent } from '@core/util/message-send-motion';
 import { refetchSoupEntity } from '@queries/soup/normalized-cache';
 import { agentHarnessServiceClient } from '@service-agent-harness/client';
 import type {
@@ -88,63 +90,76 @@ export function startPendingSession(
     prompt: options.prompt?.trim() || undefined,
   });
 
-  void agentHarnessServiceClient
-    .create({
+  const prompt = options.prompt?.trim() ?? '';
+  const attachments = options.attachments ?? [];
+  const trace =
+    prompt || attachments.length > 0
+      ? startSend(id, {
+          surface: 'new_chat',
+          promptChars: prompt.length,
+          attachmentCount: attachments.length,
+        })
+      : undefined;
+  const fail = (message: string, cause?: unknown) => {
+    trace?.end('failed', cause ?? message);
+    setError(message);
+  };
+
+  const start = async () => {
+    const result = await agentHarnessServiceClient.create({
       id,
       ...(options.botId ? { botId: options.botId } : {}),
       ...(options.modelOverride ? { model: options.modelOverride } : {}),
       ...(options.repoUrl
         ? { repoUrl: options.repoUrl, repoBranch: options.repoBranch }
         : {}),
-    } satisfies CreateAgentSessionRequest)
-    .then(async (result) => {
-      if (result.isErr()) {
-        setError(
-          result.error.map((error) => error.message).join(' ') ||
-            'The agent session could not be created.'
+    } satisfies CreateAgentSessionRequest);
+    if (result.isErr()) {
+      fail(
+        result.error.map((error) => error.message).join(' ') ||
+          'The agent session could not be created.'
+      );
+      return;
+    }
+    // A service that predates client-minted ids may answer with its own id.
+    const created = result.value.session.id;
+    trace?.adopt(created);
+    trace?.created();
+    void refetchSoupEntity(created, 'agentSession', { created: true });
+    // Adopt before waiting on the runtime handshake: the shared session folds
+    // the first prompt speculatively so the block shows it immediately.
+    setSessionId(created);
+    if (prompt || attachments.length > 0) {
+      const session = AgentSession.acquire(created);
+      try {
+        const delivered = await session.issue(
+          {
+            type: 'prompt',
+            prompt,
+            ...(attachments.length > 0 ? { attachments } : {}),
+          },
+          { userId: options.userId }
         );
-        return;
-      }
-      // Normally the id this tab minted; a service that predates the field
-      // mints its own, and the block adopts that one the way it always did.
-      const created = result.value.session.id;
-      void refetchSoupEntity(created, 'agentSession', { created: true });
-      // The block adopts the session the moment it exists. The first prompt
-      // then goes through the shared session like any other, so it is folded
-      // speculatively - bubble and working line on screen at once - while
-      // the control POST waits out the runtime handshake. Delivering it
-      // first and adopting after left the transcript empty for that wait.
-      setSessionId(created);
-      const prompt = options.prompt?.trim() ?? '';
-      if (prompt || options.attachments?.length) {
-        const session = AgentSession.acquire(created);
-        try {
-          const delivered = await session.issue(
-            {
-              type: 'prompt',
-              prompt,
-              ...(options.attachments?.length
-                ? { attachments: options.attachments }
-                : {}),
-            },
-            { userId: options.userId }
+        if (delivered.isErr()) {
+          fail(
+            delivered.error.map((error) => error.message).join(' ') ||
+              'The first message could not be sent.'
           );
-          if (delivered.isErr()) {
-            setError(
-              delivered.error.map((error) => error.message).join(' ') ||
-                'The first message could not be sent.'
-            );
-          }
-        } finally {
-          session.release();
+          return;
         }
+        trace?.prompted(delivered.value.actionId);
+        markMessageSent(`agent:${created}:${delivered.value.actionId}`);
+      } finally {
+        session.release();
       }
-    })
-    .catch(() =>
-      setError(
-        'Could not reach the agent service. Check your connection and try again.'
-      )
-    );
+    }
+  };
+
+  void (trace?.run(() => start()) ?? start()).catch(() =>
+    fail(
+      'Could not reach the agent service. Check your connection and try again.'
+    )
+  );
 
   return id;
 }

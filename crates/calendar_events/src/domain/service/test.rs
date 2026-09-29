@@ -31,6 +31,8 @@ struct FakeRepo {
     recorded_sync_errors: Arc<Mutex<Vec<String>>>,
     /// Calendars recorded as refusing push channels, in order.
     recorded_watch_unsupported: Arc<Mutex<Vec<Uuid>>>,
+    watch_unsupported_at: Arc<Mutex<Option<chrono::DateTime<Utc>>>>,
+    recorded_watch_channels: Arc<Mutex<Vec<Uuid>>>,
 }
 
 impl CalendarRepository for FakeRepo {
@@ -172,8 +174,9 @@ impl CalendarRepository for FakeRepo {
             materialized_range: None,
             synced_at: self.stored_synced_at,
             watch_expires_at: None,
-            watch_unsupported_at: (!self.recorded_watch_unsupported.lock().unwrap().is_empty())
-                .then(Utc::now),
+            watch_unsupported_at: (*self.watch_unsupported_at.lock().unwrap()).or_else(|| {
+                (!self.recorded_watch_unsupported.lock().unwrap().is_empty()).then(Utc::now)
+            }),
         })
     }
 
@@ -221,6 +224,11 @@ impl CalendarRepository for FakeRepo {
         _calendar_id: Uuid,
         _channel: GoogleWatchChannel,
     ) -> Result<(), Report> {
+        self.recorded_watch_channels
+            .lock()
+            .unwrap()
+            .push(_calendar_id);
+        *self.watch_unsupported_at.lock().unwrap() = None;
         Ok(())
     }
 
@@ -235,6 +243,7 @@ impl CalendarRepository for FakeRepo {
             .lock()
             .unwrap()
             .push(calendar_id);
+        *self.watch_unsupported_at.lock().unwrap() = Some(Utc::now());
         Ok(())
     }
 
@@ -742,6 +751,7 @@ impl GoogleCalendarProvider for MixedTotalFailureGoogleProvider {
 #[derive(Clone, Default)]
 struct PushUnsupportedGoogleProvider {
     watch_calls: Arc<Mutex<usize>>,
+    accept_watch: Arc<Mutex<bool>>,
 }
 
 impl GoogleCalendarProvider for PushUnsupportedGoogleProvider {
@@ -770,10 +780,18 @@ impl GoogleCalendarProvider for PushUnsupportedGoogleProvider {
         _config: &GoogleWatchConfig,
     ) -> Result<GoogleWatchChannel, GoogleProviderError> {
         *self.watch_calls.lock().unwrap() += 1;
-        Err(GoogleProviderError::new(
-            GoogleProviderErrorKind::PushUnsupported,
-            "Push notifications are not supported by this resource.",
-        ))
+        if *self.accept_watch.lock().unwrap() {
+            Ok(GoogleWatchChannel {
+                channel_id: Uuid::now_v7(),
+                resource_id: "resource".to_string(),
+                expires_at: Utc::now() + chrono::Duration::days(7),
+            })
+        } else {
+            Err(GoogleProviderError::new(
+                GoogleProviderErrorKind::PushUnsupported,
+                "Push notifications are not supported by this resource.",
+            ))
+        }
     }
 }
 
@@ -826,6 +844,48 @@ async fn push_unsupported_watch_is_recorded_and_the_account_completes() {
     );
     assert!(recorded_sync_errors.lock().unwrap().is_empty());
     assert_eq!(lifecycle.completions.lock().unwrap().len(), 2);
+    assert!(lifecycle.failures.lock().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn persisted_push_refusal_is_reprobed_after_seven_days_and_cleared_on_success() {
+    let lifecycle = FakeLifecycle::claimed();
+    let repository = FakeRepo::default();
+    let recorded_watch_channels = repository.recorded_watch_channels.clone();
+    let watch_unsupported_at = repository.watch_unsupported_at.clone();
+    *watch_unsupported_at.lock().unwrap() = Some(Utc::now() - chrono::Duration::days(7));
+    let provider = PushUnsupportedGoogleProvider::default();
+    *provider.accept_watch.lock().unwrap() = true;
+    let watch_calls = provider.watch_calls.clone();
+    let coordinator = GoogleCalendarBackfillCoordinator::new(
+        repository,
+        provider,
+        lifecycle.clone(),
+        NoopMacroEventBroker,
+        Some(GoogleWatchConfig {
+            address: "https://gateway.example.com/calendar/notifications".to_string(),
+            token: "token".to_string(),
+        }),
+    );
+
+    coordinator
+        .run(
+            CalendarBackfillJobKey {
+                job_id: Uuid::now_v7(),
+                email_link_id: Uuid::now_v7(),
+            },
+            "macro|calendar@example.com",
+            "secret",
+            OccurrenceRange::maintenance_horizon(Utc::now()),
+            &mut GoogleBackfillRunReport::default(),
+        )
+        .await
+        .expect("the persisted refusal should be re-probed after seven days");
+
+    assert_eq!(*watch_calls.lock().unwrap(), 1);
+    assert_eq!(*recorded_watch_channels.lock().unwrap(), vec![Uuid::nil()]);
+    assert!(watch_unsupported_at.lock().unwrap().is_none());
+    assert_eq!(lifecycle.completions.lock().unwrap().len(), 1);
     assert!(lifecycle.failures.lock().unwrap().is_empty());
 }
 
