@@ -121,9 +121,9 @@ describe('large plain-text paste interception', () => {
       expect(editor.dispatchCommand(PASTE_COMMAND, event)).toBe(false);
       expect(event.preventDefault).not.toHaveBeenCalled();
       expect(getPasteContents(editor)).toEqual([]);
-      expect(editor.getEditorState().read(() => $getRoot().getTextContent())).toBe(
-        'selected text'
-      );
+      expect(
+        editor.getEditorState().read(() => $getRoot().getTextContent())
+      ).toBe('selected text');
     }
   );
 
