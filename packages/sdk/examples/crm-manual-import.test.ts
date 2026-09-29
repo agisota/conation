@@ -492,7 +492,9 @@ describe('manual CRM import example', () => {
       console.log = log;
     }
     expect(requests).toHaveLength(0);
-    expect(output.join('\n')).toContain('Create company München 東京 (acme.com)');
+    expect(output.join('\n')).toContain(
+      'Create company München 東京 (acme.com)',
+    );
   });
 
   test('invalid rename UUIDs fail before earlier create operations are sent', async () => {
