@@ -24,48 +24,51 @@ export function PasteNode(props: PasteNodeDecoratorProps) {
 }
 
 /**
- * A compact collapsed monospace preview that looks like a code fence and
- * fades to the background color at the bottom, with a "pasted" pill in the
- * bottom-left and a `⋯` menu floating in the top-right. Clicking it opens
- * the full text. Mirrors the DocumentCard.
+ * A compact collapsed monospace preview that fades to the background and
+ * opens the full passage. The preview control is separate from its action
+ * menu so the menu's buttons are never nested inside an activatable control.
  */
 function PastedText(props: PasteNodeDecoratorProps) {
   const node = usePasteNode(props);
   const [open, setOpen] = createSignal(false);
 
+  const openViewer = (event: MouseEvent | KeyboardEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    node.selectNode();
+    setOpen(true);
+  };
+
   return (
     <Layer depth={2}>
-      <div
-        contentEditable={false}
-        class={cn(
-          'relative my-2 w-full rounded border border-edge bg-surface no-select-children select-none overflow-hidden',
-          node.isSelectedAsNode() && 'bg-active outline-edge outline-4'
-        )}
-        on:click={(e) => {
-          // Native listener (not delegated `onClick`) so this fires during
-          // real DOM bubbling and its stopPropagation beats the MarkdownTextarea
-          // container's native `on:click`, which otherwise calls editor.focus()
-          // and steals focus back, instantly closing the modal in input boxes.
-          e.preventDefault();
-          e.stopPropagation();
-          node.selectNode();
-          setOpen(true);
-        }}
-      >
-        {/* Compact monospace preview that fades to the background. */}
-        <div class="relative max-h-28 overflow-hidden">
-          <pre class="font-mono text-xs leading-relaxed bg-message p-3 m-0 whitespace-pre overflow-hidden">
-            {props.content}
-          </pre>
-          <div class="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-transparent to-message" />
-        </div>
+      <div class="relative my-2">
+        <button
+          type="button"
+          contentEditable={false}
+          aria-label={`Open ${node.origin()} text`}
+          on:keydown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              openViewer(event);
+            }
+          }}
+          on:click={openViewer}
+          class={cn(
+            'block w-full rounded border border-edge bg-surface no-select-children select-none overflow-hidden text-left',
+            node.isSelectedAsNode() && 'bg-active outline-edge outline-4'
+          )}
+        >
+          <div class="relative max-h-28 overflow-hidden">
+            <pre class="font-mono text-xs leading-relaxed bg-message p-3 m-0 whitespace-pre overflow-hidden">
+              {props.content}
+            </pre>
+            <div class="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-transparent to-message" />
+          </div>
 
-        <span class="absolute bottom-2 left-2 inline-flex items-center px-2 py-1 text-xs leading-none rounded-full border border-edge bg-surface">
-          {node.origin()}
-        </span>
+          <span class="absolute bottom-2 left-2 inline-flex items-center px-2 py-1 text-xs leading-none rounded-full border border-edge bg-surface">
+            {node.origin()}
+          </span>
+        </button>
 
-        {/* Hidden in static / read-only renders (no editable editor),
-            mirroring the reference cards. */}
         <Show when={node.isEditable()}>
           <PasteActionsMenu
             class="absolute top-1 right-1"
