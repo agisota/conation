@@ -9,7 +9,7 @@ import {
   waitFor,
   within,
 } from '@solidjs/testing-library';
-import { createSignal, type JSX } from 'solid-js';
+import { createSignal, For, type JSX } from 'solid-js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildAgentRoster, type PersistedAgentLike } from '../core/roster';
 import { AgentPicker } from './AgentPicker';
@@ -159,12 +159,14 @@ vi.mock('../components/ChatComposer', () => ({
         onInput={(event) => props.onDraftChange(event.currentTarget.value)}
       />
       <div aria-label="Attachments">
-        {props.attachments.map((attachment) => (
-          <span>{attachment.name}</span>
-        ))}
+        <For each={props.attachments}>
+          {(attachment) => <span>{attachment.name}</span>}
+        </For>
       </div>
       <button
-        onClick={() => props.onAttachFiles([new File(['account'], 'account.md')])}
+        onClick={() =>
+          props.onAttachFiles([new File(['account'], 'account.md')])
+        }
       >
         Attach
       </button>
