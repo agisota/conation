@@ -20,6 +20,13 @@ type CreateInputAttachmentTrackerOptions = {
   maxAttachments?: number;
 };
 
+// A failed localStorage write still has to invalidate uploads from an earlier
+// tracker instance with the same key (for example, after a composer remount).
+const unpersistedUploadGenerations = new Map<
+  string,
+  { generation: string; storedBeforeClear: string | null | undefined }
+>();
+
 export function createInputAttachmentTracker(
   options: CreateInputAttachmentTrackerOptions = {}
 ): InputAttachmentTracker {
@@ -42,23 +49,23 @@ export function createInputAttachmentTracker(
   const generationKey = options.persistenceKey
     ? `${options.persistenceKey}-upload-generation`
     : undefined;
-  let fallbackAfterFailedWrite = false;
-  let failedStoredGeneration: string | null | undefined;
   const getUploadGeneration = () => {
     if (generationKey) {
+      const fallback = unpersistedUploadGenerations.get(generationKey);
       try {
         const stored = localStorage.getItem(generationKey);
-        if (fallbackAfterFailedWrite) {
+        if (fallback) {
           if (
-            failedStoredGeneration === undefined ||
-            stored === failedStoredGeneration
+            fallback.storedBeforeClear === undefined ||
+            stored === fallback.storedBeforeClear
           )
-            return localUploadGeneration;
-          // A different tracker advanced the shared generation afterward.
-          fallbackAfterFailedWrite = false;
+            return fallback.generation;
+          // Another tab or tracker advanced the persisted token after the failure.
+          unpersistedUploadGenerations.delete(generationKey);
         }
         return stored ?? localUploadGeneration;
       } catch {
+        if (fallback) return fallback.generation;
         // In-memory generation still fences uploads if storage is unavailable.
       }
     }
@@ -100,15 +107,16 @@ export function createInputAttachmentTracker(
   const clearAttachments = () => {
     localUploadGeneration = crypto.randomUUID();
     if (generationKey) {
-      let storedBeforeWrite: string | null | undefined;
+      let storedBeforeClear: string | null | undefined;
       try {
-        storedBeforeWrite = localStorage.getItem(generationKey);
+        storedBeforeClear = localStorage.getItem(generationKey);
         localStorage.setItem(generationKey, localUploadGeneration);
-        fallbackAfterFailedWrite = false;
+        unpersistedUploadGenerations.delete(generationKey);
       } catch {
-        // The local token must win over a stale stored token on write failure.
-        failedStoredGeneration = storedBeforeWrite;
-        fallbackAfterFailedWrite = true;
+        unpersistedUploadGenerations.set(generationKey, {
+          generation: localUploadGeneration,
+          storedBeforeClear,
+        });
       }
     }
     setAttachments([]);
