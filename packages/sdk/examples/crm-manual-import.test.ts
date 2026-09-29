@@ -425,6 +425,97 @@ describe('manual CRM import example', () => {
   });
 
 
+  test('case-variant UUID rename duplicates fail before any request', async () => {
+    configureApply();
+    const requests = recordTransport(() => jsonResponse({}));
+    const companyId = 'abcdefab-cdef-4abc-8def-abcdefabcdef';
+    const contactId = 'abcdefab-cdef-4abc-8def-abcdefabcdef';
+    for (const input of [
+      {
+        companies: [
+          { name: 'Acme', domain: 'acme.com' },
+          { id: companyId, rename: 'First rename' },
+          { id: companyId.toUpperCase(), rename: 'Second rename' },
+        ],
+      },
+      {
+        contacts: [
+          {
+            companyDomain: 'acme.com',
+            name: 'Jane',
+            email: 'jane@acme.com',
+          },
+          { id: contactId, rename: 'First rename' },
+          { id: contactId.toUpperCase(), rename: 'Second rename' },
+        ],
+      },
+    ]) {
+      await withInput(input, async (inputPath) => {
+        await expect(run(['--input', inputPath, '--apply'])).rejects.toThrow(
+          /Duplicate/i,
+        );
+      });
+    }
+    expect(requests).toHaveLength(0);
+  });
+
+  test('201 Unicode-character names fail preflight before any batch write', async () => {
+    configureApply();
+    const requests = recordTransport(() => jsonResponse({}));
+    const overlongName = '🧪'.repeat(201);
+    for (const input of [
+      {
+        companies: [
+          { name: 'Acme', domain: 'acme.com' },
+          { name: overlongName, domain: 'other.com' },
+        ],
+      },
+      {
+        companies: [
+          { name: 'Acme', domain: 'acme.com' },
+          {
+            id: 'abcdefab-cdef-4abc-8def-abcdefabcdef',
+            rename: overlongName,
+          },
+        ],
+      },
+      {
+        contacts: [
+          {
+            companyDomain: 'acme.com',
+            name: 'Jane',
+            email: 'jane@acme.com',
+          },
+          {
+            companyDomain: 'acme.com',
+            name: overlongName,
+            email: 'jane2@acme.com',
+          },
+        ],
+      },
+      {
+        contacts: [
+          {
+            companyDomain: 'acme.com',
+            name: 'Jane',
+            email: 'jane@acme.com',
+          },
+          {
+            id: 'abcdefab-cdef-4abc-8def-abcdefabcdef',
+            rename: overlongName,
+          },
+        ],
+      },
+    ]) {
+      await withInput(input, async (inputPath) => {
+        await expect(run(['--input', inputPath, '--apply'])).rejects.toThrow(
+          /200|too long/i,
+        );
+      });
+    }
+    expect(requests).toHaveLength(0);
+  });
+
   test('rejects backend-invalid bare domain shapes before earlier batch writes', async () => {
     configureApply();
     const requests = recordTransport(() => jsonResponse({}));
