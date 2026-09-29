@@ -23,7 +23,7 @@ export function classifyExternalDestination(
         host === 'www.x.com' ||
         host === 'twitter.com' ||
         host === 'www.twitter.com') &&
-      /^\/(?:[^/]+\/status\/\d+|i\/spaces\/[^/?#]+)/.test(url.pathname)
+      /^\/(?:[^/]+\/status\/[1-9]\d*|i\/spaces\/[^/]+)\/?$/.test(url.pathname)
     ) {
       kind = 'X';
     } else if (
