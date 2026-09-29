@@ -1,0 +1,5519 @@
+{
+  "generatedAt": "2026-09-25T15:52:20.530Z",
+  "baselineMain": "484c8708a901f74cf34fd74e99df2111f8ceba23",
+  "archivedCount": 2333,
+  "notes": [
+    "A status snapshot, not an approval or merge queue. Missing tracked paths must not be staged.",
+    "taskCommits is a subject-based candidate hint, not proof of correctness or merge readiness.",
+    "Additional manually retained worktrees such as ctn-058, rus-1242 and nested PR require separate classification."
+  ],
+  "tasks": [
+    {
+      "id": "CTN-001",
+      "title": "Custom MCP support has disappeared",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:15.692Z"
+    },
+    {
+      "id": "CTN-002",
+      "title": "Agent chat model picker doesn't persist across new chats — always reverts to default model",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-002",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:25.494Z",
+      "git": {
+        "head": "f80a9a27a4d1fb6d9c19d8164935cd00e63510ff",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-003",
+      "title": "MCP: GetThread.bodyParsed drops quoted/inline reply text; ReadContent on an email message id fails; no attachment retrieval",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-003",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:25.727Z",
+      "git": {
+        "head": "19b8edc743314644a772c7545b05d96e9c6ea6df",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-004",
+      "title": "Feature request: Official pre-built Docker images for self-hosting",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "duplicate-decision-required",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T15:31:03.086Z"
+    },
+    {
+      "id": "CTN-005",
+      "title": "MCP server (v0.1.0) doesn't serve 5 tools from the generated registry: SendEmail, ReadThread, SearchTools, LoadTools, DisplayResults",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 2,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:18.847Z"
+    },
+    {
+      "id": "CTN-007",
+      "title": "feat(crm): allow contacts without a company domain",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-007",
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T01:52:26.044Z",
+      "git": {
+        "head": "352093950323a76dc2b2d6397a5a30768b61bd81",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 3,
+        "taskCommits": [
+          "352093950323a76dc2b2d6397a5a30768b61bd81",
+          "ffa449e996f6c777b791900e1a1422a8373e0110"
+        ],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-009",
+      "title": "Experimental Python CLI (MCP + CRM) built as a workaround — how would you do this properly?",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-009",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:26.312Z",
+      "git": {
+        "head": "627b3eb120d0044c809f63384c937d7eba13da7e",
+        "missingTracked": 5548,
+        "other": [
+          {
+            "xy": " M",
+            "path": "apps/docs/AI/recipes.mdx"
+          },
+          {
+            "xy": " M",
+            "path": "apps/docs/docs.json"
+          },
+          {
+            "xy": " M",
+            "path": "apps/docs/product/crm.mdx"
+          },
+          {
+            "xy": " M",
+            "path": "packages/sdk/README.md"
+          },
+          {
+            "xy": "??",
+            "path": "apps/docs/account/api-keys.mdx"
+          },
+          {
+            "xy": "??",
+            "path": "packages/sdk/examples/crm-manual-import.test.ts"
+          },
+          {
+            "xy": "??",
+            "path": "packages/sdk/examples/crm-manual-import.ts"
+          }
+        ],
+        "commitsAhead": 0,
+        "taskCommits": [],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-011",
+      "title": "Missing things",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-011",
+      "steps": {
+        "done": 5,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T01:52:26.517Z",
+      "git": {
+        "head": "e7ea67a32f1446b1c58ed45dcd82485845c2e494",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 4,
+        "taskCommits": [
+          "8d258a97bab126dbf56a6a3b840d0f11e905f62f",
+          "887086d800387705d17ceb40f142196dc21f816b",
+          "2715930987c9080a03667d6313e80d53e83b0ea6"
+        ],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-013",
+      "title": "Login Issue",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-013",
+      "steps": {
+        "done": 4,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:26.769Z",
+      "git": {
+        "head": "2f0606dffe089cd39da87cd4d6a779296f028dbd",
+        "missingTracked": 5554,
+        "other": [],
+        "commitsAhead": 3,
+        "taskCommits": [
+          "2f0606dffe089cd39da87cd4d6a779296f028dbd",
+          "dd341e7bc182c6b9057ba5bcb946b3fab28830b9"
+        ],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-014",
+      "title": "Feature to manage memory",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-014",
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T01:52:27.044Z",
+      "git": {
+        "head": "2af2e3d7cae10aa03be7f10c5c6f4d6359365110",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 3,
+        "taskCommits": [
+          "2af2e3d7cae10aa03be7f10c5c6f4d6359365110",
+          "dca44bdd61ca50484a1a89d04e5f112e17c8501c"
+        ],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-015",
+      "title": "fix(run-local): frontend fails with opaque \"did not become ready\" when node_modules is missing",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "duplicate-decision-required",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T15:31:03.643Z"
+    },
+    {
+      "id": "CTN-016",
+      "title": "fix(email): preserve trailing Unicode modifiers during cleanup",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "duplicate-decision-required",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T15:31:04.120Z"
+    },
+    {
+      "id": "CTN-017",
+      "title": "fix(email): recognize common forwarded-subject prefixes",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "duplicate-decision-required",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T15:31:04.773Z"
+    },
+    {
+      "id": "CTN-018",
+      "title": "fix(email): avoid undefined in subjectless replies and forwards",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 5,
+        "total": 5
+      },
+      "updatedAt": "2026-09-23T17:02:06.580Z"
+    },
+    {
+      "id": "CTN-020",
+      "title": "Does mcp_service run under run_local, or is MCP local-workspace access not yet supported for self-hosted?",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "duplicate-decision-required",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T15:31:05.193Z"
+    },
+    {
+      "id": "CTN-021",
+      "title": "Outlook / Microsoft Graph mail provider: status and can we help?",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 5,
+        "total": 5
+      },
+      "updatedAt": "2026-09-23T17:05:22.580Z"
+    },
+    {
+      "id": "CTN-022",
+      "title": "fix(soup): ListEntities AST filter params emit no type, so schema-driven MCP clients send them as strings",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-022",
+      "steps": {
+        "done": 2,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:27.270Z",
+      "git": {
+        "head": "155f60012dbcdefc6e55fed602287417d408cdc5",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-023",
+      "title": "Collapsed preview shows the Macro email signature as plain-text markdown",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "duplicate-decision-required",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T15:31:05.873Z"
+    },
+    {
+      "id": "CTN-027",
+      "title": "Does mcp_service run under run_local, or is MCP local-workspace access not yet supported for self-hosted?",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T01:51:48.123Z"
+    },
+    {
+      "id": "CTN-028",
+      "title": "Feature: Add support for IMAP/SMTP",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:15.986Z"
+    },
+    {
+      "id": "CTN-033",
+      "title": "feat(scheduled_action): support remote/self-hosted agents as a schedulable ActionKind",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-033",
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:30:05.085Z",
+      "git": {
+        "head": "984994e62f49e062f995d7e261c99e428c705002",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-034",
+      "title": "fix(mcp): cannot connect MCP servers without Dynamic Client Registration (e.g. HubSpot)",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": "provider-rate-limit:rox",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:19.600Z"
+    },
+    {
+      "id": "CTN-035",
+      "title": "Reply composer ignores the Reply-To email header",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-035",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:27.750Z",
+      "git": {
+        "head": "0b8f10d25d4a1cd150b0848ef748134226cf9241",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-037",
+      "title": "fix(mcp): protected resource metadata missing RFC 9728 resource field",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "duplicate-decision-required",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T15:31:06.366Z"
+    },
+    {
+      "id": "CTN-039",
+      "title": "[Feature Request] MCP Connector Auth tokens / headers",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "duplicate-decision-required",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T15:31:07.025Z"
+    },
+    {
+      "id": "CTN-051",
+      "title": "Add support for local and custom OpenAI-compatible models",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": "provider-rate-limit:rox",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:17.888Z"
+    },
+    {
+      "id": "CTN-056",
+      "title": "Resolve feedback: PR #6829 — refactor(calendar): make the calendar OpenAPI paths root-relative",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": "provider-rate-limit:rox",
+      "dependencies": [
+        "CTN-060"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-056",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:16.318Z",
+      "git": {
+        "head": "8fce26b1ec839aefb6aff3c416d98e16dfdcc4ad",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 0,
+        "taskCommits": [],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-057",
+      "title": "Resolve feedback on PR #6828 linked-conversation removal",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 4,
+        "total": 4
+      },
+      "updatedAt": "2026-09-23T17:07:33.584Z"
+    },
+    {
+      "id": "CTN-058",
+      "title": "Resolve feedback: PR #6830 — feat(routines): support Kafka event filters (MACRO-3553)",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 4,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:06.612Z"
+    },
+    {
+      "id": "CTN-059",
+      "title": "Resolve feedback: PR #6827 — feat(messages): read a comment's mark from the live document",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 8,
+        "total": 8
+      },
+      "updatedAt": "2026-09-23T21:42:19.370Z"
+    },
+    {
+      "id": "CTN-060",
+      "title": "Resolve feedback: PR #6826 — refactor(email_service): stop serving Google Calendar sync",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 6,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:16.466Z"
+    },
+    {
+      "id": "CTN-061",
+      "title": "Resolve feedback: PR #6825 — fix(comments): open a minimized margin thread as a dismissable popover",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-061",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:28.225Z",
+      "git": {
+        "head": "ad56f6548c7760293fe0cddedfe1d24ec81a7fd8",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-062",
+      "title": "Resolve feedback: PR #6824 — fix(calendar): stop retrying watches Google refuses to push for",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 15,
+        "total": 15
+      },
+      "updatedAt": "2026-09-23T21:56:50.065Z"
+    },
+    {
+      "id": "CTN-063",
+      "title": "Resolve feedback: PR #6823 — fix(ci): make Pulumi Preview on PR see the changed files",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-063",
+      "steps": {
+        "done": 4,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:28.453Z",
+      "git": {
+        "head": "70c77e742096ba3e5afa868c9d7fd215a13502c5",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-064",
+      "title": "Resolve feedback: PR #6822 — chore(calendar-service): drop the /calendar-service gateway prefix",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 5,
+        "total": 5
+      },
+      "updatedAt": "2026-09-23T17:10:27.559Z"
+    },
+    {
+      "id": "CTN-065",
+      "title": "Resolve feedback: PR #6820 — fix(call): name DM call notifications after the caller, not the callee",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-065",
+      "steps": {
+        "done": 2,
+        "total": 4
+      },
+      "updatedAt": "2026-09-25T01:52:29.099Z",
+      "git": {
+        "head": "0d8fbefefffacb45c4b2d99270160aebddd0b3aa",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 2,
+        "taskCommits": [],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-066",
+      "title": "Resolve feedback: PR #6821 — feat(web): add ActionMenu compound component",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 5,
+        "total": 5
+      },
+      "updatedAt": "2026-09-23T17:13:06.052Z"
+    },
+    {
+      "id": "CTN-067",
+      "title": "Resolve feedback: PR #6819 — fix(web): show Macro Agent's models as names with their provider logo",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-067",
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:29.618Z",
+      "git": {
+        "head": "e5cb9beee7a433a7ecddb1c29d4f802d7e925620",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-068",
+      "title": "Resolve feedback: PR #6818 — fix(web): make mention chips clickable inside the agent and chat composers",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-068",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:12.097Z",
+      "git": {
+        "head": "fec91adb6dfdcd2f264fc59e0d56d550f2989df3",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-078",
+      "title": "Resolve feedback: PR #6808 — fix(channels): allow labels on all channels except direct messages",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-078",
+      "steps": {
+        "done": 4,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:12.310Z",
+      "git": {
+        "head": "7827088304be1b342c34a00e85de6cf5b5972f2c",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-086",
+      "title": "Resolve feedback: PR #6800 — feat(ai): upgrade model selector to Claude Opus 5.5",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-086",
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:31.189Z",
+      "git": {
+        "head": "ff807cc590059c33dc0fd498b83b48138046633f",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-093",
+      "title": "Resolve feedback: PR #6792 — feat(home): editing a document moves it to the top of Home",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-093",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:31.790Z",
+      "git": {
+        "head": "8fce26b1ec839aefb6aff3c416d98e16dfdcc4ad",
+        "missingTracked": 0,
+        "other": [
+          {
+            "xy": " M",
+            "path": "bun.lock"
+          }
+        ],
+        "commitsAhead": 0,
+        "taskCommits": [],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-107",
+      "title": "Resolve feedback: PR #6779 — feat(agents): unify Agents settings, runtimes, and Connections",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-107",
+      "steps": {
+        "done": 2,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:32.062Z",
+      "git": {
+        "head": "c794091832d4a9e2b8e0219bcda7ea05395bf622",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-113",
+      "title": "Resolve feedback: PR #6773 — feat(mobile): open the user card as a sheet on mention and avatar taps",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-113",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:32.374Z",
+      "git": {
+        "head": "9f6aa7c836b38ccc1c896cd76b106c755cf58647",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-117",
+      "title": "Resolve feedback: PR #6769 — feat(initiatives): use collab surface for initiative",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-117",
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:16.875Z",
+      "git": {
+        "head": "015f85573a774b7be33afc9f6c798d19cd1b9fe0",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-124",
+      "title": "Resolve feedback: PR #6762 — feat(channels): make composable and add detail view",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-124",
+      "steps": {
+        "done": 4,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:32.994Z",
+      "git": {
+        "head": "05b790afc28aafc4654b53f0c825129df7c91862",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 10,
+        "taskCommits": [],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-125",
+      "title": "Resolve feedback: PR #6761 — feat(web): migrate workspace details to split routes",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:18.607Z"
+    },
+    {
+      "id": "CTN-128",
+      "title": "Resolve feedback: PR #6758 — feat(databases): core SQL backend, API, and SDK",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-128",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:33.554Z",
+      "git": {
+        "head": "198d6b8302a326b975c06148381557a1046b050e",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-138",
+      "title": "Resolve feedback: PR #6748 — feat(web): type nested split route declarations",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 5,
+        "total": 5
+      },
+      "updatedAt": "2026-09-23T17:16:52.399Z"
+    },
+    {
+      "id": "CTN-143",
+      "title": "Resolve feedback: PR #6743 — fix(agent_harness): route commands away from a draining replica",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-143",
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T01:52:33.906Z",
+      "git": {
+        "head": "605a301fc335615bdb1561e49bcc6b0c0e5dfad1",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-147",
+      "title": "Resolve feedback: PR #6739 — feat(messages): channel mentions in document Discussion, behind a PostHog flag",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-147",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:34.137Z",
+      "git": {
+        "head": "d6a3a5391f33e4bdc7c9ae6d2d5cb769ef287444",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-148",
+      "title": "Resolve feedback: PR #6738 — feat(agents): read tool calls as what the agent did",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:16.688Z"
+    },
+    {
+      "id": "CTN-154",
+      "title": "Resolve feedback: PR #6732 — refactor(messages): remove the legacy document comment path",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-154",
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:23.749Z",
+      "git": {
+        "head": "a0e17472df8b4d3cae0a5ba2fb6b510fcc7ff951",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-155",
+      "title": "Resolve feedback: PR #6731 — fix(web): stop the sidebar active-call badge overlapping the Chat glyph",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 4,
+        "total": 4
+      },
+      "updatedAt": "2026-09-23T17:23:40.177Z"
+    },
+    {
+      "id": "CTN-157",
+      "title": "Resolve feedback: PR #6728 — feat(web): adopt standalone split router across the application",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [
+        "CTN-158"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-157",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:21.303Z",
+      "git": {
+        "head": "8fce26b1ec839aefb6aff3c416d98e16dfdcc4ad",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 0,
+        "taskCommits": [],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-158",
+      "title": "Resolve feedback: PR #6727 — feat(web): introduce standalone split router",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T01:51:48.907Z"
+    },
+    {
+      "id": "CTN-159",
+      "title": "Resolve feedback: PR #6726 — Make notification delivery durable across ingress retries",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 8,
+        "total": 8
+      },
+      "updatedAt": "2026-09-23T22:20:14.813Z"
+    },
+    {
+      "id": "CTN-160",
+      "title": "Resolve feedback: PR #6725 — feat(reminders): improve scheduling and draft safety",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-160",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:34.570Z",
+      "git": {
+        "head": "0cd953adff2465456486829307258aa1546cbb6e",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-163",
+      "title": "Resolve feedback: PR #6722 — feat(agents): mint session ids in the browser on create",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:19.836Z"
+    },
+    {
+      "id": "CTN-165",
+      "title": "Resolve feedback: PR #6720 — feat(reminders): surface persistent in-app reminder alerts",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-165",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:34.825Z",
+      "git": {
+        "head": "dffb1e5cbbdd0d61d4eccdb7be11ab9ff52606af",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-166",
+      "title": "Resolve feedback: PR #6719 — Fix reminder navigation and discoverability",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:17.993Z"
+    },
+    {
+      "id": "CTN-176",
+      "title": "Resolve feedback: PR #6709 — feat(web): add \"Duplicate as Task\" action to document context menu",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "external-block",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 7,
+        "total": 10
+      },
+      "updatedAt": "2026-09-24T05:36:28.450Z"
+    },
+    {
+      "id": "CTN-177",
+      "title": "Resolve feedback: PR #6708 — fix: make scheduled send an explicit, race-safe commit",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:17.235Z"
+    },
+    {
+      "id": "CTN-183",
+      "title": "Resolve feedback: PR #6702 — feat(support): add zhamilya to new-user support channels",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T01:51:49.542Z"
+    },
+    {
+      "id": "CTN-184",
+      "title": "Resolve feedback: PR #6701 — fix: update preview when deleting selected item from homescreen",
+      "column": "in-progress",
+      "status": "failed",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-184",
+      "steps": {
+        "done": 144,
+        "total": 147
+      },
+      "updatedAt": "2026-09-25T13:53:27.909Z",
+      "git": {
+        "head": "0229946eff1bd94b61a5ee875aec735f6b53810a",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 36,
+        "taskCommits": [
+          "0229946eff1bd94b61a5ee875aec735f6b53810a",
+          "34d2dc96b4f8f3cea67226a6e0849df62d2c6dfd",
+          "73da468a3ae4d24f3f4ee402c42dc19dc0f961b8",
+          "9570fec40afca9c00e1d789343460d67dc686f36",
+          "a6e41c532b5742cd6989d439a69d2b7f0007e0d3",
+          "7e46cb74c4c21c6aa8ec28dee25843b13c000740",
+          "ec9d4024d8234dfa68451dd6eda0111955ef9e7f",
+          "77fc89bb2f61a0d255225d1048b35b3e2d001adb",
+          "ba577bd1547e5a7ff6a01fa06dc650afe5684187",
+          "12993715ea277898845a139c3b704fe1a6b7af87",
+          "417128b11546a5ff8ad3c294dde3931f8e975a15",
+          "f6f114eebaa8f60a6ebb236bf756631de0e60720",
+          "f8c3780ac55a231191e47bb1e1d606be4529693c",
+          "1374f9380fb868069b5666d1c89d4d640f1f467f",
+          "6cef4db197cdb0e256cfeb37caa14e6c0f754276",
+          "550b086f26f9dd281bfef4aad0d0db22fc687107",
+          "ca0abb151ed872f2afad454b9d2d430217fcd407",
+          "ebab7eaaa0307fcbdfe80038001586c21dc4e7b4",
+          "1b614ab23644f08b05fe4275c7637b4e312c8a7a"
+        ],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-187",
+      "title": "Resolve feedback: PR #6698 — fix(web): move inline detail content ownership to Split Manager",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-187",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:26.594Z",
+      "git": {
+        "head": "414b3b6446663627485e1832acb0c4594397c4b0",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-193",
+      "title": "Resolve feedback: PR #6692 — feat: add support for viewing .ai (Adobe Illustrator) files",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-193",
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:26.879Z",
+      "git": {
+        "head": "bf0504b4c4b2b62a5d6d6d946e710587547e3747",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-194",
+      "title": "Resolve feedback: PR #6691 — fix(home): include agent sessions in recent sessions list",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:17.507Z"
+    },
+    {
+      "id": "CTN-195",
+      "title": "Resolve feedback: PR #6690 — fix(activity): batch sync editors and debounce in DSS",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:17.639Z"
+    },
+    {
+      "id": "CTN-199",
+      "title": "Resolve feedback: PR #6685 — fix(mail): preserve loaded pages across cache revisions",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-23T19:24:11.145Z"
+    },
+    {
+      "id": "CTN-200",
+      "title": "Resolve feedback: PR #6684 — fix(channel): preserve live messages when history pages load",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-23T19:24:18.058Z"
+    },
+    {
+      "id": "CTN-202",
+      "title": "Resolve feedback: PR #6682 — fix(search): retain known channels while cache hydrates",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:17.758Z"
+    },
+    {
+      "id": "CTN-207",
+      "title": "Resolve feedback: PR #6677 — feat(calls): allow external participants + calendar / calls UI",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:35.783Z"
+    },
+    {
+      "id": "CTN-210",
+      "title": "Resolve feedback: PR #6674 — feat(channels): show system activity inline with messages",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-210",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:36.007Z",
+      "git": {
+        "head": "7c11301909a962ffc81b5196e35491bd19831cd2",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 2,
+        "taskCommits": [],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-211",
+      "title": "Resolve feedback: PR #6673 — feat(email): add native calendar invitation cards",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-211",
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:30:28.300Z",
+      "git": {
+        "head": "1b8ab977be1a740a1a8d9e0b28d52044987d9244",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-223",
+      "title": "Resolve feedback: PR #6661 — Add opt-in notifications for message reactions",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 3,
+        "total": 6
+      },
+      "updatedAt": "2026-09-23T17:47:24.657Z"
+    },
+    {
+      "id": "CTN-230",
+      "title": "Resolve feedback: PR #6654 — feat(pager): improve mobile swipe gesture feel to be more native",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 5,
+        "total": 5
+      },
+      "updatedAt": "2026-09-23T17:48:02.060Z"
+    },
+    {
+      "id": "CTN-231",
+      "title": "Resolve feedback: PR #6653 — fix(notifications): apply seen override after GraphQL entity mark-as-read",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:17.885Z"
+    },
+    {
+      "id": "CTN-232",
+      "title": "Resolve feedback: PR #6652 — Fix AutomationTimePicker minute input being re-padded on every keystroke",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:18.035Z"
+    },
+    {
+      "id": "CTN-233",
+      "title": "Resolve feedback: PR #6651 — chore(agens): keep the open agent session in the URL",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:18.198Z"
+    },
+    {
+      "id": "CTN-235",
+      "title": "Resolve feedback: PR #6648 — Stream terminal tool-call output in agent sessions",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 4,
+        "total": 6
+      },
+      "updatedAt": "2026-09-23T17:48:54.208Z"
+    },
+    {
+      "id": "CTN-240",
+      "title": "Resolve feedback: PR #6643 — feat(agents): auto-expand small diffs in tool groups",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 5,
+        "total": 5
+      },
+      "updatedAt": "2026-09-23T17:49:38.484Z"
+    },
+    {
+      "id": "CTN-241",
+      "title": "Resolve PR #6642 review feedback and failed CI",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:18.362Z"
+    },
+    {
+      "id": "CTN-245",
+      "title": "Resolve feedback: PR #6638 — Focus model search when hovering an agent submenu",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:18.566Z"
+    },
+    {
+      "id": "CTN-253",
+      "title": "Resolve feedback: PR #6630 — feat(agents): unify agent and runtime settings",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T01:51:51.453Z"
+    },
+    {
+      "id": "CTN-254",
+      "title": "Resolve feedback: PR #6629 — feat(agent): share live HMR previews over SSH",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:18.655Z"
+    },
+    {
+      "id": "CTN-256",
+      "title": "Resolve feedback: PR #6627 — feat(databases): editable tables, kanban, and live AI answers",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-256",
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:36.723Z",
+      "git": {
+        "head": "484c8708a901f74cf34fd74e99df2111f8ceba23",
+        "missingTracked": 1,
+        "other": [
+          {
+            "xy": " M",
+            "path": ".gitignore"
+          }
+        ],
+        "commitsAhead": 0,
+        "taskCommits": [],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-274",
+      "title": "Resolve feedback: PR #6608 — Add personal and team calendar scheduling",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-274",
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:30:28.526Z",
+      "git": {
+        "head": "3168bb5b79f103855023bb37a9ad6be39d9b632a",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-275",
+      "title": "Resolve feedback: PR #6607 — feat(web): collapse overflowing breadcrumbs",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 5,
+        "total": 5
+      },
+      "updatedAt": "2026-09-23T17:50:14.382Z"
+    },
+    {
+      "id": "CTN-283",
+      "title": "Resolve feedback: PR #6598 — feat(ios): use email icon for email notifications",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-283",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:28.701Z",
+      "git": {
+        "head": "3134e4b3a11c2719eaaf48053e524733fbe665cc",
+        "missingTracked": 5561,
+        "other": [
+          {
+            "xy": "M ",
+            "path": "apps/web/src/lib/service-clients/service-notification/generated/schemas/index.ts"
+          },
+          {
+            "xy": "M ",
+            "path": "apps/web/src/lib/service-clients/service-notification/generated/schemas/newEmailMetadata.ts"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/lib/service-clients/service-notification/generated/schemas/newEmailMetadataSenderPhotoUrl.ts"
+          },
+          {
+            "xy": "M ",
+            "path": "apps/web/src/lib/service-clients/service-notification/generated/schemas/pushNotificationData.ts"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/lib/service-clients/service-notification/generated/schemas/pushNotificationDataCommunicationTitle.ts"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/lib/service-clients/service-notification/generated/schemas/pushNotificationDataConversationId.ts"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/lib/service-clients/service-notification/generated/schemas/pushNotificationDataGroupName.ts"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/lib/service-clients/service-notification/generated/schemas/pushNotificationDataNotificationType.ts"
+          },
+          {
+            "xy": "M ",
+            "path": "apps/web/src/lib/service-clients/service-notification/generated/zod.ts"
+          },
+          {
+            "xy": "M ",
+            "path": "apps/web/src/lib/service-clients/service-notification/openapi.json"
+          },
+          {
+            "xy": "M ",
+            "path": "apps/web/tauri/src-tauri/gen/apple/NotificationServiceExtension/NotificationService.swift"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/tauri/src-tauri/gen/apple/NotificationServiceExtension/channel-generic-avatar.png"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/tauri/src-tauri/gen/apple/NotificationServiceExtension/email-generic-avatar.png"
+          },
+          {
+            "xy": "M ",
+            "path": "apps/web/tauri/src-tauri/gen/apple/app.xcodeproj/project.pbxproj"
+          },
+          {
+            "xy": "M ",
+            "path": "apps/web/tauri/src-tauri/gen/apple/project.yml"
+          },
+          {
+            "xy": "M ",
+            "path": "packages/sdk/generated/notification/types.gen.ts"
+          },
+          {
+            "xy": "M ",
+            "path": "packages/sdk/specs/notification.json"
+          },
+          {
+            "xy": "M ",
+            "path": "services/email_service/src/pubsub/inbox_sync/operations/upsert_message.rs"
+          },
+          {
+            "xy": "M ",
+            "path": "services/notification_service/src/notification/send/push.rs"
+          }
+        ],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-292",
+      "title": "Resolve feedback: PR #6589 — feat(ownership): backfill entity rows for existing resources",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-292",
+      "steps": {
+        "done": 2,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:29.005Z",
+      "git": {
+        "head": "b5f5c73557a46debac34e397a67350fb1f8bfed9",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-299",
+      "title": "Resolve feedback: PR #6582 — feat(frontend): auto-update task PR links via webhook events",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-299",
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:29.212Z",
+      "git": {
+        "head": "740491a49c67ed673f9206599400522c43fac549",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-300",
+      "title": "Resolve feedback: PR #6581 — Add team calendar sharing controls and GetTeamAvailability tool",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:30:29.535Z"
+    },
+    {
+      "id": "CTN-320",
+      "title": "Resolve feedback: PR #6561 — Add MCP SendEmail tool and contact hiding for recipient suggestions",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:38.455Z"
+    },
+    {
+      "id": "CTN-329",
+      "title": "Resolve feedback: PR #6552 — Preserve the app theme under browser forced-colors mode",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 2,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:18.843Z"
+    },
+    {
+      "id": "CTN-332",
+      "title": "Resolve feedback: PR #6549 — chore(deps): bump rmcp from 1.7.0 to 2.1.0",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-332",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:29.841Z",
+      "git": {
+        "head": "b561a1464574eac1abf5b6cf5621366c47b892e7",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-351",
+      "title": "Resolve feedback: PR #6530 — feat(privacy): add gated HIPAA safeguards for paid workspaces",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:19.001Z"
+    },
+    {
+      "id": "CTN-407",
+      "title": "Resolve feedback: PR #6472 — support tailscale for local dev",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:19.155Z"
+    },
+    {
+      "id": "CTN-411",
+      "title": "Resolve PR #6468 table-cell and Loro diagnostic feedback",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "external-block",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-23T17:42:03.297Z"
+    },
+    {
+      "id": "CTN-448",
+      "title": "Resolve feedback: PR #6429 — chore(local): proxy HTTPS with checked-in cert and wildcard CORS",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "external-block",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-23T17:41:25.137Z"
+    },
+    {
+      "id": "CTN-470",
+      "title": "Resolve feedback: PR #6407 — chore(ci): cache and parallelize web wasm builds",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "external-block",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 2,
+        "total": 6
+      },
+      "updatedAt": "2026-09-23T17:42:36.329Z"
+    },
+    {
+      "id": "CTN-477",
+      "title": "Resolve feedback: PR #6399 — Add guest record opening and meeting notes to event details",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 8
+      },
+      "updatedAt": "2026-09-25T15:32:19.211Z"
+    },
+    {
+      "id": "CTN-486",
+      "title": "Resolve feedback: PR #6390 — feat(search): include favorite state in results",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 2,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:19.410Z"
+    },
+    {
+      "id": "CTN-488",
+      "title": "Resolve feedback: PR #6388 — feat(agent): model-aware effort for Cursor and in-memory",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:19.584Z"
+    },
+    {
+      "id": "CTN-502",
+      "title": "Resolve feedback: PR #6374 — fix(email): drop leftover-canvas CSS zoom",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-502",
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:30.566Z",
+      "git": {
+        "head": "bb5b8b6b3aaf2f25c886204a238eae3cfab81d1e",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-503",
+      "title": "Resolve feedback: PR #6373 — fix(email): keep trailing combining marks and variation selectors",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-503",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:30.880Z",
+      "git": {
+        "head": "a0afa4ae9947eeb1131838570638209502709a43",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-504",
+      "title": "Resolve feedback: PR #6372 — fix(email): strip markdown from collapsed message previews",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:19.656Z"
+    },
+    {
+      "id": "CTN-506",
+      "title": "Resolve feedback: PR #6370 — fix(crm): backfill all owned inboxes",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-506",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:31.062Z",
+      "git": {
+        "head": "bb5b8b6b3aaf2f25c886204a238eae3cfab81d1e",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-518",
+      "title": "Resolve feedback: PR #6359 — feat(ci): Appetize iPhone-simulator previews on labelled PRs",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-518",
+      "steps": {
+        "done": 4,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:40.536Z",
+      "git": {
+        "head": "cda4ef4149a57128f7ede3151d418f645d0147e2",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 18,
+        "taskCommits": [
+          "cda4ef4149a57128f7ede3151d418f645d0147e2"
+        ],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-539",
+      "title": "Resolve feedback: PR #6336 — AI usage allowances, prepaid credits, overage billing, and the Max plan",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:19.832Z"
+    },
+    {
+      "id": "CTN-546",
+      "title": "Resolve feedback: PR #6329 — Flatten desktop split panes to single surface with 1px dividers",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:19.964Z"
+    },
+    {
+      "id": "CTN-563",
+      "title": "Resolve feedback: PR #6310 — feat(onboarding): mandatory team step with startup type and logo",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-563",
+      "steps": {
+        "done": 2,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T01:52:41.022Z",
+      "git": {
+        "head": "3838145638a1d962f3b09a2570c387518bf32332",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 9,
+        "taskCommits": [
+          "aa3b936e17fd1b1b4b046a2b875f250ab71e8165",
+          "b2c224190b6e59072b77b50893d9d37bf1c32aaa",
+          "00930fd8041c11ebf5008268a67575c2f1ba2e85",
+          "040ba5d3344486622b636ace9513d00caef6cc54"
+        ],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "CTN-583",
+      "title": "Resolve feedback: PR #6290 — draft: partial migration to lexical extensions",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:20.109Z"
+    },
+    {
+      "id": "CTN-593",
+      "title": "Resolve feedback: PR #6279 — chore(agents): consolidate inmem product tools behind MCP form elicitation",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": "external-block",
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-23T17:44:24.927Z"
+    },
+    {
+      "id": "CTN-672",
+      "title": "Resolve feedback: PR #6199 — Replace ListEntities with query-only QuerySoup (experiment)",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:20.174Z"
+    },
+    {
+      "id": "CTN-700",
+      "title": "Resolve feedback: PR #6170 — feat(ui): port the glass treatment from the V3/V4 experiment",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-700",
+      "steps": {
+        "done": 4,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:33.780Z",
+      "git": {
+        "head": "bed8e69b31d26ad2bf77cbf9cba7bd8f36774ed7",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-702",
+      "title": "Resolve feedback: PR #6168 — feat(settings): add sidebar search across pages and inner content",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:20.417Z"
+    },
+    {
+      "id": "CTN-759",
+      "title": "Resolve feedback: PR #6109 — feat(observability): correlate WAF logs with traces",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-759",
+      "steps": {
+        "done": 2,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:30:34.049Z",
+      "git": {
+        "head": "3134e4b3a11c2719eaaf48053e524733fbe665cc",
+        "missingTracked": 5563,
+        "other": [
+          {
+            "xy": "M ",
+            "path": "apps/web/src/lib/core/util/safeFetch.spec.ts"
+          },
+          {
+            "xy": "M ",
+            "path": "apps/web/src/lib/core/util/safeFetch.ts"
+          },
+          {
+            "xy": "MM",
+            "path": "services/sync-service/src/durable_object.rs"
+          },
+          {
+            "xy": "M ",
+            "path": "services/sync-service/tests/cors.test.ts"
+          }
+        ],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-760",
+      "title": "Resolve feedback: PR #6108 — feat(tasks): agents as task assignees open a session in the task discussion",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-760",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:34.382Z",
+      "git": {
+        "head": "f7353988481e4db12c9335fee31bd66e6f0ed923",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-779",
+      "title": "Resolve feedback: PR #6084 — fix(mcp_auth_proxy): validate redirect URIs against registered clients",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-23T19:34:27.670Z"
+    },
+    {
+      "id": "CTN-799",
+      "title": "Resolve feedback: PR #6065 — Declare every Datadog monitor in code",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-799",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:34.729Z",
+      "git": {
+        "head": "69f9f7cf04517459e5c60f759103c68b66310aaf",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-816",
+      "title": "Resolve feedback: PR #6046 — feat(self-host): docker compose stack for self-hosted deployments",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:21.484Z"
+    },
+    {
+      "id": "CTN-866",
+      "title": "Resolve feedback: PR #5991 — feat(ai-editing): trace initial sync failures",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:20.713Z"
+    },
+    {
+      "id": "CTN-913",
+      "title": "Resolve feedback: PR #5942 — Add experimental V3 app layout with horizontal top bar",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:20.874Z"
+    },
+    {
+      "id": "CTN-942",
+      "title": "Resolve feedback: PR #5913 — feat(ui): glass chrome for buttons, menus, inputs; Lucide icons",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-942",
+      "steps": {
+        "done": 4,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:34.977Z",
+      "git": {
+        "head": "944e477f3f7dd5b72ad7ac84e19513047f58bb9c",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-944",
+      "title": "Resolve PR #5912 correspondence and CRM references feedback",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-944",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:35.247Z",
+      "git": {
+        "head": "3134e4b3a11c2719eaaf48053e524733fbe665cc",
+        "missingTracked": 5561,
+        "other": [
+          {
+            "xy": "UU",
+            "path": "apps/web/src/features/block-calendar/components/SidePanelSections.tsx"
+          },
+          {
+            "xy": "M ",
+            "path": "apps/web/src/features/block-call/component/sidepanel/CallSidePanelSections.tsx"
+          },
+          {
+            "xy": "UU",
+            "path": "apps/web/src/features/block-email/component/sidepanel/EmailSidePanelSections.tsx"
+          },
+          {
+            "xy": "UU",
+            "path": "apps/web/src/features/block-md/component/sidepanel/MarkdownSidePanelSections.tsx"
+          },
+          {
+            "xy": "UU",
+            "path": "apps/web/src/features/companies/Company/Company.tsx"
+          },
+          {
+            "xy": "MM",
+            "path": "apps/web/src/features/companies/Company/emailFilter.ts"
+          },
+          {
+            "xy": "M ",
+            "path": "apps/web/src/features/contacts/Contact/Contact.tsx"
+          },
+          {
+            "xy": "AM",
+            "path": "apps/web/src/features/correspondence/CorrespondenceSection.tsx"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/features/correspondence/index.ts"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/features/correspondence/parties.test.ts"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/features/correspondence/parties.ts"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/features/correspondence/use-correspondence-threads.ts"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/features/correspondence/use-crm-records.ts"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/lib/core/component/EntityReferencesSection.test.tsx"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/lib/core/component/EntityReferencesSection.tsx"
+          },
+          {
+            "xy": "A ",
+            "path": "apps/web/src/lib/queries/crm/company-for-domain.ts"
+          },
+          {
+            "xy": "M ",
+            "path": "apps/web/src/lib/queries/crm/keys.ts"
+          },
+          {
+            "xy": "??",
+            "path": "apps/web/src/features/companies/Company/emailFilter.test.ts"
+          }
+        ],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-947",
+      "title": "Resolve feedback: PR #5908 — Add event compose mode to channel input alongside task mode",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-947",
+      "steps": {
+        "done": 2,
+        "total": 4
+      },
+      "updatedAt": "2026-09-25T15:30:35.454Z",
+      "git": {
+        "head": "a6b93e3986a6eca928311d45274d6077d54c194a",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-971",
+      "title": "Resolve feedback: PR #5884 — chore(deps): bump postgres-protocol from 0.6.11 to 0.6.12",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T01:51:52.602Z"
+    },
+    {
+      "id": "CTN-991",
+      "title": "Resolve feedback: PR #5864 — feat(nav): nav rails, a top bar, and digit jumps",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:21.027Z"
+    },
+    {
+      "id": "CTN-1039",
+      "title": "Resolve feedback: PR #5815 — Update pricing copy: teams of up to 5 people are free",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-1039",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:35.802Z",
+      "git": {
+        "head": "57683502d411d7dfb7c59909871b628256fdef74",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "CTN-1043",
+      "title": "Resolve feedback: PR #5811 — fix(email): enhance forward subject detection for HTML and plaintext",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/ctn-1043",
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:36.014Z",
+      "git": {
+        "head": "e2f5aa057e96f91a6a2d0716bf255a6ba3fca01f",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-001",
+      "title": "Resolve feedback: PR #6833 — Seanaye/perf/improve engine handoff",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-001",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:36.259Z",
+      "git": {
+        "head": "28df10ef8315baa7dcdf89d31d469e4e526e4c2a",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-002",
+      "title": "Resolve feedback: PR #6832 — fix: close initiative access and lifecycle gaps",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-002",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:30:36.558Z",
+      "git": {
+        "head": "a2153e93e2d2d5b6c1e49b8d38e564df3f659166",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-011",
+      "title": "Resolve feedback: PR #5789 — fix(run-local): frontend startup fails silently on cold node_modules/wasm cache",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-011",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:36.757Z",
+      "git": {
+        "head": "a2153e93e2d2d5b6c1e49b8d38e564df3f659166",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-017",
+      "title": "Resolve feedback: PR #5784 — fix(markdown): add fallback error message guard in getErrorDescription",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-017",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:36.950Z",
+      "git": {
+        "head": "978543f20f9bd50ec1ec212c267dbdd0a68a275f",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-044",
+      "title": "Resolve feedback: PR #5755 — feat(bots): add datadog-alerts-bot worker",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-044",
+      "steps": {
+        "done": 2,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:37.196Z",
+      "git": {
+        "head": "742e4ac647e8c3048a99df831fa680fb5a4f1cb4",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-058",
+      "title": "Resolve feedback: PR #5738 — fix(email): avoid undefined in subjectless replies and forwards",
+      "column": "todo",
+      "status": "awaiting-approval",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-058",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T05:19:46.180Z",
+      "git": {
+        "head": "967f42e528d53ff8a9e6bd8c0a255c341bc71544",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 17,
+        "taskCommits": [],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "RUS-119",
+      "title": "Resolve feedback: PR #5633 — feat(soup): forward-looking due-date buckets for grouped queries",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 6,
+        "total": 6
+      },
+      "updatedAt": "2026-09-23T18:25:23.698Z"
+    },
+    {
+      "id": "RUS-134",
+      "title": "Resolve feedback: PR #5613 — Add \"Open in new tab\" functionality for split content",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 3,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:21.162Z"
+    },
+    {
+      "id": "RUS-161",
+      "title": "Resolve feedback: PR #5582 — feat(mcp): support custom request headers for MCP connectors",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-161",
+      "steps": {
+        "done": 2,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T01:52:46.963Z",
+      "git": {
+        "head": "29950ea7f13946342ca86ba97bbd3450d17e3459",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 5,
+        "taskCommits": [
+          "dbaf31c1e43a0b38fd7a6e890fa5dd07c96a7993"
+        ],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "RUS-173",
+      "title": "Resolve feedback: PR #5570 — wip refactor: fold agent sessions on the backend only",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:21.303Z"
+    },
+    {
+      "id": "RUS-217",
+      "title": "Resolve feedback: PR #5521 — fix(mcp): add RFC 9728 resource to protected resource metadata",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T01:51:53.389Z"
+    },
+    {
+      "id": "RUS-616",
+      "title": "Resolve feedback: PR #5098 — fix(channel): display current team members when auto join is on",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:21.726Z"
+    },
+    {
+      "id": "RUS-617",
+      "title": "Resolve feedback: PR #5099 — feat(ai-tools): colored tag chips + item count for property-update tool cards",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:21.801Z"
+    },
+    {
+      "id": "RUS-618",
+      "title": "Resolve feedback: PR #5097 — refactor(tags): remove tags + tags-search feature flags (GA)",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-618",
+      "steps": {
+        "done": 2,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:39.842Z",
+      "git": {
+        "head": "0929e54eaa2f316fd142d0af00dea2750c9afc85",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-619",
+      "title": "Resolve feedback: PR #6847 — feat(auth): bypass dev signup allowlist",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-619",
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:40.047Z",
+      "git": {
+        "head": "8767af809703215e420baabd74c1d04c9bdcd6db",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-620",
+      "title": "Resolve feedback: PR #6846 — feat: add Projects to Tasks",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-621"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-620",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:17.989Z",
+      "git": {
+        "head": "9cc6264aa524afcb07d4434c7182673a1a41f471",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-621",
+      "title": "Resolve feedback: PR #6845 — feat: add initiative MCP tools",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T01:51:53.957Z"
+    },
+    {
+      "id": "RUS-622",
+      "title": "Resolve feedback: PR #6844 — feat(agents): start macrod-bound agents from the composer",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 7
+      },
+      "updatedAt": "2026-09-25T15:32:07.373Z"
+    },
+    {
+      "id": "RUS-623",
+      "title": "Resolve feedback: PR #6842 — feat: Android app init",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T01:51:54.622Z"
+    },
+    {
+      "id": "RUS-625",
+      "title": "Resolve feedback: PR #6841 — Seanaye/perf/reduce notification fetching",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T01:51:55.586Z"
+    },
+    {
+      "id": "RUS-626",
+      "title": "Resolve feedback: PR #6840 — Seanaye/perf/mobile cache",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T01:51:56.219Z"
+    },
+    {
+      "id": "RUS-628",
+      "title": "Resolve feedback: PR #6838 — feat(users): clean up sessions and scheduled actions before user deletion",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 3,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:07.563Z"
+    },
+    {
+      "id": "RUS-630",
+      "title": "Resolve feedback: PR #6835 — feat: support initiative discussions",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T01:51:56.755Z"
+    },
+    {
+      "id": "RUS-631",
+      "title": "Resolve feedback: PR #6834 — feat: add initiative properties and GraphQL APIs",
+      "column": "todo",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-25T01:51:57.252Z"
+    },
+    {
+      "id": "RUS-698",
+      "title": "Resolve feedback: PR #5029 — feat(tags): add tags to document preview",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-698",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:40.276Z",
+      "git": {
+        "head": "3efc0b06af9452092b526f5cbc560754242726e1",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1214",
+      "title": "Resolve feedback: PR #4507 — chore: start 'chunking' sync service websockets",
+      "column": "in-review",
+      "status": "merge-boundary-evidence-recovery",
+      "paused": true,
+      "pausedReason": "legacy-adoption-unmappable: merge-boundary-evidence-recovery",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1214",
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:40.603Z",
+      "git": {
+        "head": "3efc0b06af9452092b526f5cbc560754242726e1",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1242",
+      "title": "Resolve feedback: PR #4478 — chore: hex and axum-ify sync service",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:07.670Z"
+    },
+    {
+      "id": "RUS-1435",
+      "title": "Resolve feedback: PR #4282 — chore(scripts): fix S3 extensionless-key reconcile + orphan cleanup",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1435",
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:40.761Z",
+      "git": {
+        "head": "3134e4b3a11c2719eaaf48053e524733fbe665cc",
+        "missingTracked": 5561,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1436",
+      "title": "Resolve feedback: PR #4281 — feat(md): paste node for large copy-pasted text",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1436",
+      "steps": {
+        "done": 4,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:40.968Z",
+      "git": {
+        "head": "3134e4b3a11c2719eaaf48053e524733fbe665cc",
+        "missingTracked": 5561,
+        "other": [
+          {
+            "xy": " M",
+            "path": "apps/web/src/lib/core/component/LexicalMarkdown/component/decorator/PasteNode.tsx"
+          },
+          {
+            "xy": " M",
+            "path": "apps/web/src/lib/core/component/LexicalMarkdown/plugins/text-paste/textPastePlugin.ts"
+          },
+          {
+            "xy": " M",
+            "path": "docs/AGENT_GUIDE/documents.md"
+          },
+          {
+            "xy": " M",
+            "path": "packages/lexical-core/nodes/PasteNode.ts"
+          },
+          {
+            "xy": " M",
+            "path": "packages/lexical-core/tests/paste.test.ts"
+          },
+          {
+            "xy": "??",
+            "path": "apps/web/src/lib/core/component/LexicalMarkdown/plugins/text-paste/textPastePlugin.test.ts"
+          }
+        ],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1437",
+      "title": "Resolve feedback: PR #4280 — fix(gmail): paywall additional inboxes, keep first inbox free",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1437",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:48.746Z",
+      "git": {
+        "head": "7e88c8378e085fc368a92b52ca4f7e21ff067ca7",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 2,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1438",
+      "title": "Resolve feedback: PR #6854 — feat(entity_registry): add owner grant policy (MACRO-3382)",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:32:07.779Z"
+    },
+    {
+      "id": "RUS-1439",
+      "title": "Resolve feedback: PR #6853 — fix(web): find matches after code blocks in markdown search",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 16,
+        "total": 16
+      },
+      "updatedAt": "2026-09-23T21:37:55.849Z"
+    },
+    {
+      "id": "RUS-1440",
+      "title": "Resolve feedback: PR #6852 — Keep agent tool titles whole and strip workspace from paths",
+      "column": "todo",
+      "status": "queued",
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:32:07.962Z"
+    },
+    {
+      "id": "RUS-1441",
+      "title": "Resolve feedback: PR #6856 — fix(connection-gateway): resubscribe the redis relay when its stream ends",
+      "column": "in-review",
+      "status": "failed",
+      "paused": true,
+      "pausedReason": "in-review-stall-deadlock",
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1441",
+      "steps": {
+        "done": 1,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T01:52:48.947Z",
+      "git": {
+        "head": "77ba07976043f0c9ebecc383520d7cc43f05ea53",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 4,
+        "taskCommits": [
+          "b981776eb11633a6718fed88f06065fe5c26aeaf"
+        ],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "RUS-1442",
+      "title": "Resolve feedback: PR #6851 — Keep agent tool call groups collapsed by default",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1442",
+      "steps": {
+        "done": 2,
+        "total": 6
+      },
+      "updatedAt": "2026-09-25T15:30:44.254Z",
+      "git": {
+        "head": "61d1ac8446b90cd9974e9f626c32b107c6b5160d",
+        "missingTracked": 5562,
+        "other": [],
+        "commitsAhead": 3,
+        "taskCommits": [
+          "61d1ac8446b90cd9974e9f626c32b107c6b5160d"
+        ],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "RUS-1443",
+      "title": "Resolve feedback: PR #6850 — Persist New conversation drafts when switching sessions",
+      "column": "in-review",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1443",
+      "steps": {
+        "done": 3,
+        "total": 5
+      },
+      "updatedAt": "2026-09-25T15:30:44.528Z",
+      "git": {
+        "head": "3134e4b3a11c2719eaaf48053e524733fbe665cc",
+        "missingTracked": 5588,
+        "other": [
+          {
+            "xy": "??",
+            "path": ".worktree-pr6850/"
+          }
+        ],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1444",
+      "title": "Resolve feedback: PR #6848 — feat(web): trace agent send from composer click to first reply",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 18,
+        "total": 18
+      },
+      "updatedAt": "2026-09-23T23:09:06.850Z"
+    },
+    {
+      "id": "RUS-1447",
+      "title": "DEP-01 — Reproducible CTN source build",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 1,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T08:06:32.550Z"
+    },
+    {
+      "id": "RUS-1448",
+      "title": "DEP-02 — Production self-host profile",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1447"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1448",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T01:38:02.157Z",
+      "git": {
+        "head": "df5dd33bd77bc92c322b33c3445ccee3e5377e15",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1449",
+      "title": "DEP-03 — Consistent backup and recovery",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1448"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1449",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T02:08:10.091Z",
+      "git": {
+        "head": "2010030ce950b1783afd53b0b3ded7ea71411ce9",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1450",
+      "title": "DEP-04 — Cloud contract registry and replacement",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1447"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1450",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T04:12:02.194Z",
+      "git": {
+        "head": "89ec5926aecc505dc1e1d4cbb9a411e1769fd4db",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1451",
+      "title": "DEP-05 — Own domains and routes",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1448"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1451",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T02:27:24.251Z",
+      "git": {
+        "head": "378a1b1bc5ea2dc730e1e210c92bf93f56915041",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1452",
+      "title": "DEP-06 — Declarative capability matrix",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1448"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1452",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T02:34:08.010Z",
+      "git": {
+        "head": "58044e8de1d688373d868edd45c04493b8d98c94",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1453",
+      "title": "DEP-07 — Self-host plans and limits",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1448"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1453",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T04:13:48.624Z",
+      "git": {
+        "head": "4fcced5328d7824058013389312e059d69b0e202",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1454",
+      "title": "SEC-01 — Operator-owned Doppler and technical secret delivery",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1448"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1454",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T02:06:47.632Z",
+      "git": {
+        "head": "7934947d3332a27fb2ccc55cfafe0e5dbe2c808b",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1455",
+      "title": "SEC-02 — Unambiguous configuration source priority",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1454"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1455",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T03:49:06.831Z",
+      "git": {
+        "head": "64dc9b933fa5821f407463f0925eda7a3f14f32b",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1456",
+      "title": "SEC-03 — Secrets backend separate from ENVIRONMENT",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1454",
+        "RUS-1455"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1456",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T03:10:24.413Z",
+      "git": {
+        "head": "76d23b3991039b24f479ae7d9ff07715e932aefa",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1457",
+      "title": "SEC-04 — Secure storage of user credentials",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1456"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1457",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T03:39:34.994Z",
+      "git": {
+        "head": "fb5ab1e41cd1621d27e54390590176c5e30a8d05",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1458",
+      "title": "SEC-05 — Exclude third-party marketing and unauthorized egress",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1452"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1458",
+      "steps": {
+        "done": 0,
+        "total": 8
+      },
+      "updatedAt": "2026-09-24T02:46:18.799Z",
+      "git": {
+        "head": "a528f084d27c38fc6c317a43a448b93df0c6b08c",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1459",
+      "title": "ID-01 — Corporate identity and registration",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1451",
+        "RUS-1457"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1459",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T04:56:28.936Z",
+      "git": {
+        "head": "82d5682e9290de3a457bb3983edcd047ab3677d5",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1460",
+      "title": "ID-02 — Independent first sign-in and service mail",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1459",
+        "RUS-1461"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1460",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T05:35:12.659Z",
+      "git": {
+        "head": "53fe66a6cc96fcf67a49b3bd8d1a3183dc40103d",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1461",
+      "title": "MAIL-01 — Own Stalwart mailboxes and internal mail circuit",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1448",
+        "RUS-1449",
+        "RUS-1451",
+        "RUS-1457",
+        "RUS-1459"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1461",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T05:17:52.698Z",
+      "git": {
+        "head": "30a86f62071b16b66524c3816e6337c9b6e02468",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1462",
+      "title": "MAIL-02 — Provider-neutral mail connections and JMAP identifiers",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1461",
+        "RUS-1457",
+        "RUS-1459"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1462",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T05:43:04.614Z",
+      "git": {
+        "head": "9a2e2485eb9e6e33b7b1c9015b793901587f3f7a",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1463",
+      "title": "MAIL-03 — Reliable JMAP mailbox synchronization",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1462",
+        "RUS-1450"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1463",
+      "steps": {
+        "done": 0,
+        "total": 8
+      },
+      "updatedAt": "2026-09-24T06:02:46.566Z",
+      "git": {
+        "head": "e8f39c1ebebfe6e6378663d81329d9d692426bf0",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1464",
+      "title": "MAIL-04 — JMAP drafts, sending and folders",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1462",
+        "RUS-1463",
+        "RUS-1465"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1464",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T06:33:20.882Z",
+      "git": {
+        "head": "129169137d7035acacd47e17b4b9f5b134b738ce",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1465",
+      "title": "MAIL-05 — JMAP attachments, revocable signed delivery and byte quota",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1462",
+        "RUS-1512",
+        "RUS-1450"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1465",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T06:17:39.135Z",
+      "git": {
+        "head": "f607a433233f5bd60067610b1b2bf7b9a980dd02",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1466",
+      "title": "MAIL-06 — Mail API, connection and visible status",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1462",
+        "RUS-1463",
+        "RUS-1464",
+        "RUS-1465",
+        "RUS-1479"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1466",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T06:55:12.748Z",
+      "git": {
+        "head": "83e898b5003719980330989bcad3089e05ae05b8",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1467",
+      "title": "CAL-01 — Verify CalDAV and deliver a first-party calendar provider",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1461",
+        "RUS-1457"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1467",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T05:35:12.669Z",
+      "git": {
+        "head": "d0000d4f54c66e084eb63e611717e04b46e5ebaf",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1468",
+      "title": "CAL-02 — Reliable CalDAV recurrence, RSVP, and scheduling",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1467",
+        "RUS-1464"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1468",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T07:05:51.074Z",
+      "git": {
+        "head": "133cd7e940101214171f20c2a5e41a617d8d912c",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1469",
+      "title": "CAL-03 — Calendar, search, reminders, and delivery status",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1468",
+        "RUS-1452",
+        "RUS-1481"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1469",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T07:21:59.736Z",
+      "git": {
+        "head": "5ba0fff4fe7925deef757686faf59880ab64cd94",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1470",
+      "title": "CAN-01 — Durable basic Canvas and export on owned DSS",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1450",
+        "RUS-1451"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1470",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T02:53:30.879Z",
+      "git": {
+        "head": "c3123e42babaa2d93fc0db1a1b769338f58b96d1",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1471",
+      "title": "CAN-02 — Collaborative Canvas edits, conflicts, and server ACL",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1470",
+        "RUS-1513"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1471",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T03:30:47.775Z",
+      "git": {
+        "head": "55fb454a1a962f2c58ba01955c780fa3c8b646e2",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1472",
+      "title": "UI-01 — Rox Warm Light semantic palette",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1447",
+        "RUS-1498"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1472",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T03:10:03.663Z",
+      "git": {
+        "head": "9bfb23e9d6c34e48615b91eccc1cc6ad025a6369",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1473",
+      "title": "UI-02 — Light first launch without a dark flash",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1472"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1473",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T03:44:13.123Z",
+      "git": {
+        "head": "0a1a039e2f2982d8dd7b01f6734a6b98d22b5c4b",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1474",
+      "title": "UI-03 — Typography, density and contextual help",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1472",
+        "RUS-1500"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1474",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T04:42:47.850Z",
+      "git": {
+        "head": "e3fc6e25e132c4aee7e6efbfcf4c4c2b09756ee8",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1475",
+      "title": "BRAND-01 — Instance branding read contract",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1451"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1475",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T02:46:39.822Z",
+      "git": {
+        "head": "bc805e34c38b73a28fa005c5215aad9135a84a90",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1476",
+      "title": "BRAND-02 — Administrative brand identity settings",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1475",
+        "RUS-1477",
+        "RUS-1474"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1476",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T04:57:28.910Z",
+      "git": {
+        "head": "56a7482219e258da2ca3209ecfc9ca604c10254d",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1477",
+      "title": "BRAND-03 — Brand security and versioned assets",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1475"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1477",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T07:32:29.964Z",
+      "git": {
+        "head": "a3945ed22ecb23ec8cc3dd917af3ee56dc8d3780",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1478",
+      "title": "BRAND-04 — Product identity on user-facing surfaces",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1476",
+        "RUS-1477"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1478",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T05:39:22.481Z",
+      "git": {
+        "head": "f7be24f771a13a49458ab448f52aeeb0f7342c01",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1479",
+      "title": "LOC-01 — Centralized Russian UI catalog",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1447"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1479",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T01:26:53.630Z",
+      "git": {
+        "head": "2a46ccad5b9c5c5a9afac74a7e875dd040a0dc25",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1480",
+      "title": "LOC-02 — Errors, notifications, and external messages",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1479"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1480",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T02:07:57.726Z",
+      "git": {
+        "head": "2bc62c16548acc7db760503c10abf4835f232142",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1481",
+      "title": "LOC-03 — Dates, inflections, and Cyrillic search",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1479",
+        "RUS-1467"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1481",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T05:48:18.840Z",
+      "git": {
+        "head": "f29fd7dce7a87fafb044a62500c73ef950e3ec28",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1482",
+      "title": "CALL-01 — Self-hosted audio and video calling",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1451",
+        "RUS-1454"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1482",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T02:45:48.979Z",
+      "git": {
+        "head": "387db9fcfbfcd599314c017d1dabdba07b75ab62",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1483",
+      "title": "CALL-02 — Recording to operator-owned object storage",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1482",
+        "RUS-1450"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1483",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T03:20:45.022Z",
+      "git": {
+        "head": "caa07376a631cca410c89fd07e7a479e6ded4477",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1484",
+      "title": "CALL-03 — Russian call transcription and summary",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1482",
+        "RUS-1454"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1484",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T03:17:17.731Z",
+      "git": {
+        "head": "225870ad526bc5cae182207267f9ae8cb54e7e5e",
+        "missingTracked": 0,
+        "other": [
+          {
+            "xy": "??",
+            "path": "services/transcription/.venv/"
+          }
+        ],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1485",
+      "title": "CALL-04 — Room permissions, consent and lifecycle",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1482"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1485",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T03:10:14.778Z",
+      "git": {
+        "head": "f71e28ced006721f43e06ba9dc63e3e2f8438f47",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1486",
+      "title": "AG-01 — Useful agent in the built-in runtime",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1448",
+        "RUS-1454",
+        "RUS-1452"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1486",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T04:12:16.875Z",
+      "git": {
+        "head": "e193199df5e83b66bed00d5c6de41b29a14f0c17",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1487",
+      "title": "AG-02 — Available models, tools, and disabled integrations",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1486"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1487",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T07:31:34.457Z",
+      "git": {
+        "head": "b2e04f64a5574ee5167930f5ba5550cf1cafea12",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1488",
+      "title": "AG-03 — Isolated code execution",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1486"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1488",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T00:57:33.217Z",
+      "git": {
+        "head": "c08c55d73371b79496603e2f95030ecb73d68b38",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1489",
+      "title": "AG-04 — Catalog of exactly 19 distinct profiles",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1487",
+        "RUS-1479"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1489",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T02:07:17.280Z",
+      "git": {
+        "head": "20a248435837e54c7a28affd7a4da19ef9faa5a0",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1490",
+      "title": "AG-05 — Idempotent profile creation at registration",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1459",
+        "RUS-1489"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1490",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T05:28:16.681Z",
+      "git": {
+        "head": "1d04c5341ddab72cf64c60bcb54d686a794eb0f1",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1491",
+      "title": "AG-06 — User edits, deletion and backfill",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1490"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1491",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T05:47:00.409Z",
+      "git": {
+        "head": "990f1a013822a3498766785107d352cde2d60913",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1492",
+      "title": "AG-07 — Agent permissions and action confirmation",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1487"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1492",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T00:57:36.170Z",
+      "git": {
+        "head": "f24038c9840665079d2daf536e3246f9aee81b37",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1493",
+      "title": "AG-08 — Consent-only scheduled runs with budgets",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1490",
+        "RUS-1469",
+        "RUS-1492"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1493",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T07:33:23.671Z",
+      "git": {
+        "head": "1107e9b5d9d18b5c02117f26e6b961a39cffb335",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1494",
+      "title": "QA-01 — End-to-end user isolation",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1466",
+        "RUS-1469",
+        "RUS-1471",
+        "RUS-1485",
+        "RUS-1492",
+        "RUS-1477",
+        "RUS-1518",
+        "RUS-1519",
+        "RUS-1527"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1494",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T07:57:12.386Z",
+      "git": {
+        "head": "96d5027e95f4b0d315e8cdf510a9fb3866787d51",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1495",
+      "title": "QA-02 — Reproducible build and regression",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1447",
+        "RUS-1490",
+        "RUS-1492"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1495",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T06:13:51.840Z",
+      "git": {
+        "head": "db6f9999e959ff176200ea8049af3f15454967bc",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1496",
+      "title": "QA-03 — Operations, recovery and load",
+      "column": "todo",
+      "status": "queued",
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1494",
+        "RUS-1495",
+        "RUS-1449",
+        "RUS-1512",
+        "RUS-1516",
+        "RUS-1518",
+        "RUS-1519",
+        "RUS-1527",
+        "RUS-1528",
+        "RUS-1529",
+        "RUS-1497",
+        "RUS-1508"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1496",
+      "steps": {
+        "done": 0,
+        "total": 8
+      },
+      "updatedAt": "2026-09-24T09:29:36.129Z",
+      "git": {
+        "head": "629c316b219e93c595c6ad40a0b6b2478bcacc9a",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1497",
+      "title": "LIC-01 — AGPL and corresponding source",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1447"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1497",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T07:37:23.669Z",
+      "git": {
+        "head": "57fcea822140f26ffaa74cae025cdbc9c762141b",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1498",
+      "title": "UI-ZED — Rox Warm Light palette and semantic token specification",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1447"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1498",
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-24T02:49:30.052Z",
+      "git": {
+        "head": "54688a8d52f4a2ce8beea06ba7a6dd8a679dbde9",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1499",
+      "title": "UI-ZED — light-theme contrast and state regression report",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1498",
+        "RUS-1472"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1499",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T04:01:26.890Z",
+      "git": {
+        "head": "9688e7f3bfa74eaa438b85f6fd4c3d5024d0cb04",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1500",
+      "title": "UI-ZED — Density and Virtual-List Metrics",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1472"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1500",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T04:26:11.271Z",
+      "git": {
+        "head": "e478b18f5da6e145dac5379d451ba699cc0b332c",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1501",
+      "title": "UI-ZED — Flat working panels without bento gaps",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1474",
+        "RUS-1500"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1501",
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-24T05:15:35.372Z",
+      "git": {
+        "head": "9a00ca4eea25a57d56d4e7fa35c0e4ef281c4d27",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1502",
+      "title": "UI-ZED — Independent visual acceptance of 12 screens",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1499",
+        "RUS-1503",
+        "RUS-1504",
+        "RUS-1500"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1502",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T06:07:39.657Z",
+      "git": {
+        "head": "5c0e1c1f6893b4f18600d40b66c2c6e1df79354c",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1503",
+      "title": "UI-ZED — integration verification of theme registry and first frame",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1472",
+        "RUS-1473"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1503",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T04:01:53.921Z",
+      "git": {
+        "head": "2420baba13b22a3e210cf3c98027d872ba821982",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1504",
+      "title": "UI-ZED — Modal overlays, touch and edge-case polish",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1501",
+        "RUS-1474"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1504",
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-24T05:41:25.102Z",
+      "git": {
+        "head": "03f396bc14fae2e56c72739e665012bbe262c42f",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1505",
+      "title": "Verify RUS manual IDs and isolated CTN imports",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-24T09:48:20.497Z"
+    },
+    {
+      "id": "RUS-1506",
+      "title": "CONV-02 — Codex pipeline without Rox",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1506",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T00:55:14.906Z",
+      "git": {
+        "head": "41a8d69d926bd80e57eeb833d8ef3558020e7e77",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1507",
+      "title": "CONV-03 — Synchronize upstream every three hours with a backup",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1507",
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-24T07:29:00.032Z",
+      "git": {
+        "head": "f9bd1f48c01fb2030aa415a1191ce3011ac858cf",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1508",
+      "title": "CONV-04 — Atomic pre-merge backup for every main update",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1508",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T02:06:11.466Z",
+      "git": {
+        "head": "45e1cf3289c0e41c61dc03a045a5a9674390f93f",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1509",
+      "title": "CONV-05 — Selective Conation transfer, not a bulk merge",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1529"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1509",
+      "steps": {
+        "done": 0,
+        "total": 9
+      },
+      "updatedAt": "2026-09-24T09:29:36.734Z",
+      "git": {
+        "head": "484c8708a901f74cf34fd74e99df2111f8ceba23",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 0,
+        "taskCommits": [],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "RUS-1510",
+      "title": "CONV-06 — Internal Stalwart mail without Gmail",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1461",
+        "RUS-1462",
+        "RUS-1463",
+        "RUS-1464",
+        "RUS-1465",
+        "RUS-1466"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1510",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T07:07:55.872Z",
+      "git": {
+        "head": "a495b16276d6a59a0e09164607244c32c4ff12c4",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1511",
+      "title": "CONV-07 — Independent public email delivery",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1510"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1511",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T07:16:14.899Z",
+      "git": {
+        "head": "c5d1713626794e8ecc8ff52d7b6a7b6da1f7d696",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1512",
+      "title": "CONV-08 — Personal and team byte quotas",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1453",
+        "RUS-1450"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1512",
+      "steps": {
+        "done": 0,
+        "total": 8
+      },
+      "updatedAt": "2026-09-24T02:18:45.051Z",
+      "git": {
+        "head": "4df66f53582bd969e9923612baf81920cdcbd014",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1513",
+      "title": "CONV-09 — Canvas offline and coherent local sync preparation",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1470"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1513",
+      "steps": {
+        "done": 0,
+        "total": 8
+      },
+      "updatedAt": "2026-09-24T03:10:05.134Z",
+      "git": {
+        "head": "b200ad7d465943ef7bc48a97cc102ed5ee59384f",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1514",
+      "title": "CONV-10 — Verify live calling and operator-owned Russian transcription",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1482",
+        "RUS-1483",
+        "RUS-1484",
+        "RUS-1485"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1514",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T04:12:02.217Z",
+      "git": {
+        "head": "96ba8899db89315a61a6315200adfdcf2619aa2c",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1515",
+      "title": "CONV-11 — Consented internal meeting and source-tagged meeting model",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1483",
+        "RUS-1484",
+        "RUS-1485",
+        "RUS-1467",
+        "RUS-1468"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1515",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T07:18:17.730Z",
+      "git": {
+        "head": "334ace13e35f503e2a0ad7039e66fc4554982458",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1516",
+      "title": "CONV-12 — Meeting secretary: tasks only with an owner",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1515",
+        "RUS-1489",
+        "RUS-1492"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1516",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T07:40:24.140Z",
+      "git": {
+        "head": "db817f76afdb694a141801ee49256a1e532e8a30",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1517",
+      "title": "CONV-13 — Selectively port the personal dashboard UI",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1517",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T02:08:12.926Z",
+      "git": {
+        "head": "4cb1ce438480b9f49d6adf23daeb8e4b529e806f",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1518",
+      "title": "CONV-13 — Team dashboard backend and conflict policy",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1459",
+        "RUS-1517"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1518",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T05:16:11.378Z",
+      "git": {
+        "head": "4ed1dc8bbd466b2f5a569c3751843553b8e7b84e",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1519",
+      "title": "CONV-14 — Live organization canvas",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1470",
+        "RUS-1471",
+        "RUS-1525"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1519",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T05:37:22.193Z",
+      "git": {
+        "head": "12c58fe06b687a3248f51a90c49817129f37713b",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1520",
+      "title": "CONV-15 — 19 agents at registration without duplicates",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1459",
+        "RUS-1489",
+        "RUS-1490"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1520",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T05:47:00.414Z",
+      "git": {
+        "head": "35438eebc26a4aa9ca34f3c797e9446ba0cfc9fc",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1521",
+      "title": "CONV-16 — Verify corporate signup marketing boundary",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1458",
+        "RUS-1459"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1521",
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-24T05:29:26.521Z",
+      "git": {
+        "head": "c5a61f14e44ed54519e51a32a8e7ff079c8b31f0",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1522",
+      "title": "CONV-17 — Keep Doppler secret delivery separate from local mode",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1454",
+        "RUS-1455",
+        "RUS-1456"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1522",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T04:03:46.146Z",
+      "git": {
+        "head": "d98201b531cef775d8bd7118308d8b5840a342f1",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1523",
+      "title": "CONV-18 — Reconcile open pull requests and issues without changing existing PR cards",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1505"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1523",
+      "steps": {
+        "done": 0,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T04:31:13.850Z",
+      "git": {
+        "head": "96b43df5d7f3ce5c813d6fd4e370fc2caa6d4e5c",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 1,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1524",
+      "title": "Replace Fusion echo placeholders with working routines",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1507",
+        "RUS-1508"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1524",
+      "steps": {
+        "done": 0,
+        "total": 5
+      },
+      "updatedAt": "2026-09-24T06:35:30.304Z",
+      "git": {
+        "head": "5cc658d230d7b2e570ce4b9b19909a4871fbe901",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 2,
+        "taskCommits": [],
+        "importOnly": true
+      }
+    },
+    {
+      "id": "RUS-1525",
+      "title": "Server organization model for departments, positions and membership",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1459"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1525",
+      "steps": {
+        "done": 0,
+        "total": 8
+      },
+      "updatedAt": "2026-09-24T05:16:27.467Z",
+      "git": {
+        "head": "967f42e528d53ff8a9e6bd8c0a255c341bc71544",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 17,
+        "taskCommits": [],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "RUS-1526",
+      "title": "Внешние встречи: feasibility, согласие и запись",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-23T20:41:10.032Z"
+    },
+    {
+      "id": "RUS-1527",
+      "title": "Authorized meeting feed and calendar-linked recorded-text search",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [
+        "RUS-1515",
+        "RUS-1467",
+        "RUS-1468"
+      ],
+      "worktree": "/Users/t/Projects/CTN/.fusion/worktrees/rus-1527",
+      "steps": {
+        "done": 0,
+        "total": 7
+      },
+      "updatedAt": "2026-09-24T07:32:29.961Z",
+      "git": {
+        "head": "967f42e528d53ff8a9e6bd8c0a255c341bc71544",
+        "missingTracked": 0,
+        "other": [],
+        "commitsAhead": 17,
+        "taskCommits": [],
+        "importOnly": false
+      }
+    },
+    {
+      "id": "RUS-1528",
+      "title": "Ротация раскрытого ROX-доступа и очистка истории",
+      "column": "todo",
+      "status": null,
+      "paused": true,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 0,
+        "total": 0
+      },
+      "updatedAt": "2026-09-23T22:06:52.686Z"
+    },
+    {
+      "id": "RUS-1529",
+      "title": "Audit and authoritatively replan 77 Fusion task plans before dispatch",
+      "column": "done",
+      "status": null,
+      "paused": false,
+      "pausedReason": null,
+      "dependencies": [],
+      "worktree": null,
+      "steps": {
+        "done": 6,
+        "total": 6
+      },
+      "updatedAt": "2026-09-24T09:29:35.449Z"
+    }
+  ]
+}
