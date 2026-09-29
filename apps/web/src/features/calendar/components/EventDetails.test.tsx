@@ -128,6 +128,29 @@ it.each([
   expect(screen.queryByRole('button', { name: 'Open in Maps' })).toBeNull();
 });
 
+it('offers Maps for an accented named place', () => {
+  const location = 'Café de Paris';
+  render(() => (
+    <EventDetails event={eventWithLocation(location)} timeFormat="12-hour" />
+  ));
+
+  fireEvent.click(screen.getByRole('button', { name: 'Open in Maps' }));
+  expect(open).toHaveBeenCalledWith(
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
+  );
+});
+
+it('does not offer Maps for a virtual meeting with an accented place word', () => {
+  render(() => (
+    <EventDetails
+      event={eventWithLocation('Café de Paris — virtual meeting')}
+      timeFormat="12-hour"
+    />
+  ));
+
+  expect(screen.queryByRole('button', { name: 'Open in Maps' })).toBeNull();
+});
+
 it.each([
   [
     'Central Park',

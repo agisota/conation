@@ -364,7 +364,7 @@ function EventLocationItem(props: { location: string }) {
         physicalText
       );
     const isNamedPlace =
-      /\b(?:park|museum|hotel|restaurant|cafe|café|airport|station|library|university|campus|hospital|stadium|arena|garden|plaza|center|centre|hall|theatre|theater|church|temple|beach|harbor|harbour|pier|monument|zoo|mall|market)\b/i.test(
+      /(?<![\p{L}\p{N}_])(?:park|museum|hotel|restaurant|cafe|café|airport|station|library|university|campus|hospital|stadium|arena|garden|plaza|center|centre|hall|theatre|theater|church|temple|beach|harbor|harbour|pier|monument|zoo|mall|market)(?![\p{L}\p{N}_])/iu.test(
         physicalText
       );
     if (
