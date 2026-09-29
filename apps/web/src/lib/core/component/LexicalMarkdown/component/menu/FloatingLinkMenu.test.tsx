@@ -67,9 +67,9 @@ vi.mock('../../plugins', () => ({
   },
 }));
 
-import { FloatingLinkMenu } from './FloatingLinkMenu';
 import { FloatingMenuGroup } from '../../context/FloatingMenuContext';
 import { LexicalWrapperContext } from '../../context/LexicalWrapperContext';
+import { FloatingLinkMenu } from './FloatingLinkMenu';
 
 afterEach(() => {
   cleanup();
@@ -202,7 +202,9 @@ it('keeps clipped Apply controls out of keyboard tab order and hides read-only e
     url: 'https://www.openstreetmap.org/#map=14/56.8139/-5.0650&layers=C',
   });
 
-  expect(screen.queryByRole('button', { name: 'Apply link changes' })).toBeNull();
+  expect(
+    screen.queryByRole('button', { name: 'Apply link changes' })
+  ).toBeNull();
   expect(screen.queryByRole('button', { name: 'Edit link' })).toBeNull();
   expect(screen.queryByRole('textbox')).toBeNull();
 });
