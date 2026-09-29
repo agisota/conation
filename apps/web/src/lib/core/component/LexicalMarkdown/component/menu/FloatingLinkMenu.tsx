@@ -1,3 +1,4 @@
+import { classifyExternalDestination } from '@core/component/external-destinations';
 import { ExternalDestinationAction, LinkHoverCard } from '@core/component/Link';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import { toast } from '@core/component/Toast/Toast';
@@ -129,7 +130,14 @@ export function FloatingLinkMenu(props: {
       reset();
       return;
     }
-    if (!link.editAccess) return;
+    if (!link.editAccess) {
+      if (!classifyExternalDestination(link.url ?? '')) return;
+      setMenuOpen(true);
+      setPreviewHover(false);
+      setLinkInfo({ ...link });
+      setPendingLinkInfo({ ...link });
+      return;
+    }
     setMenuOpen(true);
     setPreviewHover(false);
     setLinkInfo({ ...link });
@@ -415,7 +423,10 @@ export function FloatingLinkMenu(props: {
       </Match>
       <Match when={menuOpen()}>
         <MenuWrapper>
-          <div class="flex items-center gap-1.5">
+          <div
+            class="flex items-center gap-1.5"
+            hidden={!linkInfo()?.editAccess}
+          >
             <div class="flex h-8 min-w-0 grow items-center gap-2 rounded-md border border-edge-muted bg-surface px-2 focus-within:border-accent">
               <Link class="size-4 shrink-0 text-ink-extra-muted" />
               <input
@@ -489,6 +500,7 @@ export function FloatingLinkMenu(props: {
               'max-h-0 mt-0': !expanded(),
               'max-h-24 mt-1.5': expanded(),
             }}
+            hidden={!linkInfo()?.editAccess}
           >
             <div class="flex h-8 min-w-0 grow items-center gap-2 rounded-md border border-edge-muted bg-surface px-2 focus-within:border-accent">
               <LinkText class="size-4 shrink-0 text-ink-extra-muted" />

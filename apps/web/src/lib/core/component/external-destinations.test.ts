@@ -11,6 +11,10 @@ describe('classifyExternalDestination', () => {
     ['https://maps.google.com/?q=Somewhere', 'Maps'],
     ['https://www.openstreetmap.org/#map=12/1/2', 'Maps'],
     ['https://www.openstreetmap.org/search?query=Somewhere', 'Maps'],
+    [
+      'https://www.openstreetmap.org/#map=14/56.8139/-5.0650&layers=C',
+      'Maps',
+    ],
   ] as const)('%s classifies as %s without rewriting its URL', (url, kind) => {
     expect(classifyExternalDestination(url)).toEqual({
       kind,
@@ -39,6 +43,9 @@ describe('classifyExternalDestination', () => {
     'https://www.google.com/maps/place/',
     'https://www.google.com/maps/dir/',
     'https://www.google.com/maps/search/',
+    'https://www.openstreetmap.org/#map=14/not-a-location&layers=C',
+    'http://www.openstreetmap.org/#map=14/56.8139/-5.0650&layers=C',
+    'https://user:pass@www.openstreetmap.org/#map=14/56.8139/-5.0650&layers=C',
   ])('%s is not trusted', (url) => {
     expect(classifyExternalDestination(url)).toBeUndefined();
   });

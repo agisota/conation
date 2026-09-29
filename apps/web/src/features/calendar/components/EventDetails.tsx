@@ -360,7 +360,7 @@ function EventLocationItem(props: { location: string }) {
     )
       return;
     const hasStreetAddress =
-      /\b\d{1,6}\s+[\p{L}][\p{L}'’-]*(?:\s+[\p{L}][\p{L}'’-]*){0,3}\s+\b(?:street|st|road|rd|avenue|ave|boulevard|blvd|lane|ln|drive|dr|way|square|sq|highway|hwy|route|rte)\b/iu.test(
+      /\b\d{1,6}\s+[\p{L}][\p{L}'’-]*(?:\s+[\p{L}][\p{L}'’-]*){0,3}\s+\b(?:street|st|road|rd|avenue|ave|boulevard|blvd|parkway|pkwy|lane|ln|drive|dr|way|square|sq|highway|hwy|route|rte)\b/iu.test(
         physicalText
       );
     const isNamedPlace =

@@ -1,3 +1,4 @@
+import { classifyExternalDestination } from '@core/component/external-destinations';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { openExternalUrl } from '@core/util/url';
 import {
@@ -438,11 +439,21 @@ function registerLinksPlugin(editor: LexicalEditor, props: LinkPluginProps) {
       return;
     }
 
+    if (classifyExternalDestination(link.url)) {
+      e.preventDefault();
+      e.stopPropagation();
+      onClickLink({
+        linkRef: el,
+        selection: window.getSelection() || undefined,
+        editAccess: false,
+        ...link,
+      });
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     openExternalUrl(link.url);
   };
-
   const handlePointerMove = (e: MouseEvent) => {
     if (isTouchDevice()) return;
     const target = e.target;

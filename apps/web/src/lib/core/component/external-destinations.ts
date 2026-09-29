@@ -56,7 +56,7 @@ export function classifyExternalDestination(
       kind = 'Maps';
     } else if (
       (host === 'openstreetmap.org' || host === 'www.openstreetmap.org') &&
-      (/^#map=\d+\/-?\d+(?:\.\d+)?\/-?\d+(?:\.\d+)?(?:\/\d+(?:\.\d+)?)?$/.test(
+      (/^#map=\d+\/-?\d+(?:\.\d+)?\/-?\d+(?:\.\d+)?(?:\/\d+(?:\.\d+)?)?(?:&layers=[^&]+)?$/.test(
         url.hash
       ) ||
         (/^\/search\/?$/.test(url.pathname) && url.searchParams.has('query')))

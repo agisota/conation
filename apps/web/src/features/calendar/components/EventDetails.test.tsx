@@ -74,6 +74,20 @@ it('keeps an address-and-phone location dialable without searching for the phone
   );
 });
 
+it.each(['123 Main Parkway', '123 Main Pkwy'])(
+  'offers a map action for the physical street suffix %s',
+  (location) => {
+    render(() => (
+      <EventDetails event={eventWithLocation(location)} timeFormat="12-hour" />
+    ));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open in Maps' }));
+    expect(open).toHaveBeenCalledWith(
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
+    );
+  }
+);
+
 it.each([
   ['Meeting at 10 Main Street', 'Meeting%20at%2010%20Main%20Street'],
   ['Hilton Hotel Conference Center', 'Hilton%20Hotel%20Conference%20Center'],
@@ -105,6 +119,7 @@ it.each([
   'Dial-in ext 1234',
   'Lunch',
   'Birthday',
+  'Meeting code 123456',
 ])('does not offer a misleading map for %s', (location) => {
   render(() => (
     <EventDetails event={eventWithLocation(location)} timeFormat="12-hour" />
