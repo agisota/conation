@@ -176,6 +176,7 @@
         "pages": [
           "account/teams",
           "account/billing",
+          "account/api-keys",
           "security"
         ]
       },

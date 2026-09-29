@@ -1,5 +1,7 @@
 Macro's SDK: a Typescript library for harnessing the power of Macro
 
+For a guarded, opt-in manual CRM import using this SDK, see the [runnable example](examples/crm-manual-import.ts) and [API key setup guide](../../apps/docs/account/api-keys.mdx).
+
 - **`generated/`**: generated Typescript types and a HeyAPI client from Macro's
   OpenAPI specs.
 - **`src/`**: a hand-written ergonomic SDK layer that provides an "orm"-y API.
@@ -240,6 +242,41 @@ macro.events.on('channel.message_posted', async ({ metadata, message }) => {
 // Hono
 app.post('/webhook', (c) => macro.events.webhook()(c.req.raw));
 ```
+
+### Manual CRM import
+
+Use the SDK facade for CRM writes and optional markdown documents; do not reuse an MCP OAuth cache or call private HTTP endpoints. Create a user API key in **Settings → API Keys**, store it as `MACRO_API_KEY`, and keep it out of source control. The example defaults to a dry run and performs no requests until `--apply` is supplied.
+
+Save input such as this as `crm-import.json`. The UUIDs are format-valid placeholders, not existing records.
+Before applying, replace each with the UUID of an existing record you intend to rename, or remove that
+rename row. Otherwise, a rename can fail after earlier create operations have written.
+
+```json
+{
+  "companies": [
+    { "name": "Acme", "domain": "acme.com", "note": "# CRM note" },
+    { "id": "00000000-0000-4000-8000-000000000001", "rename": "Acme, Inc." }
+  ],
+  "contacts": [
+    {
+      "companyDomain": "acme.com",
+      "name": "Jane Example",
+      "email": "jane@acme.com"
+    },
+    { "id": "00000000-0000-4000-8000-000000000002", "rename": "Jane Example" }
+  ],
+  "documents": [{ "name": "Import report", "markdown": "# Import report" }]
+}
+```
+
+Set `MACRO_API_KEY` securely before applying. From the repository root, validate and preview the operations, then explicitly apply:
+
+```sh
+bun run packages/sdk/examples/crm-manual-import.ts --input crm-import.json
+CONFIRM_APPEND_ONLY=yes bun run packages/sdk/examples/crm-manual-import.ts --input crm-import.json --apply
+```
+
+Each update requires its existing record `id`; contact creation requires an exact match for a non-generic company domain and an email on that domain. When the same import creates a company and contacts under it, the example reuses the returned company handle rather than relying on search indexing. Preflight reads all six blocked-domain lists from the checked-in CRM policy and rejects those domains and reserved suffixes before writes; it requires a full monorepo checkout and fails closed if the policy is unavailable or changes to an unrecognized format. Notes are CRM comments, while `documents` creates separate markdown documents. Both are append-only: reruns can duplicate content, and every applying invocation containing either requires `CONFIRM_APPEND_ONLY=yes`. A failed multi-write import stops at the first error and reports earlier successful operations; it does not retry or roll back. `--apply` requires a `mak_` user API key and team access with CRM enabled. It does not make writes atomic or idempotent.
 
 # Developing
 

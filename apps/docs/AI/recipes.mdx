@@ -6,6 +6,41 @@ description: "Copy-paste prompts for the most useful things agents can do in you
 
 Agents in Macro sit on top of [unified memory](/product/unified-memory), so one prompt can reach your email, messages, tasks, docs, calls, and connectors. These recipes are starting points: paste them into an agent chat (<kbd>c</kbd> + <kbd>a</kbd>), an [automation](/product/agents#automations), a channel via **@Macro**, or any [MCP client](/AI/mcp/overview) connected to your workspace.
 
+## Manual CRM entry
+
+For a controlled import or update, use the [TypeScript SDK example](https://github.com/macro-inc/macro/blob/main/packages/sdk/examples/crm-manual-import.ts), not private HTTP endpoints. It reads a JSON input file and defaults to a dry run: review the planned operations before adding `--apply`. Its input format supports creating a company with a name and bare domain, renaming by explicit company ID, creating a contact with a matching company domain, renaming by explicit contact ID, appending CRM notes, and optionally creating markdown documents.
+
+For example, save this as `crm-import.json` to plan a company and contact creation:
+
+```json
+{
+  "companies": [{ "name": "Acme", "domain": "acme.com" }],
+  "contacts": [{ "companyDomain": "acme.com", "name": "Ada Lovelace", "email": "ada@acme.com" }]
+}
+```
+
+From the repository root, set a user API key beginning with `mak_` as `MACRO_API_KEY` in your shell from your secure secret store, then run the example without `--apply` first:
+
+```bash
+bun run packages/sdk/examples/crm-manual-import.ts --input ./crm-import.json
+```
+
+After reviewing the dry-run output, run it with `--apply` to make the writes. Create the key under [Settings → API Keys](/account/api-keys); it acts as your user and needs access to the team's CRM. Do not put the key in the JSON file or commit it. Renames require explicit existing IDs; the example does not choose a target from fuzzy search results. If a write fails after earlier operations, it stops and reports partial success rather than retrying or rolling back.
+
+```bash
+bun run packages/sdk/examples/crm-manual-import.ts --input ./crm-import.json --apply
+```
+
+CRM notes are comments on company or contact records (`note` on an entry in `companies` or `contacts`); they are not documents. Markdown documents are a separate, optional `documents` array with `name` and `markdown`, created through the SDK. Notes and documents are append-only, so reruns can create duplicates. If an apply includes either, explicitly confirm:
+
+```bash
+CONFIRM_APPEND_ONLY=yes bun run packages/sdk/examples/crm-manual-import.ts --input ./crm-import.json --apply
+```
+
+Use MCP OAuth for MCP-native search, reading, and tool discovery. The CRM MCP tools include company list/details (`ListCompanies` and `GetCompany`); property changes use separate property tools. MCP also supports `CreateDocument`, but it does not expose the SDK's company/contact create, rename, or CRM-note operations. Do not scrape an `mcp-remote` token cache or call private HTTP endpoints for writes.
+
+The Python CLI described in [issue #6103](https://github.com/macro-inc/macro/issues/6103) was an experiment whose source was not provided; this recipe documents the supported TypeScript SDK route, not a port of that CLI.
+
 ## Daily inbox brief
 
 Create an [automation](/product/agents#automations) (agents module → **Automations** tab → **Create an automation**) scheduled for each morning:
