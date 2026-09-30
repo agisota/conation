@@ -8,6 +8,66 @@ fn env(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
 }
 
 #[test]
+fn passwordless_mail_uses_selected_local_smtp() {
+    let doc = build_with_smtp(
+        3000,
+        8080,
+        8085,
+        "function populate() {}",
+        "function reconcile() {}",
+        None,
+        None,
+        &SmtpSettings {
+            host: "conation-login-stalwart",
+            port: 25,
+            from_email: "noreply@conation.test",
+        },
+    );
+    let requests = doc["requests"].as_array().unwrap();
+    let tenant = requests
+        .iter()
+        .find(|request| request["url"].as_str().unwrap().starts_with("/api/tenant/"))
+        .unwrap();
+    let email = &tenant["body"]["tenant"]["emailConfiguration"];
+    assert_eq!(email["host"], "conation-login-stalwart");
+    assert_eq!(email["port"], 25);
+    assert_eq!(email["defaultFromEmail"], "noreply@conation.test");
+    assert_eq!(email["defaultFromName"], "Conation");
+    assert_eq!(tenant["body"]["tenant"]["name"], "Conation (локально)");
+    let template = requests
+        .iter()
+        .find(|request| {
+            request["url"]
+                .as_str()
+                .unwrap()
+                .starts_with("/api/email/template/")
+        })
+        .unwrap();
+    assert_eq!(
+        template["body"]["emailTemplate"]["fromEmail"],
+        "noreply@conation.test"
+    );
+    assert_eq!(
+        template["body"]["emailTemplate"]["defaultSubject"],
+        "Код входа в Conation"
+    );
+    assert_eq!(
+        template["body"]["emailTemplate"]["defaultTextTemplate"],
+        "Код входа в Conation: ${code}"
+    );
+    let app = requests
+        .iter()
+        .find(|request| {
+            request["url"]
+                .as_str()
+                .unwrap()
+                .starts_with("/api/application/")
+        })
+        .unwrap();
+    assert_eq!(app["body"]["application"]["name"], "Conation");
+}
+
+#[test]
 fn google_idp_requires_a_real_client_secret() {
     // The legacy Doppler placeholder is a Secrets-Manager key NAME, not a
     // secret — building IdPs from it would bake a broken FusionAuth config

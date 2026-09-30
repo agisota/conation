@@ -303,20 +303,6 @@ pub const RUST_SERVICES: &[RustService] = &[
         opt_in: false,
         no_default_features: false,
     },
-    RustService {
-        compose_name: "scheduled_action_service",
-        cargo_bin: "scheduled_action_service",
-        package: "scheduled_action",
-        host_port: Some(Port::ScheduledAction),
-        path_prefix: Some("/scheduled-action"),
-        is_websocket: false,
-        // This is part of the complete self-contained product stack. Dev mode
-        // continues to use its deployed service until the standalone profile
-        // replaces every managed endpoint together.
-        modes: &[Mode::Local],
-        opt_in: false,
-        no_default_features: false,
-    },
 ];
 
 /// The Rust services that participate in `mode` (opt-in services list no modes,

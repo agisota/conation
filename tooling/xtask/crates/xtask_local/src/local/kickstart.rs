@@ -105,10 +105,15 @@ impl GithubIdp {
     }
 }
 
-/// Build the kickstart document. `lambda_body` is the JS source of
-/// `populate_jwt_local.js`; `reconcile_lambda_body` is the reconcile lambda
-/// attached to `google_gmail` (only used when `google` is configured); redirect
-/// URLs are templated from the instance ports.
+/// SMTP settings shared by the FusionAuth tenant and passwordless template.
+pub struct SmtpSettings<'a> {
+    pub host: &'a str,
+    pub port: u16,
+    pub from_email: &'a str,
+}
+
+/// Build the default Mailpit kickstart for unit tests.
+#[cfg(test)]
 pub fn build(
     frontend_port: u16,
     auth_port: u16,
@@ -117,6 +122,36 @@ pub fn build(
     reconcile_lambda_body: &str,
     google: Option<&GoogleIdp>,
     github: Option<&GithubIdp>,
+) -> Value {
+    build_with_smtp(
+        frontend_port,
+        auth_port,
+        doc_cognition_port,
+        lambda_body,
+        reconcile_lambda_body,
+        google,
+        github,
+        &SmtpSettings {
+            host: "mailpit",
+            port: 1025,
+            from_email: identity::MAIL_FROM,
+        },
+    )
+}
+
+/// Build the kickstart document. `lambda_body` is the JS source of
+/// `populate_jwt_local.js`; `reconcile_lambda_body` is the reconcile lambda
+/// attached to `google_gmail` (only used when `google` is configured); redirect
+/// URLs are templated from the instance ports.
+pub fn build_with_smtp(
+    frontend_port: u16,
+    auth_port: u16,
+    doc_cognition_port: u16,
+    lambda_body: &str,
+    reconcile_lambda_body: &str,
+    google: Option<&GoogleIdp>,
+    github: Option<&GithubIdp>,
+    smtp: &SmtpSettings<'_>,
 ) -> Value {
     let app_id = identity::APPLICATION_ID;
     let tenant_id = identity::TENANT_ID;
@@ -177,15 +212,15 @@ pub fn build(
             "method": "POST",
             "url": format!("/api/email/template/{template_id}"),
             "body": { "emailTemplate": {
-                "name": "Passwordless Login (local)",
-                "defaultSubject": "Your Macro login code",
-                "defaultHtmlTemplate": "<p>Your Macro login code:</p><h1>${code}</h1>",
-                "defaultTextTemplate": "Your Macro login code: ${code}",
-                "fromEmail": identity::MAIL_FROM,
+                "name": "Код входа в Conation (локально)",
+                "defaultSubject": "Код входа в Conation",
+                "defaultHtmlTemplate": "<p>Код входа в Conation:</p><h1>${code}</h1>",
+                "defaultTextTemplate": "Код входа в Conation: ${code}",
+                "fromEmail": smtp.from_email,
             }}
         }),
-        // 4. Tenant — with SMTP pointed at Mailpit + the passwordless template,
-        // so FusionAuth-sent passwordless codes land in Mailpit. PATCH, not
+        // 4. Tenant — with SMTP pointed at the selected local server and the
+        // passwordless template. PATCH, not
         // POST: `variables.defaultTenantId` (below) pins FusionAuth's built-in
         // default tenant to our fixed id, and this request reconfigures that
         // tenant in place. Local stays single-tenant this way — a second
@@ -196,7 +231,7 @@ pub fn build(
             "method": "PATCH",
             "url": format!("/api/tenant/{tenant_id}"),
             "body": { "tenant": {
-                "name": "Macro Local",
+                "name": "Conation (локально)",
                 "issuer": identity::ISSUER,
                 // Enable the events the create/delete user webhooks consume, so
                 // FusionAuth notifies auth-service to register new users for the
@@ -215,11 +250,11 @@ pub fn build(
                     "timeToLiveInSeconds": 3600,
                 },
                 "emailConfiguration": {
-                    "host": "mailpit",
-                    "port": 1025,
+                    "host": smtp.host,
+                    "port": smtp.port,
                     "security": "NONE",
-                    "defaultFromEmail": identity::MAIL_FROM,
-                    "defaultFromName": "Macro Local",
+                    "defaultFromEmail": smtp.from_email,
+                    "defaultFromName": "Conation",
                     "passwordlessEmailTemplateId": template_id,
                 },
                 // Make the passwordless code a 6-digit number (matches the dev
@@ -232,14 +267,14 @@ pub fn build(
                 },
             }}
         }),
-        // 5. Macro application. `tenantId` sets the X-FusionAuth-TenantId header
+        // 5. Conation application. `tenantId` sets the X-FusionAuth-TenantId header
         // (required for tenant-scoped ops once a second tenant exists).
         json!({
             "method": "POST",
             "url": format!("/api/application/{app_id}"),
             "tenantId": tenant_id,
             "body": { "application": {
-                "name": "Macro",
+                "name": "Conation",
                 "tenantId": tenant_id,
                 // The passwordless /login endpoint issues a refresh token based
                 // on loginConfiguration.generateRefreshTokens; without it FA omits

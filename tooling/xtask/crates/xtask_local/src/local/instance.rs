@@ -201,6 +201,26 @@ impl Instance {
         self.suffixed_dash("auth")
     }
 
+    /// Fixed IPAM ranges for a named instance's external and Compose networks.
+    /// The default instance keeps Docker's existing network allocation. Names
+    /// can hash to the same bucket; Docker rejects overlapping active subnets,
+    /// so callers should choose another instance name if allocation conflicts.
+    pub fn network_databases_subnet(&self) -> Option<String> {
+        self.named_subnet("198.18")
+    }
+
+    pub fn network_auth_subnet(&self) -> Option<String> {
+        self.named_subnet("198.19")
+    }
+
+    pub fn network_services_subnet(&self) -> Option<String> {
+        self.named_subnet("10.254")
+    }
+
+    pub fn network_auth_internal_subnet(&self) -> Option<String> {
+        self.named_subnet("10.253")
+    }
+
     pub fn volume_postgres(&self) -> String {
         self.suffixed_underscore("macro_postgres_data")
     }
@@ -239,6 +259,13 @@ impl Instance {
         } else {
             format!("{base}-{}", self.name.0)
         }
+    }
+
+    fn named_subnet(&self, prefix: &str) -> Option<String> {
+        (!self.is_default()).then(|| {
+            let bucket = fnv1a(self.name.as_str()) % BUCKETS;
+            format!("{prefix}.{bucket}.0/24")
+        })
     }
 
     fn suffixed_underscore(&self, base: &str) -> String {

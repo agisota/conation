@@ -77,6 +77,7 @@ pub fn generate(
     } else {
         instance.port(Port::Frontend)
     };
+    let preview_port = super::local_env::preview_port_from_env()?;
     let signup_antibot_hmac =
         super::identity::instance_secret("signup-antibot-hmac", instance.name());
 
@@ -88,6 +89,7 @@ pub fn generate(
             environment: rust_service_environment(
                 svc.compose_name,
                 frontend_port,
+                preview_port,
                 &signup_antibot_hmac,
             ),
             ..Default::default()
@@ -100,7 +102,7 @@ pub fn generate(
             && !instance.is_default()
             && let Some(port) = svc.host_port
         {
-            ports.push(format!("{}:8080", instance.port(port)));
+            ports.push(format!("127.0.0.1:{}:8080", instance.port(port)));
         }
         // The agent egress proxy is the harness's second listener, and the one
         // service port a party outside the compose network has to reach: the
@@ -109,7 +111,7 @@ pub fn generate(
         // nothing for the harness.
         if mode.spec().runs_local_infra && svc.compose_name == EGRESS_SERVICE {
             ports.push(format!(
-                "{}:{EGRESS_CONTAINER_PORT}",
+                "127.0.0.1:{}:{EGRESS_CONTAINER_PORT}",
                 instance.port(Port::AgentHarnessEgress)
             ));
         }
@@ -268,7 +270,10 @@ fn add_localstack_service(
                 start_interval: Some("2s".to_string()),
                 ..Default::default()
             }),
-            ports: dct::Ports::Short(vec![format!("{}:4566", instance.port(Port::LocalStack))]),
+            ports: dct::Ports::Short(vec![format!(
+                "127.0.0.1:{}:4566",
+                instance.port(Port::LocalStack)
+            )]),
             networks: net_aliases(&[
                 ("databases", &["localstack"]),
                 ("services", &["localstack"]),
@@ -303,7 +308,7 @@ fn add_proxy_service(
         Some(dct::Service {
             image: Some(CADDY_IMAGE.to_string()),
             environment: kv(&[("PROXY_PORT", &proxy_port.to_string())]),
-            ports: dct::Ports::Short(vec![format!("{proxy_port}:{proxy_port}")]),
+            ports: dct::Ports::Short(vec![format!("127.0.0.1:{proxy_port}:{proxy_port}")]),
             volumes,
             networks: dct::Networks::Simple(vec!["services".to_string(), "databases".to_string()]),
             ..Default::default()
@@ -335,8 +340,10 @@ fn add_local_infra(
         ..Default::default()
     };
     if !instance.is_default() {
-        fusionauth.ports =
-            dct::Ports::Short(vec![format!("{}:9011", instance.port(Port::FusionAuth))]);
+        fusionauth.ports = dct::Ports::Short(vec![format!(
+            "127.0.0.1:{}:9011",
+            instance.port(Port::FusionAuth)
+        )]);
     }
     services.insert("fusionauth".to_string(), Some(fusionauth));
 
@@ -356,8 +363,8 @@ fn add_local_infra(
             image: Some(MAILPIT_IMAGE.to_string()),
             environment: kv(&mailpit_env),
             ports: dct::Ports::Short(vec![
-                format!("{}:1025", instance.port(Port::MailpitSmtp)),
-                format!("{}:8025", instance.port(Port::MailpitUi)),
+                format!("127.0.0.1:{}:1025", instance.port(Port::MailpitSmtp)),
+                format!("127.0.0.1:{}:8025", instance.port(Port::MailpitUi)),
             ]),
             networks: net_aliases(&[("services", &["mailpit"]), ("auth", &["mailpit"])]),
             ..Default::default()
@@ -369,22 +376,22 @@ fn add_local_infra(
         services.insert(
             "postgres".to_string(),
             Some(ports_only(vec![format!(
-                "{}:5432",
+                "127.0.0.1:{}:5432",
                 instance.port(Port::Postgres)
             )])),
         );
         services.insert(
             "redis".to_string(),
             Some(ports_only(vec![
-                format!("{}:6379", instance.port(Port::Redis)),
-                format!("{}:8001", instance.port(Port::RedisUi)),
+                format!("127.0.0.1:{}:6379", instance.port(Port::Redis)),
+                format!("127.0.0.1:{}:8001", instance.port(Port::RedisUi)),
             ])),
         );
         services.insert(
             "search".to_string(),
             Some(ports_only(vec![
-                format!("{}:9200", instance.port(Port::OpenSearch)),
-                format!("{}:9600", instance.port(Port::OpenSearchPa)),
+                format!("127.0.0.1:{}:9200", instance.port(Port::OpenSearch)),
+                format!("127.0.0.1:{}:9600", instance.port(Port::OpenSearchPa)),
             ])),
         );
         // Kafka also needs its host-facing ADVERTISED listener to carry the
@@ -395,7 +402,7 @@ fn add_local_infra(
         services.insert(
             "kafka".to_string(),
             Some(dct::Service {
-                ports: dct::Ports::Short(vec![format!("{kafka_port}:9092")]),
+                ports: dct::Ports::Short(vec![format!("127.0.0.1:{kafka_port}:9092")]),
                 environment: kv(&[(
                     "KAFKA_ADVERTISED_LISTENERS",
                     &format!("PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:{kafka_port}"),
@@ -566,10 +573,11 @@ fn override_in_place(service: &mut serde_yaml::Mapping, field: &str) {
 fn rust_service_environment(
     compose_name: &str,
     frontend_port: u16,
+    preview_port: Option<u16>,
     signup_antibot_hmac: &str,
 ) -> dct::Environment {
     if compose_name == "authentication-service" {
-        let origins = super::local_env::allowed_origins_csv(frontend_port);
+        let origins = super::local_env::allowed_origins_csv(frontend_port, preview_port);
         kv(&[
             ("PORT", "8080"),
             ("ALLOWED_ORIGINS", origins.as_str()),
