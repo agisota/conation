@@ -113,3 +113,21 @@ fn test_linkless_strips_brackets() {
     assert!(!text.contains('['));
     assert!(!text.contains(']'));
 }
+
+#[test]
+fn forwarded_html_details_survive_parsed_and_linkless_derivatives() {
+    let html = "<html><body><div>latest reply</div><div class=\"gmail_quote\"><div class=\"gmail_attr\">On Wed, Jan 1, 2025 wrote:</div><blockquote><p>forwarded detail</p></blockquote></div></body></html>";
+    let replyless = crate::body_replyless::compute_body_replyless(Some("FW:"), Some(html), None);
+
+    assert_eq!(replyless.as_deref(), Some(html));
+    assert!(
+        compute_body_parsed(true, &replyless)
+            .unwrap()
+            .contains("forwarded detail")
+    );
+    assert!(
+        compute_body_parsed_linkless(true, &replyless)
+            .unwrap()
+            .contains("forwarded detail")
+    );
+}
