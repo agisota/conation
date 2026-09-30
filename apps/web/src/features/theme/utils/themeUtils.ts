@@ -191,11 +191,15 @@ let previewSnapshot: {
 } | null = null;
 
 export function applyTheme(id: string): void {
-  let theme = themes().find((t) => t.id === id);
+  // Keep the persisted built-in ID stable. An earlier local preview wrote the
+  // display name as the ID, so accept it when restoring that profile.
+  const resolvedId = id === 'Conation Dark' ? DEFAULT_DARK_THEME : id;
+  let theme = themes().find((t) => t.id === resolvedId);
   if (!theme) {
     console.error(`theme not found: ${id}`);
-    theme = themes().find((t) => t.id === DEFAULT_DARK_THEME)!;
+    theme = themes().find((t) => t.id === DEFAULT_DARK_THEME) ?? themes()[0];
   }
+  if (!theme) return;
   setCurrentThemeId(theme.id);
   // Committing a theme supersedes any in-flight preview; drop the snapshot so
   // clearThemePreview doesn't revert the commit.

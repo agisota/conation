@@ -18,6 +18,7 @@ import {
   themeColorTokens,
 } from '../signals/themeSignals';
 import { paletteTokens, type ThemeV3 } from '../types/themeTypes';
+import { themeDisplayName } from '../utils/themeDisplayName';
 import { setLiveThemeColorTokens } from '../utils/themeUtils';
 import { isThemeV3 } from '../utils/themeValidation';
 import { ThemeTokenEditor } from './ThemeTokenEditor';
@@ -63,20 +64,6 @@ function initialSystemTheme(): SystemTheme {
   );
 }
 
-/** Localized display names for Conation's built-in themes. */
-function systemThemeDisplayName(theme: SystemTheme): string {
-  switch (theme.id) {
-    case 'Conation Dark':
-      return t('theme.system.conationDark');
-    case 'Conation Light':
-      return t('theme.system.conationLight');
-    case 'Conation Gruvbox':
-      return t('theme.system.conationGruvbox');
-    default:
-      return theme.name;
-  }
-}
-
 function themeModeLabel(mode: ThemeV3['mode']): string {
   return t(mode === 'dark' ? 'theme.mode.dark' : 'theme.mode.light');
 }
@@ -86,14 +73,14 @@ export default function ThemeEdit3() {
   const initial = initialSystemTheme();
   const [selectedTheme, setSelectedTheme] = createSignal(initial);
   const [name, setName] = createSignal(
-    t('theme.customName', { name: systemThemeDisplayName(initial) })
+    t('theme.customName', { name: themeDisplayName(initial) })
   );
   const [draftId, setDraftId] = createSignal(`${initial.id}-custom`);
   const [storageHydrated, setStorageHydrated] = createSignal(false);
 
   const loadSystemTheme = (theme: SystemTheme) => {
     setSelectedTheme(theme);
-    setName(t('theme.customName', { name: systemThemeDisplayName(theme) }));
+    setName(t('theme.customName', { name: themeDisplayName(theme) }));
     setDraftId(`${theme.id}-custom`);
     setLiveThemeMode(theme.mode);
     setLiveThemeColorTokens({ ...theme.colorTokens });
@@ -195,7 +182,7 @@ export default function ThemeEdit3() {
                   }}
                 />
                 <Select.ItemLabel class="min-w-0 flex-1 truncate">
-                  {systemThemeDisplayName(itemProps.item.rawValue)}
+                  {themeDisplayName(itemProps.item.rawValue)}
                 </Select.ItemLabel>
                 <span class="text-[10px] uppercase text-ink-extra-muted">
                   {themeModeLabel(itemProps.item.rawValue.mode)}
@@ -216,7 +203,7 @@ export default function ThemeEdit3() {
               <Select.Value<SystemTheme>>
                 {(state) => (
                   <span class="min-w-0 flex-1 truncate">
-                    {systemThemeDisplayName(state.selectedOption())}
+                    {themeDisplayName(state.selectedOption())}
                   </span>
                 )}
               </Select.Value>

@@ -3,7 +3,9 @@ import en from '@app/lib/i18n/locales/en.json';
 import ru from '@app/lib/i18n/locales/ru.json';
 import { afterEach, describe, expect, it } from 'vitest';
 import { DEFAULT_DARK_THEME, DEFAULT_LIGHT_THEME } from './constants';
+import { macroDarkTheme } from './themes/macro-dark';
 import { conationGruvboxTheme } from './themes/macro-gruvbox';
+import { themeDisplayName } from './utils/themeDisplayName';
 
 const themeSources = import.meta.glob('./**/*.{ts,tsx}', {
   eager: true,
@@ -31,14 +33,16 @@ describe('theme localization', () => {
     }
   });
 
-  it('uses Conation identifiers for built-in themes', () => {
+  it('keeps persisted theme IDs while localizing built-in labels', () => {
     setLocale('ru');
 
     expect(t('theme.system.conationDark')).toBe('Conation — тёмная');
     expect(t('theme.ramp.position', { token: 'surface-2' })).toBe(
       'Положение surface-2 на градиенте'
     );
-    expect(DEFAULT_DARK_THEME).toBe('Conation Dark');
+    expect(DEFAULT_DARK_THEME).toBe('Macro Dark');
+    expect(macroDarkTheme.id).toBe(DEFAULT_DARK_THEME);
+    expect(themeDisplayName(macroDarkTheme)).toBe('Conation — тёмная');
     expect(DEFAULT_LIGHT_THEME).toBe('Conation Light');
     expect(conationGruvboxTheme.id).toBe('Conation Gruvbox');
   });

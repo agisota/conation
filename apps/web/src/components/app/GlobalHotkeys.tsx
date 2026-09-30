@@ -57,6 +57,7 @@ import {
   themes,
 } from '@theme/signals/themeSignals';
 import type { ThemeV3 } from '@theme/types/themeTypes';
+import { themeDisplayName } from '@theme/utils/themeDisplayName';
 import {
   applySystemTheme,
   applyTheme,
@@ -383,7 +384,7 @@ export default function GlobalShortcuts() {
 
   const ThemeDisplay: Component<{ theme: ThemeV3 }> = (props) => (
     <div class="flex items-center gap-2">
-      {props.theme.name}
+      {themeDisplayName(props.theme)}
       <ThemeChips theme={props.theme} size="sm" />
     </div>
   );
@@ -435,7 +436,7 @@ export default function GlobalShortcuts() {
   themes().forEach((theme) => {
     registerHotkey({
       scopeId: setThemeScope.commandScopeId,
-      description: `${theme.name}`,
+      description: themeDisplayName(theme),
       keyDownHandler: () => {
         // Change the theme currently being viewed without switching between
         // static and system-driven theme modes.
@@ -464,7 +465,7 @@ export default function GlobalShortcuts() {
   themes().forEach((theme) => {
     registerHotkey({
       scopeId: setPreferredLightScope.commandScopeId,
-      description: `${theme.name}`,
+      description: themeDisplayName(theme),
       keyDownHandler: () => {
         setLightModeTheme(theme.id);
         analytics.track('theme_changed', { themeId: theme.id });
@@ -490,7 +491,7 @@ export default function GlobalShortcuts() {
   themes().forEach((theme) => {
     registerHotkey({
       scopeId: setPreferredDarkScope.commandScopeId,
-      description: `${theme.name}`,
+      description: themeDisplayName(theme),
       keyDownHandler: () => {
         setDarkModeTheme(theme.id);
         analytics.track('theme_changed', { themeId: theme.id });

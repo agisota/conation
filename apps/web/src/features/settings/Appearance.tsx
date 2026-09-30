@@ -28,6 +28,7 @@ import {
   userThemes,
 } from '@theme/signals/themeSignals';
 import type { ThemeV3 } from '@theme/types/themeTypes';
+import { themeDisplayName } from '@theme/utils/themeDisplayName';
 import {
   applyTheme,
   clearThemePreview,
@@ -196,7 +197,9 @@ function createThemeEditorController(onSelect: (id: string) => void) {
       setIsThemeSaved(false);
       setThemeName(
         t('settings.appearance.theme.copyName', {
-          name: source?.name ?? t('settings.appearance.theme.fallbackName'),
+          name: source
+            ? themeDisplayName(source)
+            : t('settings.appearance.theme.fallbackName'),
         })
       );
     }
@@ -307,9 +310,17 @@ function InterfaceThemeSelect(props: {
   let inputRef: HTMLInputElement | undefined;
 
   const current = () => themes().find((theme) => theme.id === props.value());
+  const currentName = () => {
+    const theme = current();
+    return theme
+      ? themeDisplayName(theme)
+      : t('settings.appearance.theme.unsavedName');
+  };
   const matches = (theme: ThemeV3) =>
     (props.filter?.(theme) ?? true) &&
-    theme.name.toLowerCase().includes(filter().trim().toLowerCase());
+    themeDisplayName(theme)
+      .toLowerCase()
+      .includes(filter().trim().toLowerCase());
   const defaults = () => DEFAULT_THEMES.filter(matches);
   const customs = () => userThemes().filter(matches);
 
@@ -323,15 +334,15 @@ function InterfaceThemeSelect(props: {
     >
       <span class="flex min-w-0 flex-1 items-center gap-2">
         <ThemeChips theme={theme} size="sm" />
-        <span class="truncate">{theme.name}</span>
+        <span class="truncate">{themeDisplayName(theme)}</span>
       </span>
       <span class="ml-2 flex shrink-0 items-center gap-0.5 text-ink-extra-muted opacity-0 group-hover:opacity-100 touch:opacity-100">
-        <CopyThemeButton themeId={theme.id} name={theme.name} />
+        <CopyThemeButton themeId={theme.id} name={themeDisplayName(theme)} />
         <Show when={editable}>
           <button
             type="button"
             aria-label={t('settings.appearance.theme.editNamed', {
-              name: theme.name,
+              name: themeDisplayName(theme),
             })}
             class="rounded p-0.5 hover:text-ink"
             onPointerDown={(e) => e.stopPropagation()}
@@ -348,7 +359,7 @@ function InterfaceThemeSelect(props: {
           <button
             type="button"
             aria-label={t('settings.appearance.theme.deleteNamed', {
-              name: theme.name,
+              name: themeDisplayName(theme),
             })}
             class="rounded p-0.5 hover:text-failure"
             onPointerDown={(e) => e.stopPropagation()}
@@ -386,7 +397,7 @@ function InterfaceThemeSelect(props: {
           // deleted), fall back to the live tokens so the swatch still reflects
           // the current colors and the label reads "Unsaved Theme".
           theme={current() ?? getLiveTheme()}
-          name={current()?.name ?? t('settings.appearance.theme.unsavedName')}
+          name={currentName()}
         />
         <Dropdown.Content
           // Render as a plain div (not Surface) so the edge is a faint ink
@@ -479,7 +490,7 @@ function InterfaceThemeSelect(props: {
       <Show when={current()}>
         <ThemePillActions
           themeId={props.value()}
-          name={current()?.name ?? t('settings.appearance.theme.fallbackName')}
+          name={currentName()}
           onEdit={() =>
             props.editorOpen?.()
               ? props.onCloseEditor?.()
@@ -558,7 +569,7 @@ function ActiveThemeSelect(props: {
         name={
           themeMode() === 'system'
             ? t('settings.appearance.systemPreference')
-            : activeTheme().name
+            : themeDisplayName(activeTheme())
         }
       />
       <Dropdown.Content
@@ -605,7 +616,7 @@ function ActiveThemeSelect(props: {
                   >
                     <span class="flex min-w-0 flex-1 items-center gap-2">
                       <ThemeChips theme={theme} size="sm" />
-                      <span class="truncate">{theme.name}</span>
+                      <span class="truncate">{themeDisplayName(theme)}</span>
                     </span>
                     <Dropdown.ItemIndicator class="shrink-0">
                       <CheckIcon class="size-3.5 text-accent" />
@@ -635,9 +646,14 @@ function ActiveThemeRow() {
     if (theme) pinTheme(theme);
   });
 
-  const activeName = () =>
-    themes().find((theme) => theme.id === resolveActiveThemeId())?.name ??
-    t('settings.appearance.theme.unsavedName');
+  const activeName = () => {
+    const theme = themes().find(
+      (candidate) => candidate.id === resolveActiveThemeId()
+    );
+    return theme
+      ? themeDisplayName(theme)
+      : t('settings.appearance.theme.unsavedName');
+  };
 
   return (
     <>

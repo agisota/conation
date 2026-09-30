@@ -94,6 +94,11 @@ export const [darkModeTheme, setDarkModeTheme] = makePersisted(
   { name: 'conation-dark-mode-theme' }
 );
 
+// A prior local preview stored the product label as the dark theme ID. Restore
+// the stable built-in ID before settings or first-paint theme resolution reads it.
+if (currentThemeId() === 'Conation Dark') setCurrentThemeId(DEFAULT_DARK_THEME);
+if (darkModeTheme() === 'Conation Dark') setDarkModeTheme(DEFAULT_DARK_THEME);
+
 /** The "Active theme" mode: pin a fixed light or dark theme, or follow the OS
  *  ('system'). Drives which per-mode theme (lightModeTheme/darkModeTheme) is
  *  live — see resolveActiveThemeId / systemThemeEffect in themeUtils. */
