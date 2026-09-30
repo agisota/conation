@@ -27,7 +27,9 @@ its status must be refreshed before declaring a release gate complete.
   after removing the duplicate, `stack up` dry-run generated the Compose and
   FusionAuth kickstart artifacts and `docker compose config -q` passed. The
   later configurable preview-origin and SMTP source edits passed targeted
-  `rustfmt --check` but have **not** been recompiled due to disk pressure.
+  `rustfmt --check` and the final offline `cargo check` for `xtask_local`
+  with `local-stack` and debug info disabled. This checks compilation, not
+  Docker startup or the browser sign-in flow.
 - The generated instance is `conation-auth-probe` with port base `27000`.
   Its proxy would listen on `127.0.0.1:27009`. The generated local environment
   and FusionAuth kickstart currently point SMTP at

@@ -68,10 +68,10 @@ services and delivers sign-in mail to a local mailbox.
   service, message readback from the local mailbox, code redemption in the
   current browser, then session refresh and logout. SMTP acceptance, a
   generated kickstart, or a reachable welcome screen alone do not meet it.
-- At the current checkpoint, the isolated Stalwart SMTP-to-JMAP path and
-  generated Compose syntax are verified. FusionAuth and the auth service are
-  not running; the last SMTP/origin source edits have not been recompiled
-  because disk space fell below 3 GiB during a cold attempt. The end-to-end
+- At the current checkpoint, the isolated Stalwart SMTP-to-JMAP path,
+  generated Compose syntax, and offline `xtask_local` compilation of the
+  final source are verified. FusionAuth and the auth service are not running;
+  disk space fell below 3 GiB during an earlier cold attempt. The end-to-end
   acceptance remains open until the binary and containers run and the browser
   flow passes.
 - These environment choices are bootstrap settings for a fresh named stack.
