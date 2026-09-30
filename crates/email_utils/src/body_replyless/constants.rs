@@ -17,6 +17,9 @@ lazy_static! {
         r#"(?is)From:.*(Sent:|Date:).*To:.*Subject:.*"#
     ).unwrap();
 
+    // Regex for forward subject prefixes, anchored so words like "fwiw:" don't match.
+    pub static ref FORWARD_SUBJECT_RE: Regex = Regex::new(r"(?i)^\s*fwd?:").unwrap();
+
     // Regex for other common text splitters.
     pub static ref GENERIC_SPLITTER_RE: Regex = Regex::new(
         r#"(?i)(^\s*--+original message--+)|(^\s*from:)|(^\s*on .*wrote:)"#
@@ -73,4 +76,9 @@ lazy_static! {
     pub static ref ANY_ELEMENT_SELECTOR: Selector = Selector::parse("*").unwrap();
     pub static ref BODY_SELECTOR: Selector = Selector::parse("body").unwrap();
     pub static ref BLOCK_LEVEL_ELEMENTS_SELECTOR: Selector = Selector::parse("p, div, li, h1, h2, h3, h4, h5, h6").unwrap();
+}
+
+/// Returns whether a subject begins with a recognized forwarded-message prefix.
+pub fn is_forward_subject(subject: Option<&str>) -> bool {
+    subject.is_some_and(|subject| FORWARD_SUBJECT_RE.is_match(subject))
 }

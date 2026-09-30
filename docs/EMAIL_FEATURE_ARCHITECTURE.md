@@ -316,6 +316,15 @@ falls back to recognized quote removal or the full body instead of a blank body.
 The shared editor HTML decorator still owns its Lexical/Solid lifecycle; its
 sanitization/color helpers delegate to the package through `@core/email`.
 
+The backend's `email_utils::body_replyless::compute_body_replyless` preserves the
+complete selected body for subjects beginning with `FW:` or `Fwd:` (case
+insensitive, with optional leading whitespace). Both HTML and plaintext paths
+apply the same anchored predicate before reply splitting; lookalikes such as
+`fwdish:` and subjects without the immediate colon retain ordinary reply
+extraction. HTML input is still the already-sanitized body, and HTML precedence
+over plaintext is unchanged. Parsed and linkless derivatives consume that
+preserved replyless result; this does not change composer subject generation.
+
 1. Query availability and display policy are separate. The adapter can expose
    cached data even when a completed request failed. A pending resource is never
    read eagerly. `primitives/thread-snapshot.ts` decides to retain a readable
