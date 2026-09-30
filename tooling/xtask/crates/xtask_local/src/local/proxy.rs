@@ -9,6 +9,7 @@
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
+use sha2::{Digest, Sha256};
 
 use super::gen_compose::caddyfile_path;
 use super::instance::{Instance, Port};
@@ -17,6 +18,13 @@ use super::{Mode, inventory};
 /// The host-facing proxy origin.
 pub fn url(instance: &Instance) -> String {
     format!("http://localhost:{}", instance.port(Port::Proxy))
+}
+
+/// Fingerprint the exact generated Caddyfile so stack update can detect drift.
+pub fn caddyfile_fingerprint(mode: Mode, static_frontend: bool) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(caddyfile(mode, static_frontend).as_bytes());
+    format!("caddyfile-v1:{:x}", hasher.finalize())
 }
 
 /// Write the instance Caddyfile and return its path. Both local and dev keep a

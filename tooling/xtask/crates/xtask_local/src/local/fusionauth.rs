@@ -1,6 +1,7 @@
 //! FusionAuth local bootstrap: generate the per-instance kickstart artifacts
 //! and wait for readiness. No Pulumi, no API read-back, no patch step.
 
+use std::collections::BTreeMap;
 use std::process::Command;
 
 use anyhow::{Context, Result};
@@ -35,12 +36,27 @@ pub fn write_kickstart(
     instance: &Instance,
     google: Option<&kickstart::GoogleIdp>,
     github: Option<&kickstart::GithubIdp>,
+    env: &BTreeMap<String, String>,
 ) -> Result<()> {
     let dir = gen_compose::kickstart_dir(instance);
     std::fs::create_dir_all(&dir)
         .with_context(|| format!("creating kickstart dir {}", dir.display()))?;
 
-    let doc = kickstart::build(
+    let smtp_host = env
+        .get("SMTP_HOST")
+        .map(String::as_str)
+        .unwrap_or("mailpit");
+    let smtp_port = env
+        .get("SMTP_PORT")
+        .map(|value| value.parse::<u16>())
+        .transpose()
+        .context("SMTP_PORT must be a TCP port")?
+        .unwrap_or(1025);
+    let smtp_from = std::env::var("CONATION_LOCAL_SMTP_FROM")
+        .ok()
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| super::identity::MAIL_FROM.to_owned());
+    let doc = kickstart::build_with_smtp(
         instance.port(Port::Frontend),
         instance.port(Port::Auth),
         instance.port(Port::DocCognition),
@@ -48,6 +64,11 @@ pub fn write_kickstart(
         &read_lambda(RECONCILE_LAMBDA)?,
         google,
         github,
+        &kickstart::SmtpSettings {
+            host: smtp_host,
+            port: smtp_port,
+            from_email: &smtp_from,
+        },
     );
     let json = serde_json::to_string_pretty(&doc)? + "\n";
     std::fs::write(dir.join("kickstart.json"), json)

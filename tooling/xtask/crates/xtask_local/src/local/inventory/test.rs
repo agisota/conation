@@ -1,6 +1,18 @@
 use super::*;
 
 #[test]
+fn compose_service_names_are_unique() {
+    let mut names = std::collections::HashSet::new();
+    for service in RUST_SERVICES {
+        assert!(
+            names.insert(service.compose_name),
+            "duplicate compose service: {}",
+            service.compose_name
+        );
+    }
+}
+
+#[test]
 fn local_binaries_are_unique_and_complete() {
     let bins = local_binaries();
     // 17 distinct binaries (the bundled set, including scheduled_action, the local-only

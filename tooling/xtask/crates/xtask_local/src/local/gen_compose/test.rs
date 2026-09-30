@@ -81,11 +81,19 @@ const TEST_SIGNUP_HMAC: &str = "local-conation-signup-antibot-hmac";
 
 #[test]
 fn authentication_override_pins_tauri_https_localhost() {
-    let env = rust_service_environment("authentication-service", 24010, TEST_SIGNUP_HMAC);
+    let env = rust_service_environment(
+        "authentication-service",
+        24010,
+        Some(3004),
+        TEST_SIGNUP_HMAC,
+    );
     let origins = allowed_origins_value(&env).expect("ALLOWED_ORIGINS");
     for origin in [
         "http://localhost:24010",
+        "http://127.0.0.1:24010",
+        "http://127.0.0.1:3004",
         "tauri://localhost",
+        "capacitor://localhost",
         "http://tauri.localhost",
         "https://tauri.localhost",
         "https://localhost",
@@ -99,7 +107,7 @@ fn authentication_override_pins_tauri_https_localhost() {
 
 #[test]
 fn non_auth_override_does_not_pin_allowed_origins() {
-    let env = rust_service_environment("email-service", 24010, TEST_SIGNUP_HMAC);
+    let env = rust_service_environment("email-service", 24010, Some(3004), TEST_SIGNUP_HMAC);
     assert!(
         allowed_origins_value(&env).is_none(),
         "non-auth override must keep ALLOWED_ORIGINS on env_file"
@@ -107,7 +115,12 @@ fn non_auth_override_does_not_pin_allowed_origins() {
 }
 #[test]
 fn authentication_override_pins_signup_antibot_hmac() {
-    let env = rust_service_environment("authentication-service", 24010, TEST_SIGNUP_HMAC);
+    let env = rust_service_environment(
+        "authentication-service",
+        24010,
+        Some(3004),
+        TEST_SIGNUP_HMAC,
+    );
     assert_eq!(
         env_string(&env, "SIGNUP_ANTIBOT_HMAC_KEY"),
         Some(TEST_SIGNUP_HMAC)
@@ -116,7 +129,7 @@ fn authentication_override_pins_signup_antibot_hmac() {
 
 #[test]
 fn non_auth_override_does_not_pin_signup_antibot_hmac() {
-    let env = rust_service_environment("email-service", 24010, TEST_SIGNUP_HMAC);
+    let env = rust_service_environment("email-service", 24010, Some(3004), TEST_SIGNUP_HMAC);
     assert!(
         env_string(&env, "SIGNUP_ANTIBOT_HMAC_KEY").is_none(),
         "non-auth override must keep SIGNUP_ANTIBOT_HMAC_KEY on env_file"

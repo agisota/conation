@@ -19,6 +19,42 @@ use std::collections::BTreeMap;
 use super::instance::{Instance, Port};
 use super::{Mode, identity, resources};
 
+/// Browser and native-app origins accepted by the local authentication service.
+/// Keep the frontend port instance-derived while allowing both loopback spellings.
+/// A separate Vite preview may add one explicit loopback port.
+pub(super) fn allowed_origins_csv(frontend_port: u16, preview_port: Option<u16>) -> String {
+    let mut origins = vec![
+        format!("http://localhost:{frontend_port}"),
+        format!("http://127.0.0.1:{frontend_port}"),
+        "tauri://localhost".to_string(),
+        "capacitor://localhost".to_string(),
+        "http://tauri.localhost".to_string(),
+        "https://tauri.localhost".to_string(),
+        "https://localhost".to_string(),
+    ];
+    if let Some(port) = preview_port {
+        origins.push(format!("http://127.0.0.1:{port}"));
+    }
+    origins.join(",")
+}
+
+/// One explicit loopback preview port shared by CORS and FusionAuth redirects.
+pub(super) fn preview_port_from_env() -> anyhow::Result<Option<u16>> {
+    let Ok(raw) = std::env::var("CONATION_LOCAL_PREVIEW_PORT") else {
+        return Ok(None);
+    };
+    if raw.is_empty() {
+        return Ok(None);
+    }
+    let port = raw
+        .parse::<u16>()
+        .map_err(|_| anyhow::anyhow!("CONATION_LOCAL_PREVIEW_PORT must be a TCP port"))?;
+    if port == 0 {
+        anyhow::bail!("CONATION_LOCAL_PREVIEW_PORT must be nonzero");
+    }
+    Ok(Some(port))
+}
+
 /// The full local environment for one instance.
 pub struct LocalEnv {
     environment: &'static str,
@@ -302,30 +338,41 @@ impl QueueEnv {
     }
 }
 
-/// Mail: SES sends are routed to Mailpit SMTP (see the `ses_client` transport).
+/// Mail: SES sends use Mailpit by default; an isolated local SMTP server can
+/// be selected for a named stack without changing the shared defaults.
 struct MailEnv {
-    smtp_host: &'static str,
-    smtp_port: &'static str,
-    sender_base_address: &'static str,
+    smtp_host: String,
+    smtp_port: String,
+    sender_base_address: String,
 }
 
 impl MailEnv {
     fn local() -> Self {
         MailEnv {
-            smtp_host: "mailpit",
-            smtp_port: "1025",
-            sender_base_address: "macro.local",
+            smtp_host: local_mail_setting("CONATION_LOCAL_SMTP_HOST", "mailpit"),
+            smtp_port: local_mail_setting("CONATION_LOCAL_SMTP_PORT", "1025"),
+            sender_base_address: local_mail_setting(
+                "CONATION_LOCAL_SENDER_BASE_ADDRESS",
+                "macro.local",
+            ),
         }
     }
 
     fn write(&self, env: &mut BTreeMap<String, String>) {
-        env.insert("SMTP_HOST".into(), self.smtp_host.into());
-        env.insert("SMTP_PORT".into(), self.smtp_port.into());
+        env.insert("SMTP_HOST".into(), self.smtp_host.clone());
+        env.insert("SMTP_PORT".into(), self.smtp_port.clone());
         env.insert(
             "SENDER_BASE_ADDRESS".into(),
-            self.sender_base_address.into(),
+            self.sender_base_address.clone(),
         );
     }
+}
+
+fn local_mail_setting(name: &str, default: &str) -> String {
+    std::env::var(name)
+        .ok()
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| default.to_owned())
 }
 
 /// The agent harness: which bot it answers for, and where its sandboxes come
