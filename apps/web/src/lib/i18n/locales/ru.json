@@ -2646,6 +2646,7 @@
   "auth.errors.mailboxCreateFailed": "Не удалось создать почтовый ящик. Попробуйте ещё раз.",
   "auth.errors.passwordLoginFailed": "Не удалось войти. Проверьте адрес почты и пароль, затем повторите попытку.",
   "auth.errors.resendFailed": "Не удалось отправить код повторно. Попробуйте ещё раз.",
+  "auth.errors.serviceUnavailable": "Не удалось связаться с сервером входа. Проверьте подключение и попробуйте снова.",
   "auth.errors.signInFailed": "Не удалось войти. Попробуйте ещё раз.",
   "auth.errors.ssoUnavailable": "Не удалось начать вход через SSO для этого адреса.",
   "auth.errors.verificationFailed": "Не удалось подтвердить код.",

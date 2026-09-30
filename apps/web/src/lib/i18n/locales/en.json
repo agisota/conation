@@ -2640,6 +2640,7 @@
   "auth.errors.mailboxCreateFailed": "Couldn't create your mailbox. Please try again.",
   "auth.errors.passwordLoginFailed": "Failed to log in. Check your email and password, then try again.",
   "auth.errors.resendFailed": "Failed to resend the code. Please try again.",
+  "auth.errors.serviceUnavailable": "Couldn't reach the sign-in server. Check your connection and try again.",
   "auth.errors.signInFailed": "Sign-in failed. Please try again.",
   "auth.errors.ssoUnavailable": "Unable to start SSO login for this email.",
   "auth.errors.verificationFailed": "Unable to verify the code.",

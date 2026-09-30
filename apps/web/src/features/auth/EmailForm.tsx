@@ -5,10 +5,10 @@ import { authServiceClient } from '@service-auth/client';
 import { action, useSubmission } from '@solidjs/router';
 import { Stage } from './Shared';
 import {
+  type AntibotProof,
   isAntibotReject,
   rememberSignupMailboxLocal,
   solveSignupAntibot,
-  type AntibotProof,
 } from './signup-antibot';
 
 // Use the webview scheme as-is. Production used to force https, which turned
@@ -35,19 +35,26 @@ async function postPasswordless(
   referral_code: string | null,
   antibot?: AntibotProof
 ) {
-  return platformFetch(
-    `${SERVER_HOSTS['auth-service']}/login/passwordless`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        redirect_uri: `${window.location.protocol}//${window.location.host}/app`,
-        email,
-        ...(referral_code && { referral_code }),
-        ...(antibot && { antibot }),
-      }),
+  try {
+    return await platformFetch(
+      `${SERVER_HOSTS['auth-service']}/login/passwordless`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          redirect_uri: `${window.location.protocol}//${window.location.host}/app`,
+          email,
+          ...(referral_code && { referral_code }),
+          ...(antibot && { antibot }),
+        }),
+      }
+    );
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(t('auth.errors.serviceUnavailable'));
     }
-  );
+    throw error;
+  }
 }
 
 // Initiates the passwordless login flow.
